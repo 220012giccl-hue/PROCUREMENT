@@ -1,0 +1,61 @@
+{
+    "product_categories": {
+        "electrical": [
+            "wire",
+            "cable",
+            "switch",
+            "socket",
+            "breaker",
+            "transformer",
+            "electricity",
+            "power",
+            "voltage",
+            "current",
+            "electrical"
+        ],
+        "plumbing": [
+            "pipe",
+            "valve",
+            "faucet",
+            "tap",
+            "drain",
+            "water",
+            "plumbing",
+            "sewage",
+            "pump"
+        ],
+        "building": [
+            "cement",
+            "concrete",
+            "steel",
+            "brick",
+            "wood",
+            "timber",
+            "paint",
+            "construction",
+            "building",
+            "material",
+            "ac",
+            "hvac",
+            "air conditioning"
+        ]
+    },
+    "email_relevance_keywords": [
+        "order",
+        "purchase",
+        "quote",
+        "rfq",
+        "request for quotation",
+        "supply",
+        "material",
+        "equipment",
+        "procurement",
+        "vendor",
+        "quotation",
+        "pricing",
+        "cost",
+        "delivery",
+        "urgent",
+        "required"
+    ]
+}

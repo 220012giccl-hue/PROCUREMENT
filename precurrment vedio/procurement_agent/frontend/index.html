@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PROCUREMENT AGENT</title>
+    <link rel="stylesheet" href="styles.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Code syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <!-- API Module -->
+    <script src="js/api.js"></script>
+    <script src="js/projects.js"></script>
+    <script src="login.js"></script>
+</head>
+
+<body>
+    <script>
+        (function () {
+            if (sessionStorage.getItem('procurement_agent_logged_in') !== 'true') {
+                window.location.replace('login.html');
+                throw new Error('Redirect');
+            }
+        })();
+    </script>
+    <div class="container">
+        <aside class="sidebar">
+            <!-- Logo -->
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 0L14.5 9.5L24 12L14.5 14.5L12 24L9.5 14.5L0 12L9.5 9.5L12 0Z"
+                            fill="currentColor" />
+                    </svg>
+                </div>
+                <h1>Procurement Agent</h1>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="sidebar-nav">
+                <ul class="nav-links">
+
+                    <!-- Dashboard -->
+                    <li id="nav-dashboard" class="nav-item active" onclick="switchView('dashboard')">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Dashboard</span>
+                    </li>
+
+                    <!-- Emails (Collapsible) -->
+                    <li class="nav-item nav-parent" id="nav-emails-parent"
+                        onclick="toggleNavSection('emails-section', 'nav-emails-parent')">
+                        <div class="nav-parent-row">
+                            <span class="nav-parent-left">
+                                <i class="fas fa-envelope"></i>
+                                <span>Emails</span>
+                            </span>
+                            <i class="fas fa-chevron-down nav-chevron" id="chevron-emails-section"></i>
+                        </div>
+                    </li>
+                    <div class="nav-sub-section" id="emails-section">
+                        <li class="nav-item nav-sub-item" id="nav-inbox" onclick="switchView('inbox')">
+                            <span class="nav-dot"></span>
+                            <span>Inbox</span>
+                        </li>
+                        <li class="nav-item nav-sub-item" id="nav-drafts" onclick="switchView('drafts')">
+                            <span class="nav-dot"></span>
+                            <span>Drafts</span>
+                        </li>
+                    </div>
+
+                    <!-- Projects (Collapsible) -->
+                    <li class="nav-item nav-parent" id="nav-projects-parent"
+                        onclick="toggleNavSection('projects-section', 'nav-projects-parent')">
+                        <div class="nav-parent-row">
+                            <span class="nav-parent-left">
+                                <i class="fas fa-folder-open"></i>
+                                <span>Projects</span>
+                            </span>
+                            <i class="fas fa-chevron-down nav-chevron" id="chevron-projects-section"></i>
+                        </div>
+                    </li>
+                    <div class="nav-sub-section" id="projects-section">
+                        <li class="nav-item nav-sub-item" id="nav-all-projects" onclick="switchView('projects')">
+                            <span class="nav-dot"></span>
+                            <span>All Projects</span>
+                        </li>
+                    </div>
+
+                    <!-- AI Assistant -->
+                    <li class="nav-item" id="nav-ai-assistant" onclick="switchView('ai-assistant')">
+                        <i class="fas fa-robot"></i>
+                        <span>AI Assistant</span>
+                    </li>
+
+                    <!-- CHATboard -->
+                    <li class="nav-item" id="nav-chatboard" onclick="switchView('chatboard')">
+                        <i class="fas fa-comment-dots"></i>
+                        <span>Chatbot</span>
+                    </li>
+
+                    <!-- Suppliers (Collapsible) -->
+                    <li class="nav-item nav-parent" id="nav-suppliers-parent"
+                        onclick="toggleNavSection('suppliers-section', 'nav-suppliers-parent')">
+                        <div class="nav-parent-row">
+                            <span class="nav-parent-left">
+                                <i class="fas fa-building"></i>
+                                <span>Suppliers</span>
+                            </span>
+                            <i class="fas fa-chevron-down nav-chevron" id="chevron-suppliers-section"></i>
+                        </div>
+                    </li>
+                    <div class="nav-sub-section" id="suppliers-section">
+                        <li class="nav-item nav-sub-item" id="nav-vendors" onclick="switchView('vendors')">
+                            <span class="nav-dot"></span>
+                            <span>Suppliers List</span>
+                        </li>
+                        <li class="nav-item nav-sub-item" id="nav-comparison" onclick="switchView('comparison')">
+                            <span class="nav-dot"></span>
+                            <span>Rate List</span>
+                        </li>
+                    </div>
+
+                    <!-- Chat History (Collapsible) -->
+                    <li class="nav-item nav-parent" id="nav-history-parent"
+                        onclick="toggleNavSection('history-section', 'nav-history-parent')">
+                        <div class="nav-parent-row">
+                            <span class="nav-parent-left">
+                                <i class="fas fa-history"></i>
+                                <span>Chat History</span>
+                            </span>
+                            <i class="fas fa-chevron-down nav-chevron" id="chevron-history-section"></i>
+                        </div>
+                    </li>
+                    <div class="nav-sub-section" id="history-section">
+                        <li class="nav-item nav-sub-item new-chat-btn"
+                            onclick="switchView('ai-assistant'); startNewChat();">
+                            <i class="fas fa-plus" style="font-size:0.75rem; color: var(--deep-blue);"></i>
+                            <span style="color: var(--deep-blue); font-weight:600;">New Chat</span>
+                        </li>
+                        <ul id="sidebar-chat-history" class="sidebar-history-list">
+                            <!-- Chat history items rendered by JS -->
+                        </ul>
+                    </div>
+
+                </ul>
+            </nav>
+
+            <!-- Bottom: Settings + Logout -->
+            <div class="sidebar-bottom">
+                <div class="sidebar-bottom-item" id="nav-settings" onclick="switchView('settings')">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </div>
+                <div class="sidebar-bottom-item logout-item" onclick="handleLogout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-dashboard">
+            <!-- Decorative clouds for heavenly feel -->
+            <div class="cloud cloud-1"></div>
+            <div class="cloud cloud-2"></div>
+            <div class="cloud cloud-3"></div>
+
+            <header>
+                <h1 id="view-title">Dashboard</h1>
+                <div class="header-actions"></div>
+            </header>
+
+            <!-- CHAT WIDGET (Moved here for better visibility) -->
+            <div class="chat-widget" id="chatWidget" style="position: fixed; bottom: 24px; right: 24px; z-index: 9999;">
+                <button class="chat-toggle" id="chatToggle" onclick="toggleChatWidget()">
+                    <span class="chat-icon">💬</span>
+                </button>
+
+                <div class="chat-panel hidden" id="chatPanel">
+                    <div class="chat-header">
+                        <div class="agent-info">
+                            <div class="agent-avatar">PA</div>
+                            <div class="agent-text">
+                                <h3>Procurement Agent</h3>
+                                <span>Abdex Industries</span>
+                            </div>
+                        </div>
+                        <button class="close-chat" onclick="toggleChatWidget()">×</button>
+                    </div>
+                    <div class="chat-messages" id="chatMessages"></div>
+                    <div class="chat-input-area">
+                        <input type="text" id="chatbotUserInput" placeholder="Ask about hoses..." autocomplete="off">
+                        <button class="send-btn" id="chatbotSendBtn" onclick="handleChatbotSend()">▶</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard View (NEW DEFAULT) -->
+            <section id="dashboard-view" class="view">
+                <div class="welcome-section">
+                    <h1>Welcome to Procurement Agent</h1>
+                    <p>Your intelligent procurement automation platform</p>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">📧</div>
+                        <div class="stat-content">
+                            <h3 id="stat-emails">0</h3>
+                            <p>Total Emails</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🏢</div>
+                        <div class="stat-content">
+                            <h3 id="stat-vendors">0</h3>
+                            <p>Suppliers</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📝</div>
+                        <div class="stat-content">
+                            <h3 id="stat-drafts">0</h3>
+                            <p>Pending Drafts</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-content">
+                            <h3 id="stat-sent">0</h3>
+                            <p>Completed Quotations</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card" style="margin-top: 2rem;">
+                    <h2>Quick Actions</h2>
+                    <div class="quick-actions">
+                        <button class="btn btn-primary" onclick="switchView('inbox')">
+                            <i class="fas fa-envelope"></i> Check Emails
+                        </button>
+                        <button class="btn btn-primary" onclick="switchView('vendors')">
+                            <i class="fas fa-building"></i> Manage Suppliers
+                        </button>
+                        <button class="btn btn-primary" onclick="switchView('ai-assistant')">
+                            <i class="fas fa-robot"></i> AI Assistant
+                        </button>
+                        <button class="btn btn-primary" onclick="switchView('drafts')">
+                            <i class="fas fa-file-alt"></i> Review Drafts
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="card" style="margin-top: 2rem;">
+                    <h2>Recent Activity</h2>
+                    <ul id="recent-activity" class="activity-list">
+                        <li class="activity-item">
+                            <span>Loading activity...</span>
+                        </li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Views -->
+            <section id="inbox-view" class="view" style="display: none;">
+                <header class="section-header"
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <div>
+                        <h2><i class="fas fa-inbox"></i> Inbound Procurement Feed</h2>
+                        <p>Track and classify incoming requests from clients and vendors</p>
+                    </div>
+                    <div class="header-actions" style="display: flex; gap: 0.8rem;">
+                        <button class="btn btn-primary" onclick="syncAndRefresh('gmail')"
+                            style="background: #ea4335; border: none; display: flex; align-items: center; gap: 8px;">
+                            <i class="fab fa-google"></i> Fetch Gmail
+                        </button>
+                        <button class="btn btn-primary" onclick="syncAndRefresh('outlook')"
+                            style="background: #0078d4; border: none; display: flex; align-items: center; gap: 8px;">
+                            <i class="fab fa-microsoft"></i> Fetch Outlook
+                        </button>
+                    </div>
+                </header>
+
+                <!-- Professional Filter Bar -->
+                <div class="filter-bar">
+                    <div class="filter-group">
+                        <label>Search Emails</label>
+                        <input type="text" id="email-search-input" placeholder="Search sender, subject..."
+                            onkeyup="applyInboxFilters()">
+                    </div>
+                    <div class="filter-group">
+                        <label>Category</label>
+                        <select id="email-category-filter" onchange="applyInboxFilters()">
+                            <option value="">All Categories</option>
+                            <option value="new_procurement">Procurement</option>
+                            <option value="quote">Quotations</option>
+                            <option value="info">Information</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>From Date</label>
+                        <input type="date" id="email-date-from" onchange="applyInboxFilters()">
+                    </div>
+                    <div class="filter-group">
+                        <label>To Date</label>
+                        <input type="date" id="email-date-to" onchange="applyInboxFilters()">
+                    </div>
+                    <button class="btn btn-secondary" onclick="resetInboxFilters()">
+                        <i class="fas fa-undo"></i> Reset
+                    </button>
+                </div>
+
+                <!-- Active Filter Chips -->
+                <div id="filter-chips-container" style="display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap;">
+                </div>
+
+                <div class="card" style="padding: 0; overflow-x: auto; min-width: 1000px;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 150px;">Date & Time</th>
+                                <th style="width: 200px;">Sender</th>
+                                <th style="width: auto;">Subject</th>
+                                <th style="width: 150px;">Category</th>
+                                <th style="width: 150px;">Status</th>
+                                <th style="width: 100px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="email-table-body">
+                            <!-- Emails will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Projects View -->
+            <section id="projects-view" class="view" style="display: none;">
+                <header class="section-header"
+                    style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h2>Recent Projects</h2>
+                        <p>Track procurement cycles per project</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="showAddProjectModal()">+ Add Project</button>
+                </header>
+                <div class="card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 120px;">Client ID</th>
+                                <th>Client Name</th>
+                                <th>Project Name</th>
+                                <th>Source Email</th>
+                                <th style="width: 120px;">Status</th>
+                                <th style="width: 120px;">Created</th>
+                                <th style="width: 100px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="projects-table-body">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Clients View -->
+            <section id="clients-view" class="view" style="display: none;">
+                <header class="section-header"
+                    style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h2>Client Directory</h2>
+                        <p>Manage your client identities</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="showAddClientModal()">+ Add Client</button>
+                </header>
+                <div class="card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Joined</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="clients-table-body">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Settings View -->
+            <section id="settings-view" class="view" style="display: none;">
+                <div class="settings-page">
+                    <div class="settings-header">
+                        <h2><i class="fas fa-cog"></i> Settings</h2>
+                        <p>Manage your email connections and account preferences.</p>
+                    </div>
+
+                    <!-- Email Connections Card -->
+                    <div class="settings-card">
+                        <div class="settings-card-header">
+                            <i class="fas fa-envelope-open-text"></i>
+                            <div>
+                                <h3>Email Connections</h3>
+                                <p>Connect your email accounts to fetch and send procurement emails.</p>
+                            </div>
+                        </div>
+                        <div class="settings-connections">
+                            <!-- Gmail -->
+                            <div class="connection-item" id="gmail-connection-item">
+                                <div class="connection-info">
+                                    <div class="connection-logo gmail-logo">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                            xmlns="http://www.w3.org/2000/svg">
+                                            <path
+                                                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                                                fill="#4285F4" />
+                                            <path
+                                                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                                                fill="#34A853" />
+                                            <path
+                                                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"
+                                                fill="#FBBC05" />
+                                            <path
+                                                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                                                fill="#EA4335" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <span class="connection-name">Gmail</span>
+                                        <span class="connection-email" id="gmail-connected-email">Not connected</span>
+                                    </div>
+                                </div>
+                                <div class="connection-actions">
+                                    <span class="connection-badge disconnected" id="gmail-badge">Disconnected</span>
+                                    <button class="btn-connect-page gmail-connect" id="gmail-connect-btn"
+                                        onclick="connectGmail()">
+                                        <i class="fas fa-plug"></i> Connect Gmail
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Outlook -->
+                            <div class="connection-item" id="outlook-connection-item">
+                                <div class="connection-info">
+                                    <div class="connection-logo outlook-logo">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                            xmlns="http://www.w3.org/2000/svg">
+                                            <rect width="24" height="24" rx="3" fill="#0078D4" />
+                                            <path d="M13 6h7v12h-7V6z" fill="#50E6FF" opacity="0.6" />
+                                            <path d="M4 8l7-2v12L4 16V8z" fill="white" />
+                                            <ellipse cx="7.5" cy="12" rx="2.5" ry="3" fill="#0078D4" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <span class="connection-name">Outlook</span>
+                                        <span class="connection-email" id="outlook-connected-email">Not connected</span>
+                                    </div>
+                                </div>
+                                <div class="connection-actions">
+                                    <span class="connection-badge disconnected" id="outlook-badge">Disconnected</span>
+                                    <button class="btn-connect-page outlook-connect" id="outlook-connect-btn"
+                                        onclick="connectOutlook()">
+                                        <i class="fas fa-plug"></i> Connect Outlook
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                </div>
+            </section>
+
+            <!-- AI Assistant View -->
+            <section id="ai-assistant-view" class="view" style="display: none;">
+                <div class="ai-view-layout">
+                    <div class="ai-assistant-container" id="ai-drop-zone" ondrop="handleFileDrop(event)"
+                        ondragover="event.preventDefault(); this.classList.add('drag-over')"
+                        ondragleave="this.classList.remove('drag-over')">
+                        <!-- Empty State (Redesigned Greeting) -->
+                        <div id="ai-empty-state" class="greeting-section">
+                            <div class="greeting-content">
+                                <h2 class="greeting-header">
+                                    <span class="greeting-icon">
+                                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none"
+                                            xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M12 0L14.5 9.5L24 12L14.5 14.5L12 24L9.5 14.5L0 12L9.5 9.5L12 0Z"
+                                                fill="url(#assistant-grad)" />
+                                            <defs>
+                                                <linearGradient id="assistant-grad" x1="0" y1="0" x2="24" y2="24"
+                                                    gradientUnits="userSpaceOnUse">
+                                                    <stop stop-color="#A8D4F0" />
+                                                    <stop offset="1" stop-color="#7EC4E8" />
+                                                </linearGradient>
+                                            </defs>
+                                        </svg>
+                                    </span>
+                                    <span class="greeting-title">Welcome to Procurement Agent</span>
+                                </h2>
+                                <div class="greeting-message">
+                                    <p class="greeting-line line-1">Let's streamline your procurement process together.
+                                    </p>
+                                    <p class="greeting-line line-2">Ask me anything about suppliers, RFQs, or analyze
+                                        your
+                                        documents.</p>
+                                    <p class="greeting-line line-3">I'm here to help.</p>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <!-- Chat Messages Container -->
+                        <div id="chat-messages-container" class="chat-messages-container" style="display: none;">
+                            <div id="chat-messages" class="chat-messages">
+                                <!-- Messages appear here -->
+                            </div>
+                        </div>
+
+                        <!-- Uploaded Files Preview -->
+                        <div id="uploaded-files-preview" class="files-preview">
+                            <!-- File cards appear here -->
+                        </div>
+
+                        <!-- File Upload Zone -->
+                        <div id="file-upload-zone" class="ai-upload-zone" ondrop="handleFileDrop(event)"
+                            ondragover="event.preventDefault()" ondragleave="event.target.classList.remove('drag-over')"
+                            ondragenter="event.target.classList.add('drag-over')">
+                            <input type="file" id="file-input" multiple hidden onchange="handleFileSelect(event)">
+                        </div>
+
+                        <!-- Chat Input Area -->
+                        <div class="ai-input-container">
+                            <!-- Quick Action Buttons (Moved for Stability) -->
+                            <div class="ai-quick-actions">
+                                <button class="ai-quick-btn"
+                                    onclick="askQuickQuestion('What is the Procurement Agent and how does it work?')">
+                                    <i class="fas fa-info-circle"></i>
+                                    About Platform
+                                </button>
+                                <button class="ai-quick-btn"
+                                    onclick="askQuickQuestion('How do I add new suppliers to the system?')">
+                                    <i class="fas fa-users"></i>
+                                    Add Suppliers
+                                </button>
+                                <button class="ai-quick-btn"
+                                    onclick="askQuickQuestion('Explain the email analysis feature')">
+                                    <i class="fas fa-envelope"></i>
+                                    Email Analysis
+                                </button>
+                            </div>
+                            <div class="ai-input-wrapper">
+                                <button class="btn-upload-prominent"
+                                    onclick="document.getElementById('file-input').click()" title="Attach Files">
+                                    <i class="fas fa-paperclip"></i>
+                                </button>
+                                <input type="text" id="chat-input" class="ai-input"
+                                    placeholder="Write your message here..."
+                                    onkeypress="if(event.key === 'Enter') sendChatMessage()">
+                                <div class="ai-input-actions">
+                                    <button id="voice-btn" class="voice-btn" onclick="startVoiceRecognition()"
+                                        title="Voice Input">
+                                        <i class="fas fa-microphone"></i>
+                                    </button>
+                                    <button class="ai-send-btn" onclick="sendChatMessage()" title="Send Message">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                    <button class="ai-clear-btn-small" onclick="clearChat()" title="Clear Chat">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chat History Sidebar (ChatGPT Style) - MOVED TO RIGHT SIDE -->
+                    <aside class="ai-chat-history">
+                        <div class="history-header">
+                            <h3>Chat History</h3>
+                            <button class="btn-new-chat" onclick="startNewChat()">
+                                <i class="fas fa-plus"></i> New Chat
+                            </button>
+                        </div>
+                        <ul id="chat-history-list" class="history-list">
+                            <!-- History items appear here -->
+                        </ul>
+                    </aside>
+                </div>
+            </section>
+
+            <section id="vendors-view" class="view" style="display: none;">
+                <div class="card">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                        <h2>Supplier Management</h2>
+                        <button class="btn btn-primary" onclick="showVendorModal()">+ Add New Supplier</button>
+                    </div>
+                    <div id="vendor-categories">
+                        <!-- Categorized suppliers will be rendered here by JavaScript -->
+                    </div>
+                </div>
+            </section>
+
+            <section id="drafts-view" class="view" style="display: none;">
+                <div class="drafts-page-header">
+                    <h2>Email Drafts</h2>
+                    <button class="btn btn-primary" onclick="openNewDraftModal()"
+                        style="font-size:0.85rem; padding:0.45rem 1rem;">
+                        <i class="fas fa-plus"></i> New Draft
+                    </button>
+                </div>
+                <div class="drafts-layout">
+                    <div class="drafts-list-panel">
+                        <ul id="drafts-list-ul" class="drafts-list"></ul>
+                    </div>
+                    <div class="drafts-preview-panel">
+                        <div id="drafts-preview-empty" class="drafts-preview-empty">Select a draft to preview</div>
+                        <div id="drafts-preview-content" class="drafts-preview-content" style="display: none;">
+                            <div class="draft-preview-header">
+                                <h3 id="preview-vendor">Vendor Name</h3>
+                                <div class="draft-preview-meta">
+                                    <p><strong>To:</strong> <span id="preview-to"></span></p>
+                                    <p><strong>Subject:</strong> <span id="preview-subject"></span></p>
+                                </div>
+                            </div>
+                            <!-- Source Reference Link -->
+                            <div id="draft-backlink-container" style="display: none;"></div>
+
+                            <div id="preview-body" class="draft-preview-body"></div>
+                            <div class="draft-preview-actions">
+                                <button class="btn btn-primary" id="btn-edit-draft"><i class="fas fa-edit"></i> Edit &
+                                    Review</button>
+                                <button class="btn btn-success" id="btn-send-draft"><i class="fas fa-paper-plane"></i>
+                                    Send Now</button>
+                                <button class="btn btn-danger" id="btn-delete-draft"
+                                    style="background: transparent; border: 1px solid #fee2e2; color: #dc2626;"><i
+                                        class="fas fa-trash"></i> Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="comparison-view" class="view" style="display: none;">
+                <div id="comparison-section" class="card">
+                    <!-- Comparison View -->
+                    <div class="card">
+                        <h2>Price Comparison Table</h2>
+                        <button class="btn btn-success" onclick="testComparison()" style="margin-bottom: 1rem;">🧪 Test
+                            Price Comparison</button>
+
+                        <table id="comparison-table">
+                            <thead>
+                                <tr>
+                                    <th>Suppliers</th>
+                                    <th>Product</th>
+                                    <th>Price</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="comparison-body">
+                                <tr>
+                                    <td colspan="4">No comparison data available. Click "Test Price Comparison" to see
+                                        demo.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CHATboard Dedicated View -->
+            <section id="chatboard-view" class="view" style="display: none;">
+                <div class="card"
+                    style="height: calc(100vh - 180px); display: flex; flex-direction: column; padding: 0; overflow: hidden;">
+                    <div class="chat-header"
+                        style="background: var(--gradient-sidebar); border-bottom: 1px solid var(--border-light); padding: 1.5rem;">
+                        <div class="agent-info">
+                            <div class="agent-avatar"
+                                style="width: 50px; height: 50px; font-size: 1.4rem; background: var(--gradient-vibrant); color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                                PA</div>
+                            <div class="agent-text">
+                                <h3 style="font-size: 1.2rem;">Abdex Procurement Board</h3>
+                                <p style="font-size: 0.85rem; color: var(--text-muted);">Dedicated procurement workspace
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="boardMessages"
+                        style="flex: 1; overflow-y: auto; padding: 2rem; background: #fafcff; display: flex; flex-direction: column; gap: 1.5rem;">
+                        <!-- Large view messages -->
+                    </div>
+
+                    <div style="padding: 1.5rem; border-top: 1px solid var(--border-light); background: white;">
+                        <div style="display: flex; gap: 12px; max-width: 900px; margin: 0 auto; width: 100%;">
+                            <input type="text" id="boardUserInput" placeholder="Type your procurement request here..."
+                                style="flex: 1; padding: 1rem 1.5rem; border-radius: 30px; border: 1px solid var(--border-light); outline: none; font-size: 1rem; box-shadow: var(--shadow-soft);"
+                                onkeypress="if(event.key === 'Enter') handleBoardSend()">
+                            <button class="btn btn-primary" onclick="handleBoardSend()"
+                                style="width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0;">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Vendor Modal -->
+    <div id="vendor-modal" class="modal">
+        <div class="modal-content">
+            <h2 id="modal-title">Add New Suppliers</h2>
+            <input type="text" id="v-name" placeholder="Supplier Name" required>
+            <input type="email" id="v-email" placeholder="Email" required>
+            <select id="v-category">
+                <option>Builder</option>
+                <option>Plumber</option>
+                <option>Electrician</option>
+                <option>Other</option>
+            </select>
+            <textarea id="v-desc" placeholder="Description (optional)"></textarea>
+            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                <button class="btn btn-success" onclick="saveVendor()">Save</button>
+                <button class="btn" onclick="hideVendorModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== NEW DRAFT MODAL ===== -->
+    <div id="new-draft-modal" class="modal" style="display:none;">
+        <div class="modal-content" style="max-width: 680px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.2rem;">
+                <h2 style="margin:0;"><i class="fas fa-pen-to-square" style="color:#60a5fa;"></i> Create New Draft</h2>
+                <button onclick="closeNewDraftModal()"
+                    style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:#94a3b8;"><i
+                        class="fas fa-times"></i></button>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem; margin-bottom:0.8rem;">
+                <div>
+                    <label class="nd-label">Vendor Name</label>
+                    <input type="text" id="nd-vendor-name" placeholder="e.g. Al-Rajhi Supplies" class="nd-input">
+                </div>
+                <div>
+                    <label class="nd-label">Vendor Email</label>
+                    <input type="email" id="nd-vendor-email" placeholder="vendor@example.com" class="nd-input">
+                </div>
+            </div>
+
+            <div style="margin-bottom:0.8rem;">
+                <label class="nd-label">Subject</label>
+                <input type="text" id="nd-subject" placeholder="Request for Quotation — [Item]" class="nd-input">
+            </div>
+
+            <div style="margin-bottom:1rem;">
+                <label class="nd-label">Email Body</label>
+                <textarea id="nd-body" rows="9" class="nd-input nd-textarea" placeholder="Dear [Vendor],
+
+We would like to request a quotation for the following items:
+
+1. [Product Name] — Qty: [X] [Unit]
+
+Please provide your best price with delivery timeline.
+
+Regards,
+Procurement Team"></textarea>
+            </div>
+
+            <div style="display:flex; gap:0.75rem; justify-content:flex-end;">
+                <button class="btn" onclick="closeNewDraftModal()"
+                    style="background:transparent; border:1px solid #e2e8f0; color:#64748b;">Cancel</button>
+                <button class="btn btn-success" onclick="saveNewDraft()">
+                    <i class="fas fa-save"></i> Save Draft
+                </button>
+                <button class="btn btn-primary" onclick="saveAndSendNewDraft()">
+                    <i class="fas fa-paper-plane"></i> Save & Send
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Draft Edit Modal -->
+    <div id="draft-modal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <h2>Edit Draft Email</h2>
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; color: #aaa;">To:</label>
+                <input type="text" id="draft-recipient" readonly style="background: rgba(255,255,255,0.05);">
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; color: #aaa;">Subject:</label>
+                <input type="text" id="draft-subject" placeholder="Email Subject">
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; color: #aaa;">Message:</label>
+                <textarea id="draft-body" rows="12" placeholder="Email body" style="font-family: monospace;"></textarea>
+            </div>
+            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                <button class="btn btn-success" onclick="sendEditedDraft()"><i class="fas fa-paper-plane"></i> Send
+                    Email</button>
+                <button class="btn btn-enhance" onclick="showImproveModalFromEdit()"><i class="fas fa-magic"></i>
+                    Enhance</button>
+                <button class="btn btn-primary" onclick="saveDraft()"><i class="fas fa-save"></i> Save</button>
+                <button class="btn" onclick="hideDraftModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Draft Improvement Modal -->
+    <div id="improve-modal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <h2>✨ Enhance Draft</h2>
+            <p style="color: #aaa; margin-bottom: 1rem;">Tell me how you'd like to improve this draft email:</p>
+            <textarea id="improve-instructions" rows="4"
+                placeholder="E.g., Make it more formal, add urgency, mention delivery deadline, emphasize quality requirements..."></textarea>
+            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                <button class="btn btn-success" onclick="applyImprovement()">Enhance</button>
+                <button class="btn" onclick="hideImproveModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== PROJECT LIFECYCLE MODAL ===== -->
+    <div id="lifecycle-modal" class="lifecycle-modal-overlay" style="display:none;"
+        onclick="if(event.target===this) closeLifecycleModal()">
+        <div class="lifecycle-modal-box">
+            <div class="lifecycle-modal-header">
+                <div>
+                    <h2 id="lc-project-name">Project Details</h2>
+                    <p id="lc-project-meta" style="color:#94a3b8; font-size:0.85rem; margin:0;"></p>
+                </div>
+                <button class="lc-close-btn" onclick="closeLifecycleModal()"><i class="fas fa-times"></i></button>
+            </div>
+
+            <!-- Client Info Strip -->
+            <div class="lc-client-strip">
+                <i class="fas fa-user-tie"></i>
+                <span><strong id="lc-client-name">—</strong></span>
+                <span id="lc-client-email" style="color:#94a3b8; font-size:0.85rem;"></span>
+                <span class="lc-status-badge" id="lc-project-status">Active</span>
+            </div>
+
+            <!-- Timeline Steps -->
+            <div class="lc-timeline">
+                <!-- Step 1: Client Email -->
+                <div class="lc-stage">
+                    <div class="lc-stage-icon lc-icon-blue"><i class="fas fa-envelope"></i></div>
+                    <div class="lc-stage-content">
+                        <h4>Client Requests <span id="lc-email-count" class="lc-count-badge">0</span></h4>
+                        <div id="lc-emails-list" class="lc-items-list"></div>
+                    </div>
+                </div>
+                <div class="lc-connector"></div>
+
+                <!-- Step 2: Vendor Drafts -->
+                <div class="lc-stage">
+                    <div class="lc-stage-icon lc-icon-purple"><i class="fas fa-paper-plane"></i></div>
+                    <div class="lc-stage-content">
+                        <h4>RFQ Drafts Sent <span id="lc-draft-count" class="lc-count-badge">0</span></h4>
+                        <div id="lc-drafts-list" class="lc-items-list"></div>
+                    </div>
+                </div>
+                <div class="lc-connector"></div>
+
+                <!-- Step 3: Vendor Responses -->
+                <div class="lc-stage">
+                    <div class="lc-stage-icon lc-icon-green"><i class="fas fa-reply"></i></div>
+                    <div class="lc-stage-content">
+                        <h4>Vendor Responses <span id="lc-response-count" class="lc-count-badge">0</span></h4>
+                        <div id="lc-responses-list" class="lc-items-list"></div>
+                        <!-- Manual vendor response input -->
+                        <div class="lc-process-response-box" id="lc-process-box" style="display:none;">
+                            <textarea id="lc-vendor-body" rows="4"
+                                placeholder="Paste vendor reply text or PDF content here..."></textarea>
+                            <input type="email" id="lc-vendor-email-input" placeholder="Vendor email address">
+                            <input type="text" id="lc-vendor-subject" placeholder="Subject">
+                            <button class="btn btn-success" onclick="submitVendorResponse()"
+                                style="margin-top:0.5rem; width:100%;">
+                                <i class="fas fa-cogs"></i> Extract & Add to Comparison
+                            </button>
+                        </div>
+                        <button class="lc-add-response-btn" onclick="toggleProcessBox()">
+                            <i class="fas fa-plus"></i> Add Vendor Response
+                        </button>
+                    </div>
+                </div>
+                <div class="lc-connector"></div>
+
+                <!-- Step 4: Comparison Table -->
+                <div class="lc-stage">
+                    <div class="lc-stage-icon lc-icon-gold"><i class="fas fa-table"></i></div>
+                    <div class="lc-stage-content">
+                        <h4>Price Comparison <span id="lc-quote-count" class="lc-count-badge">0</span></h4>
+                        <div id="lc-comparison-container">
+                            <table class="lc-comparison-table" id="lc-comparison-table" style="display:none;">
+                                <thead>
+                                    <tr>
+                                        <th>Vendor</th>
+                                        <th>Product</th>
+                                        <th>Price</th>
+                                        <th>Unit</th>
+                                        <th>Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="lc-comparison-body"></tbody>
+                            </table>
+                            <p id="lc-no-quotes" class="lc-empty-text">No vendor quotes yet. Add a vendor response above
+                                to see comparison data.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manual Client Modal -->
+    <div id="manual-client-modal" class="modal">
+        <div class="modal-content">
+            <h2>Add New Client</h2>
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label>Client Name</label>
+                <input type="text" id="mc-name" placeholder="e.g. Al-Futtaim Construction" class="ai-input"
+                    style="width:100%; margin-top:0.5rem;">
+            </div>
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label>Client Email</label>
+                <input type="email" id="mc-email" placeholder="client@example.com" class="ai-input"
+                    style="width:100%; margin-top:0.5rem;">
+            </div>
+            <div style="display: flex; gap: 1rem;">
+                <button class="btn btn-success" onclick="saveManualClient()">Save Client</button>
+                <button class="btn" onclick="hideModal('manual-client-modal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manual Project Modal -->
+    <div id="manual-project-modal" class="modal">
+        <div class="modal-content">
+            <h2>Start New Project</h2>
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label>Project Name</label>
+                <input type="text" id="mp-name" placeholder="e.g. Burj Khalifa Maintenance" class="ai-input"
+                    style="width:100%; margin-top:0.5rem;">
+            </div>
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label>Select Client</label>
+                <select id="mp-client-id" class="ai-input"
+                    style="width:100%; margin-top:0.5rem; background:#1e293b; color:#fff; border:1px solid #334155;">
+                    <!-- Populated by JS -->
+                </select>
+            </div>
+            <div style="display: flex; gap: 1rem;">
+                <button class="btn btn-success" onclick="saveManualProject()">Create Project</button>
+                <button class="btn" onclick="hideModal('manual-project-modal')">Cancel</button>
+            </div>
+        </div>
+
+        <!-- ===== EMAIL ANALYSIS MODAL ===== -->
+        <div id="analysis-section" class="modal">
+            <div class="modal-content" style="max-width: 800px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h2>🔍 Deep Email Analysis</h2>
+                    <button class="btn btn-small"
+                        onclick="document.getElementById('analysis-section').style.display='none'"><i
+                            class="fas fa-times"></i></button>
+                </div>
+                <div id="analysis-content" style="max-height: 60vh; overflow-y: auto;">
+                    <p>Analyzing with LLM...</p>
+                </div>
+                <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
+                    <button class="btn btn-primary"
+                        onclick="document.getElementById('analysis-section').style.display='none'">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Source Viewer Modal -->
+    <div id="source-viewer-modal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>Source Email Reference</h3>
+                <span class="close-modal" onclick="closeSourceViewer()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="source-viewer-header"
+                    style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">
+                    <div id="source-subject"
+                        style="font-weight: 700; font-size: 1.2rem; color: var(--text-primary); margin-bottom: 0.5rem;">
+                    </div>
+                    <div id="source-meta" style="font-size: 0.9rem; color: var(--text-muted);"></div>
+                </div>
+                <div id="source-body"
+                    style="white-space: pre-wrap; font-family: 'Inter', sans-serif; font-size: 0.95rem; line-height: 1.7; color: var(--text-secondary); background: rgba(0,0,0,0.2); padding: 1.5rem; border-radius: 8px; max-height: 500px; overflow-y: auto;">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeSourceViewer()">Close Reference</button>
+            </div>
+        </div>
+    </div>
+    <script src="js/chatbot.js?v=1.0.5"></script>
+    <script src="app.js?v=1.0.3"></script>
+</body>
+
+
+</html>

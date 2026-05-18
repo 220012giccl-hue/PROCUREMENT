@@ -1,0 +1,2380 @@
+Project Goal
+We already have a working Procurement Assistant AI Agent inside the platform.
+The next goal is to improve the platform so it feels less like a basic chatbot and more like a professional procurement workflow tool for construction, infrastructure, oil & gas, and engineering companies.
+This agent should act like a digital procurement employee. It should help users research products, compare suppliers, prepare RFQs, extract data from documents, draft supplier emails, and create approval-ready procurement summaries.
+1. Improve AI Response Format
+Currently, the AI gives a chat-style answer. We need the output to look more like a professional procurement report.
+Every procurement answer should follow this structure where relevant:
+Required Output Structure
+Requirement Summary
+Show what the user is asking for.
+Example:
+User is looking for a thermoplastic hose suitable for oil and gas use, around 5,000 PSI working pressure.
+Matched Products / Suppliers
+Show recommended products or suppliers in a clean list.
+Each item should include:
+Product name
+Supplier / brand
+Short description
+Pressure rating / size / technical specs
+Application
+Source link
+Image if available
+Comparison Table
+For comparison requests, always show a table.
+Columns should include:
+Supplier
+Product
+Pressure Rating
+Size / Bore
+Application
+Compliance
+Source
+Best Recommendation
+AI should clearly say which option is best.
+Example:
+Recommended Option: Parker Black Eagle HoseReason: It matches the pressure requirement, is suitable for oil and gas use, and appears more aligned with the required technical conditions.
+Missing Information
+AI should mention what still needs confirmation.
+Example:
+Stock availability
+Lead time
+Current price
+Minimum order quantity
+Warranty
+Certification documents
+Delivery location
+Supplier terms
+Next Actions
+At the end of every answer, show action buttons.
+Buttons:
+Create RFQ
+Compare Suppliers
+Save to Procurement List
+Draft Supplier Email
+Generate Approval Summary
+Export PDF
+Add to Project
+2. Add Action Buttons Under AI Answers
+Under every procurement response, add clickable action buttons.
+Required Buttons
+Create RFQ
+When user clicks this, open a form with pre-filled details from the AI answer.
+Fields:
+Project name
+Product name
+Supplier
+Required quantity
+Delivery location
+Required date
+Technical requirement
+Notes
+Attachments
+Supplier email
+Compare Suppliers
+This should allow the user to compare multiple products/suppliers side by side.
+The comparison page should include:
+Supplier name
+Product
+Price
+Lead time
+Warranty
+Technical match
+Compliance
+Delivery option
+Recommendation score
+Save to Procurement List
+Save the selected product into a procurement list.
+Fields to save:
+Product name
+Supplier
+Specs
+Source URL
+Image
+Project
+Status
+Notes
+Created by
+Date created
+Draft Supplier Email
+Generate an email draft to supplier.
+Example output:
+Subject: Request for Quote – Parker Black Eagle Hose
+Body:
+Hi [Supplier Name],
+We are requesting a quote for the following item:
+Product: Parker Black Eagle HoseRequired pressure: 5,000 PSIApplication: Oil and gas / construction project useQuantity: [Insert Quantity]Delivery location: [Insert Location]Required delivery date: [Insert Date]
+Please provide price, availability, lead time, warranty information, and any relevant technical datasheets.
+Kind regards,[User Name]
+Generate Approval Summary
+Create a short internal summary for manager approval.
+Example:
+Procurement Approval Summary
+Product: Parker Black Eagle HoseSupplier: ParkerReason for selection: Matches technical requirement and oil/gas applicationPending confirmation: Price, lead time, certificationRecommended action: Request official quote before approval
+Export PDF
+Allow user to export AI answer, comparison table, recommendation, and sources into a branded PDF.
+PDF should include:
+Company logo
+Project name
+Requirement summary
+Supplier comparison
+AI recommendation
+Missing information
+Sources
+Date generated
+3. Add Source, Confidence, and Missing Data Indicators
+For procurement, users must trust the AI output.
+Every answer should show:
+Source
+Example:
+Source: Parker official product page
+Confidence Level
+Use simple labels:
+High confidence
+Medium confidence
+Low confidence
+Missing Data
+Example:
+Missing: Price, availability, lead time
+Last Checked
+Example:
+Last checked: 6 May 2026
+This can be displayed as small badges under the answer.
+Example UI:
+Source: Parker WebsiteConfidence: HighMissing: Price, Lead TimeLast Checked: Today
+4. Improve Chat Thread Naming
+Current chat thread names are too long or unclear.
+Instead of using the full user message, generate clean thread titles automatically.
+Examples:
+Instead of:
+can you return the range of th...
+Use:
+Thermoplastic Hose 5,000 PSI
+Instead of:
+compare parker black eagle hose...
+Use:
+Parker vs Gates Hose Comparison
+Instead of:
+find supplier for steel pipe...
+Use:
+Steel Pipe Supplier Search
+Thread titles should be short, professional, and easy to understand.
+5. Add Procurement Dashboard Cards
+The dashboard should show procurement workflow information, not only general chat.
+Add cards such as:
+Dashboard Cards
+Open RFQs
+Number of RFQs currently active
+Supplier Quotes Received
+Number of quotes received and waiting for review
+Pending Approvals
+Items waiting for manager approval
+Overdue Supplier Responses
+Suppliers who have not replied yet
+Recommended Savings
+AI-estimated savings based on supplier comparison
+Recently Compared Products
+Last 5 product comparisons
+High Priority Procurement Items
+Urgent items based on deadline/project need
+Documents Processed
+Number of PDFs, quotes, invoices, or datasheets processed by AI/OCR
+6. Add Document Upload + OCR Workflow
+This is very important.
+User should be able to upload:
+Supplier quotes
+Product datasheets
+Invoices
+Purchase orders
+Scope of work documents
+Tender documents
+Material lists
+Technical specifications
+The AI should extract:
+Product name
+Supplier name
+Price
+Quantity
+Lead time
+Warranty
+Technical specs
+Compliance information
+Delivery terms
+Payment terms
+Expiry date of quote
+After extraction, AI should show a clean summary and allow the user to:
+Save extracted data
+Compare against another quote
+Generate approval summary
+Create supplier follow-up email
+Export as PDF
+7. Add RFQ Workflow
+We need a proper RFQ module.
+RFQ Statuses
+Use these statuses:
+Draft
+Sent
+Supplier Responded
+Under Review
+Approved
+Rejected
+Expired
+Closed
+RFQ Fields
+Each RFQ should include:
+RFQ number
+Project name
+Product / material requested
+Quantity
+Technical requirements
+Supplier name
+Supplier contact
+Supplier email
+Required delivery date
+Status
+Attachments
+Notes
+Created by
+Created date
+Last updated date
+RFQ Actions
+User should be able to:
+Create RFQ from AI answer
+Send RFQ email
+Upload supplier response
+Compare response with other suppliers
+Generate approval summary
+Mark as approved/rejected
+Export RFQ record
+8. Add Procurement List Module
+Create a procurement list where selected products/items can be saved.
+Procurement List Fields
+Item name
+Category
+Supplier
+Project
+Quantity
+Required date
+Status
+Estimated cost
+Source link
+Technical notes
+Attachment
+AI recommendation
+Approval status
+Suggested Statuses
+Researching
+RFQ Needed
+RFQ Sent
+Quote Received
+Approval Needed
+Approved
+Ordered
+Delivered
+Rejected
+9. Add Supplier Database
+Create a supplier/contact database.
+Supplier Fields
+Supplier name
+Contact person
+Email
+Phone
+Website
+Product categories
+Location
+Notes
+Rating
+Past RFQs
+Past quotes
+Preferred supplier: Yes/No
+The Procurement Agent should be able to reference this supplier database when recommending or drafting emails.
+10. Improve UI Design
+The current design is clean, but it should feel more enterprise/procurement-focused.
+UI Improvements
+Use cards for AI outputs
+Show comparison tables clearly
+Add icons for RFQ, supplier, document, approval, email
+Add status badges
+Keep action buttons visible
+Make source links easy to open
+Add loading states while AI is researching
+Add “thinking steps” such as:
+Searching supplier data
+Reading product specs
+Comparing technical requirements
+Preparing recommendation
+Important
+Do not make the UI too colourful. Keep it professional, clean, and corporate.
+Use:
+White background
+Light grey cards
+Blue highlights
+Green for approved/success
+Orange for pending
+Red for overdue/rejected
+11. Add Human Approval Layer
+The AI should not automatically approve purchases.
+Every procurement decision should show:
+AI Recommendation Only — Human approval required before purchase.
+Add approval flow:
+Prepared by AI
+Reviewed by procurement team
+Approved by manager
+Sent to supplier
+This is important for enterprise trust and legal protection.
+12. Add Audit Trail
+Every major action should be logged.
+Track:
+Who asked the AI
+What the AI recommended
+Which sources were used
+Which document was uploaded
+Who created the RFQ
+Who approved/rejected
+When supplier email was drafted/sent
+When PDF was exported
+This helps with compliance, audit, and accountability.
+13. Suggested Database Tables
+Developer can adjust based on existing backend, but we likely need tables like:
+procurement_items
+id
+project_id
+item_name
+category
+supplier_id
+quantity
+required_date
+estimated_cost
+source_url
+technical_notes
+ai_recommendation
+status
+approval_status
+created_by
+created_at
+updated_at
+suppliers
+id
+name
+contact_person
+email
+phone
+website
+category
+location
+rating
+preferred_supplier
+notes
+created_at
+updated_at
+rfqs
+id
+rfq_number
+project_id
+procurement_item_id
+supplier_id
+quantity
+technical_requirements
+delivery_location
+required_delivery_date
+status
+email_subject
+email_body
+created_by
+created_at
+updated_at
+supplier_quotes
+id
+rfq_id
+supplier_id
+quoted_price
+lead_time
+warranty
+compliance_notes
+attachment_url
+ai_extracted_summary
+status
+created_at
+updated_at
+procurement_documents
+id
+file_name
+file_type
+file_url
+extracted_text
+extracted_data_json
+uploaded_by
+created_at
+updated_at
+audit_logs
+id
+user_id
+action_type
+module
+record_id
+description
+metadata_json
+created_at
+14. AI Prompt / System Behaviour
+Update the Procurement Assistant system prompt so it behaves like a procurement specialist.
+System Prompt for Procurement Assistant
+You are a Procurement Assistant AI Agent for construction, infrastructure, engineering, oil & gas, and industrial businesses.
+Your role is to help users research products, compare suppliers, prepare RFQs, analyse supplier documents, extract procurement information, and create approval-ready summaries.
+You are not a general chatbot. You must behave like a professional procurement officer.
+When answering, always structure your response clearly:
+1. Requirement Summary
+2. Matched Products or Suppliers
+3. Technical Comparison
+4. Best Recommendation
+5. Missing Information
+6. Suggested Next Actions
+When comparing products, use a table.
+Always identify missing procurement details such as price, availability, lead time, warranty, certification, delivery terms, and supplier contact.
+Never claim final approval. Your recommendations are decision-support only. A human must approve all procurement decisions.
+If source links are available, include them. If the information is uncertain, say so clearly.
+Use professional, concise business language.
+15. Suggested User Flow
+Flow 1: Product Search
+User asks:
+Find me a 5,000 PSI hose for oil and gas use.
+AI should:
+Understand requirement
+Search product options
+Return matched products
+Show comparison table
+Recommend best option
+Show missing information
+Offer action buttons
+Flow 2: Supplier Comparison
+User asks:
+Compare Parker and Gates hose options.
+AI should:
+Compare both suppliers
+Show technical specs
+Show strengths/weaknesses
+Recommend best match
+Allow user to create RFQ
+Flow 3: Upload Quote
+User uploads supplier quote PDF.
+AI should:
+Extract quote details
+Identify supplier, product, price, quantity, lead time
+Summarise the quote
+Compare with procurement requirement
+Highlight risks/missing information
+Allow user to save quote or generate approval summary
+Flow 4: Create RFQ
+User clicks Create RFQ.
+System should:
+Open RFQ form
+Pre-fill known information
+Let user edit details
+Save draft
+Allow email draft generation
+Track RFQ status
+16. Priority Development Plan
+Phase 1: Must-Have Improvements
+Do these first:
+Improve AI answer format
+Add action buttons under AI answers
+Add source/confidence/missing data badges
+Improve chat thread names
+Add PDF export for AI response
+Add RFQ creation form
+Phase 2: Workflow Improvements
+Next:
+Procurement list module
+Supplier database
+RFQ status tracking
+Supplier email draft generation
+Approval summary generation
+Audit trail
+Phase 3: Advanced Features
+Later:
+Document upload and OCR extraction
+Supplier quote comparison
+ERP/CRM/email integration
+Approval workflow
+Procurement analytics dashboard
+Role-based permissions
+17. Final Positioning for Developer
+Please build this platform as a procurement workflow system powered by AI, not just a chatbot.
+The main value is:
+AI does 80% of the heavy lifting: research, document reading, comparison, drafting, and summarising.Humans do the final 20%: review, approval, negotiation, and final decision.
+The platform should clearly show that the Procurement Agent supports the team, but the human stays in control.
+Construction Product Examples for Procurement Agent
+1. Concrete & Cement Materials
+Examples:
+Ready-mix concrete
+Cement bags
+Concrete additives
+Grout
+Mortar
+Screed
+Concrete sealers
+Concrete curing compounds
+Example user question:
+Find suppliers for 32MPa ready-mix concrete for a commercial building project.
+AI output should compare:
+Supplier
+Concrete grade
+Delivery availability
+Price per m³
+Minimum order
+Lead time
+Compliance/certification
+Delivery area
+2. Structural Steel
+Examples:
+Steel beams
+Universal beams
+Universal columns
+Steel plates
+Reinforcement bars
+Mesh sheets
+Galvanised steel
+Steel framing
+Example user question:
+Compare suppliers for structural steel beams for a warehouse project.
+AI output should compare:
+Steel grade
+Beam size
+Supplier
+Stock availability
+Fabrication option
+Delivery time
+Compliance standard
+Estimated cost
+3. Timber & Framing Materials
+Examples:
+Timber framing
+LVL beams
+Plywood sheets
+Formwork timber
+Treated pine
+Roof trusses
+Flooring sheets
+Structural timber
+Example user question:
+Find LVL beam suppliers for a residential construction project.
+AI output should compare:
+Product type
+Size
+Treatment type
+Load suitability
+Supplier
+Price
+Lead time
+Delivery option
+4. Bricks, Blocks & Masonry
+Examples:
+Clay bricks
+Concrete blocks
+Retaining wall blocks
+Hebel panels
+Masonry blocks
+Pavers
+Lintels
+Brick ties
+Example user question:
+Compare concrete block suppliers for a retaining wall project.
+AI output should compare:
+Block type
+Strength rating
+Size
+Supplier
+Price per unit
+Delivery cost
+Availability
+5. Roofing Materials
+Examples:
+Roof sheets
+Colorbond roofing
+Roof tiles
+Flashings
+Gutters
+Downpipes
+Insulation blanket
+Roof safety mesh
+Example user question:
+Find Colorbond roof sheet suppliers for a commercial shed project.
+AI output should compare:
+Sheet profile
+Thickness
+Colour
+Length
+Supplier
+Lead time
+Delivery location
+Warranty
+6. Plumbing & Drainage Materials
+Examples:
+PVC pipes
+HDPE pipes
+Copper pipes
+Stormwater pipes
+Drainage pits
+Valves
+Fittings
+Pumps
+Backflow prevention devices
+Example user question:
+Compare stormwater pipe suppliers for a civil drainage project.
+AI output should compare:
+Pipe material
+Diameter
+Pressure/class rating
+Supplier
+Compliance
+Price
+Stock availability
+7. Electrical & Lighting Materials
+Examples:
+Electrical cables
+Switchboards
+Cable trays
+Conduits
+LED lights
+Emergency lighting
+Distribution boards
+Solar-ready electrical components
+Example user question:
+Find suppliers for LED high bay lights for a warehouse fit-out.
+AI output should compare:
+Wattage
+Lumens
+IP rating
+Warranty
+Supplier
+Price
+Energy efficiency
+Lead time
+8. HVAC & Mechanical Materials
+Examples:
+Ducting
+Air conditioning units
+Ventilation fans
+Grilles
+Diffusers
+Insulated ductwork
+Exhaust systems
+Mechanical plant components
+Example user question:
+Compare HVAC ducting suppliers for a commercial office project.
+AI output should compare:
+Material
+Size
+Insulation option
+Supplier
+Fabrication lead time
+Delivery cost
+Compliance
+9. Doors, Windows & Glazing
+Examples:
+Aluminium windows
+Commercial glass panels
+Fire-rated doors
+Roller doors
+Sliding doors
+Door hardware
+Window frames
+Shopfront glazing
+Example user question:
+Find suppliers for fire-rated doors for a multi-storey apartment project.
+AI output should compare:
+Fire rating
+Door size
+Certification
+Hardware included
+Supplier
+Lead time
+Installation option
+10. Flooring & Finishes
+Examples:
+Tiles
+Carpet
+Vinyl flooring
+Timber flooring
+Hybrid flooring
+Epoxy flooring
+Acoustic underlay
+Skirting boards
+Example user question:
+Compare vinyl flooring suppliers for a childcare centre project.
+AI output should compare:
+Material type
+Slip rating
+Acoustic rating
+Warranty
+Supplier
+Price per m²
+Availability
+11. Paint, Coatings & Sealants
+Examples:
+Interior paint
+Exterior paint
+Waterproofing membranes
+Fire-rated sealants
+Joint sealants
+Protective coatings
+Anti-graffiti coating
+Concrete coating
+Example user question:
+Find waterproofing membrane options for bathroom and balcony areas.
+AI output should compare:
+Product type
+Application area
+Compliance
+Warranty
+Supplier
+Coverage per unit
+Drying time
+12. Safety & Site Equipment
+Examples:
+PPE
+Safety barriers
+Temporary fencing
+Scaffold
+Edge protection
+Signage
+Site sheds
+First aid kits
+Fall arrest equipment
+Example user question:
+Compare temporary fencing suppliers for a 6-month commercial construction project.
+AI output should compare:
+Fence type
+Hire/purchase option
+Monthly cost
+Delivery/setup cost
+Compliance
+Supplier
+Availability
+13. Plant, Tools & Equipment Hire
+Examples:
+Excavators
+Scissor lifts
+Boom lifts
+Generators
+Compressors
+Concrete saws
+Compactors
+Telehandlers
+Example user question:
+Find equipment hire options for a 5-tonne excavator for 3 weeks.
+AI output should compare:
+Equipment type
+Hire rate
+Availability
+Delivery cost
+Insurance requirement
+Fuel terms
+Supplier
+14. Civil & Roadworks Materials
+Examples:
+Asphalt
+Road base
+Gravel
+Sand
+Kerbing
+Geotextile fabric
+Drainage aggregate
+Concrete pipes
+Example user question:
+Compare road base suppliers for a civil subdivision project.
+AI output should compare:
+Material type
+Grade
+Price per tonne
+Delivery area
+Minimum order
+Availability
+Compliance
+15. Landscaping & External Works
+Examples:
+Turf
+Soil
+Mulch
+Pavers
+Retaining wall blocks
+Irrigation materials
+Outdoor lighting
+Garden edging
+Example user question:
+Find paver suppliers for external landscaping works on a townhouse project.
+AI output should compare:
+Paver type
+Size
+Colour
+Slip rating
+Supplier
+Price per m²
+Delivery time
+Replace Old Example Text With This
+Instead of:
+Find me a 5,000 PSI hose for oil and gas use.
+Use:
+Find suppliers for 32MPa ready-mix concrete for a commercial building project.
+Instead of:
+Compare Parker and Gates hose options.
+Use:
+Compare structural steel beam suppliers for a warehouse project.
+Instead of:
+Request for Quote – Parker Black Eagle Hose
+Use:
+Request for Quote – Structural Steel Beams
+Instead of:
+Product: Parker Black Eagle HoseRequired pressure: 5,000 PSIApplication: Oil and gas / construction project use
+Use:
+Product: Structural steel beamsRequired specification: As per engineering drawingsApplication: Warehouse construction projectQuantity: As per BOQ / attached schedule
+Updated Supplier Email Example
+Subject: Request for Quote – Structural Steel Beams for Warehouse Project
+Body:
+Hi [Supplier Name],
+We are requesting a quote for the following construction materials:
+Product: Structural steel beamsProject: Warehouse construction projectRequired specification: As per attached engineering drawings / BOQQuantity: [Insert Quantity]Delivery location: [Insert Site Address]Required delivery date: [Insert Date]
+Please provide:
+Unit pricing
+Total estimated cost
+Stock availability
+Fabrication lead time
+Delivery charges
+Compliance/certification documents
+Warranty information
+Payment terms
+Kind regards,[User Name]
+Updated Approval Summary Example
+Procurement Approval Summary
+Item: Structural steel beamsProject: Warehouse construction projectSupplier: [Supplier Name]Reason for selection: Supplier matches technical requirements, can meet delivery timeframe, and provides required compliance documentation.Pending confirmation: Final price, delivery date, fabrication lead time, and engineering certification.Recommended action: Request official quote and confirm compliance documents before approval.
+Updated Developer Instruction
+Tell your developer:
+Please remove all hose, pump, and oil/gas examples from the Procurement Assistant demo content unless they are specifically required for a client. This platform is being positioned for construction companies, so all examples should use construction procurement items such as concrete, steel, timber, roofing, plumbing, electrical, HVAC, doors, windows, flooring, safety equipment, plant hire, civil materials, and site supplies.
+The AI assistant should understand construction procurement language such as BOQ, drawings, specifications, site address, delivery date, supplier quote, RFQ, compliance certificate, lead time, availability, and approval summary.
+All demo prompts, placeholder examples, email templates, approval summaries, RFQ forms, and comparison tables should be based on construction products and construction workflows.
+Detailed Developer Instructions
+AI Procurement Assistant for Construction Companies
+Supplier Catalogue Demo: Blackwoods + Bunnings + Sydney Tools
+1. Main Goal
+We are building an AI Procurement Assistant for construction companies.
+The platform should not look like a simple chatbot. It should feel like a digital procurement employee that helps construction teams find products, compare suppliers, prepare RFQs, draft supplier emails, and create approval summaries.
+For the demo, we want to use these supplier websites as example catalogue sources:
+https://www.blackwoods.com.au
+https://www.bunnings.com.au
+https://trade.bunnings.com.au
+https://sydneytools.com.au
+The purpose is to show clients that the AI can search across multiple supplier catalogues and provide a professional comparison table.
+Important: we are not saying we are officially partnered with these companies. We are only using them as public supplier catalogue examples for demonstration.
+2. Why We Are Adding Multiple Supplier Catalogues
+At the moment, if the AI only searches one supplier website, the demo feels limited.
+Construction companies usually compare products from multiple suppliers before buying. They care about:
+Price
+Availability
+Lead time
+Brand
+Technical specification
+Compliance
+Delivery option
+Bulk quantity
+Supplier reliability
+Warranty
+Suitability for project
+So the AI should not just show one product. It should compare multiple products from different suppliers.
+For example, if a user asks:
+Compare cordless hammer drills for commercial construction use.
+The AI should search and compare products from:
+Sydney Tools
+Bunnings
+Blackwoods, only if relevant
+Then it should show:
+Product photos
+Product names
+Supplier names
+Brand names
+Key specifications
+Price if available
+Availability if available
+Best use case
+Source links
+Recommendation
+Missing information
+Next action buttons
+This makes the platform more powerful and more relevant for construction clients.
+3. Supplier Roles in the Demo
+Each supplier should be used for the type of products they are strong in.
+A. Blackwoods
+Use Blackwoods mostly for industrial and site-safety procurement.
+Good product categories:
+PPE
+Safety boots
+Safety glasses
+Gloves
+Respirators
+Hard hats
+Hi-vis clothing
+Workplace safety signs
+Spill kits
+First aid kits
+Fall protection
+Lifting and rigging
+Welding equipment
+Abrasives
+Cleaning and site maintenance products
+Example user prompts:
+Find safety boots for construction workers.
+Compare spill kits for a commercial construction site.
+Find fall protection equipment for roof work.
+Compare hi-vis vests for site staff.
+Find lifting slings for site material handling.
+B. Bunnings / Bunnings Trade
+Use Bunnings for general construction materials, hardware, site supplies, and building products.
+Good product categories:
+Timber
+Concrete
+Cement
+Fasteners
+Fixings
+Roofing products
+Insulation
+Doors
+Windows
+Fencing
+Ladders
+Building boards
+Plasterboard
+Steel and aluminium sections
+General hardware
+Paint
+Waterproofing
+Sealants
+Site supplies
+Example user prompts:
+Find timber screws for residential framing.
+Compare ladders for commercial fit-out work.
+Find waterproofing products for bathroom areas.
+Compare concrete repair products.
+Find steel brackets and fixings for outdoor construction.
+Compare insulation products for residential building.
+C. Sydney Tools
+Use Sydney Tools mainly for professional trade tools and construction equipment.
+Good product categories:
+Cordless drills
+Hammer drills
+Impact drivers
+Angle grinders
+Circular saws
+Mitre saws
+Concrete tools
+Carpentry tools
+Hand tools
+Tool storage
+Batteries and chargers
+Grinding discs
+Cutting discs
+Laser levels
+Measuring tools
+Compressors
+Generators
+Example user prompts:
+Compare cordless hammer drills for construction use.
+Find angle grinders for steel work.
+Compare laser levels for commercial fit-out projects.
+Find tool storage options for a construction crew.
+Compare concrete cutting tools.
+Find Makita, Milwaukee, and DeWalt drill options.
+4. How the AI Should Choose Which Supplier to Search
+The AI should not search all suppliers equally every time. It should decide based on the user’s request.
+Supplier Matching Logic
+Use this logic:
+If the query is about tools
+Keywords:
+drill
+grinder
+saw
+impact driver
+nail gun
+battery
+cordless
+power tool
+hand tool
+laser level
+tool storage
+concrete tool
+Prioritise:
+Sydney Tools
+Bunnings
+If the query is about building materials
+Keywords:
+timber
+cement
+concrete
+roofing
+plasterboard
+insulation
+fastener
+fixing
+door
+window
+fencing
+sealant
+waterproofing
+paint
+building board
+steel bracket
+Prioritise:
+Bunnings
+Bunnings Trade
+If the query is about safety or PPE
+Keywords:
+PPE
+safety boots
+gloves
+hard hat
+helmet
+respirator
+safety glasses
+hi-vis
+fall protection
+site signage
+spill kit
+first aid
+traffic cone
+barrier
+Prioritise:
+Blackwoods
+Bunnings
+If the query is about lifting or rigging
+Keywords:
+lifting
+rigging
+sling
+shackle
+chain block
+trolley
+pallet jack
+material handling
+Prioritise:
+Blackwoods
+Sydney Tools
+If the query is about welding or abrasives
+Keywords:
+welding
+welding helmet
+welding gloves
+grinding disc
+cutting disc
+abrasive
+steel cutting
+metal grinding
+Prioritise:
+Blackwoods
+Sydney Tools
+Bunnings
+5. Product Search Result Design
+When the AI finds products, do not show only plain text.
+Each product should appear as a product card with image and key details.
+Product Card Should Include
+Product image
+Product name
+Supplier name
+Brand name
+Category
+Short description
+Key specifications
+Price, if available
+Availability, if available
+Product source link
+Confidence level
+Missing data
+Action buttons
+Product Card Example
+[Product Image]
+Milwaukee M18 Cordless Hammer Drill Kit
+Supplier: Sydney Tools  
+Brand: Milwaukee  
+Category: Cordless Power Tools  
+Key Specs:
+- 18V cordless system
+- Hammer drill function
+- Suitable for trade use
+- Battery kit included, if available
+Price: If available  
+Availability: If available  
+Source: Product page link  
+[View Product] [Compare] [Save] [Create RFQ]
+If product image is not available, show a clean placeholder:
+Product image unavailable
+Do not use broken image boxes.
+6. Product Photos Requirement
+Product photos are very important for the demo.
+When the user searches for products, we want the AI answer to visually show product options.
+Developer Requirement
+For each product result:
+Fetch or display product image URL where available
+Show image inside product card
+Keep image linked to original product source
+Do not download/store supplier images unless permitted
+Do not modify supplier images
+Do not remove watermark or branding
+Use placeholder if image is missing
+This will make the platform feel much more professional and real.
+7. Comparison Table Requirement
+After product cards, the platform must show a comparison table.
+The comparison table is one of the most important parts of the procurement demo.
+Construction clients need to see options side by side.
+Standard Comparison Table
+Use this table format by default:
+Product Image
+Product Name
+Supplier
+Brand
+Category
+Key Specs
+Price
+Availability
+Best For
+Source
+Example
+Product
+Supplier
+Brand
+Key Specs
+Price
+Best For
+Cordless Hammer Drill A
+Sydney Tools
+Milwaukee
+18V, trade use
+If available
+Heavy site work
+Cordless Hammer Drill B
+Bunnings
+DeWalt
+18V, battery kit
+If available
+General construction
+Cordless Drill C
+Sydney Tools
+Makita
+Compact design
+If available
+Fit-out work
+8. Different Tables for Different Product Types
+The AI should adjust the table columns based on product category.
+A. Tools Comparison Table
+Use for drills, grinders, saws, tool kits, laser levels.
+Product
+Supplier
+Brand
+Voltage
+Battery Included
+Warranty
+Price
+Best For
+Source
+B. PPE Comparison Table
+Use for boots, gloves, helmets, glasses, respirators, hi-vis.
+Product
+Supplier
+Brand
+Safety Rating
+Size Range
+Material
+Price
+Best For
+Source
+C. Building Materials Comparison Table
+Use for timber, concrete, cement, insulation, sealants, waterproofing, fasteners.
+Product
+Supplier
+Category
+Material
+Size
+Pack Qty
+Compliance
+Price
+Source
+D. Ladders / Access Equipment Table
+Use for ladders, platforms, access equipment.
+Product
+Supplier
+Material
+Height
+Load Rating
+Compliance
+Price
+Best For
+Source
+E. Fasteners / Fixings Table
+Use for screws, bolts, anchors, brackets, fixings.
+Product
+Supplier
+Material
+Size
+Coating
+Pack Qty
+Application
+Price
+Source
+9. AI Response Structure
+Every procurement answer should follow this structure.
+Required AI Answer Format
+1. Requirement Summary
+2. Matched Products with Photos
+3. Supplier Comparison Table
+4. Best Recommendation
+5. Missing Information
+6. Suggested Next Actions
+Example
+User asks:
+Compare cordless hammer drills for commercial construction use.
+AI should answer like this:
+Requirement Summary:
+You are looking for cordless hammer drills suitable for commercial construction work, preferably durable, trade-grade, and suitable for daily site use.
+Matched Products:
+Show product cards from Sydney Tools and Bunnings.
+Comparison Table:
+Compare supplier, brand, voltage, battery included, warranty, price, availability, and best use case.
+Best Recommendation:
+The recommended option is [Product Name] because it offers the best balance of trade-grade durability, battery compatibility, warranty, and suitability for construction site use.
+Missing Information:
+- Bulk pricing not confirmed
+- Stock availability should be checked directly
+- Delivery time depends on location
+- Warranty terms should be confirmed
+- Product suitability should be reviewed by procurement manager
+Suggested Next Actions:
+[Create RFQ] [Save to Procurement List] [Draft Supplier Email] [Generate Approval Summary] [Export PDF]
+10. Missing Information Section
+This section is very important.
+The AI should never pretend it knows everything. If some information is missing, it must clearly say so.
+Common missing information:
+Price
+Stock availability
+Bulk trade pricing
+Delivery cost
+Delivery timeframe
+Warranty
+Compliance certificate
+Technical datasheet
+Minimum order quantity
+Trade account pricing
+Return policy
+Supplier contact person
+Example Missing Information Output
+Missing Information:
+- Bulk pricing is not visible.
+- Stock availability must be confirmed directly with supplier.
+- Delivery timeframe depends on site location.
+- Compliance certificate should be requested before purchase.
+- Trade account pricing may be different from public catalogue pricing.
+This makes the AI look more trustworthy.
+11. Best Recommendation Section
+The AI should always give a clear recommendation after comparing products.
+The recommendation should not be generic. It should explain why one option is better.
+Example
+Best Recommendation:
+Recommended Product: Milwaukee M18 Cordless Hammer Drill Kit
+Reason:
+This option appears most suitable for commercial construction use because it is trade-grade, has strong brand reliability, supports cordless site work, and is better suited for repeated heavy-duty use compared with general DIY-focused options.
+Procurement Note:
+Before purchase, confirm bulk pricing, warranty, availability, and delivery timeframe directly with supplier.
+Also add this note:
+AI recommendation only. Human review and approval required before procurement.
+12. Action Buttons Under Each AI Answer
+Under each AI response, add practical workflow buttons.
+Required Buttons
+Create RFQ
+Save to Procurement List
+Draft Supplier Email
+Generate Approval Summary
+Export PDF
+Add to Project
+Compare More Suppliers
+These buttons make the platform feel like a real procurement workflow system.
+13. Create RFQ Workflow
+When the user clicks Create RFQ, open an RFQ form.
+The form should be pre-filled using the selected product data.
+RFQ Form Fields
+RFQ Number
+Project Name
+Product Name
+Supplier Name
+Brand
+Category
+Product URL
+Quantity
+Delivery Location
+Required Delivery Date
+Technical Requirements
+Compliance Requirements
+Notes
+Attachments
+Status
+RFQ Statuses
+Draft
+Sent
+Supplier Responded
+Under Review
+Approved
+Rejected
+Expired
+Closed
+Example RFQ Email
+Subject: Request for Quote – [Product Name] for [Project Name]
+Hi [Supplier Name],
+We are requesting a quote for the following construction procurement item:
+Product: [Product Name]
+Brand: [Brand]
+Category: [Category]
+Quantity: [Insert Quantity]
+Project: [Project Name]
+Delivery Location: [Site Address]
+Required Delivery Date: [Insert Date]
+Product Reference: [Product URL]
+Please provide:
+- Unit price
+- Bulk pricing, if available
+- Stock availability
+- Delivery charges
+- Lead time
+- Warranty information
+- Product datasheet
+- Relevant compliance or safety certification
+- Payment terms
+Kind regards,
+[User Name]
+14. Save to Procurement List
+When the user clicks Save to Procurement List, save the product into a procurement list module.
+Procurement List Fields
+Item Name
+Product Image
+Category
+Supplier
+Brand
+Quantity
+Project
+Required Date
+Estimated Cost
+Source URL
+Technical Notes
+AI Recommendation
+Status
+Approval Status
+Created By
+Created Date
+Status Options
+Researching
+RFQ Needed
+RFQ Sent
+Quote Received
+Approval Needed
+Approved
+Ordered
+Delivered
+Rejected
+This will help users track products after the AI finds them.
+15. Draft Supplier Email
+When the user clicks Draft Supplier Email, the AI should generate a professional supplier email.
+Example
+Subject: Request for Quote – Safety Boots for Construction Site Workers
+Hi [Supplier Name],
+We are requesting a quote for the following construction site item:
+Product: [Product Name]
+Brand: [Brand]
+Category: Safety PPE
+Quantity: [Insert Quantity]
+Project: [Project Name]
+Delivery Location: [Site Address]
+Required Delivery Date: [Insert Date]
+Product Reference: [Product URL]
+Please provide:
+- Unit pricing
+- Bulk pricing if available
+- Current stock availability
+- Delivery charges
+- Lead time
+- Warranty information
+- Product datasheet
+- Relevant safety or compliance certification
+Kind regards,
+[User Name]
+16. Generate Approval Summary
+When the user clicks Generate Approval Summary, the AI should create a manager-ready summary.
+Approval Summary Format
+Procurement Approval Summary
+Project:
+Item:
+Supplier Options Compared:
+Recommended Supplier:
+Recommended Product:
+Reason for Selection:
+Estimated Cost:
+Missing Information:
+Risk Notes:
+Recommended Next Action:
+Approval Note:
+This is an AI-generated procurement recommendation. Human review and approval are required before purchase.
+Example
+Procurement Approval Summary
+Project: Commercial Fit-Out Project
+Item: Cordless Hammer Drill
+Supplier Options Compared: Sydney Tools, Bunnings
+Recommended Supplier: Sydney Tools
+Recommended Product: [Product Name]
+Reason for Selection:
+The selected product appears most suitable for commercial construction use due to its trade-grade brand, cordless flexibility, and heavy-duty application.
+Missing Information:
+- Bulk pricing not confirmed
+- Delivery time depends on location
+- Warranty terms should be checked
+- Stock availability should be confirmed before purchase
+Recommended Next Action:
+Send RFQ to supplier and request official quote before approval.
+Approval Note:
+AI recommendation only. Human approval is required before purchase.
+17. Export PDF
+The platform should allow the user to export the AI result as a PDF.
+PDF Should Include
+Company logo
+Project name
+Date generated
+User query
+Requirement summary
+Matched products
+Product photos
+Comparison table
+Best recommendation
+Missing information
+Source links
+Approval note
+Next action summary
+This is very useful for construction procurement managers who need to share information internally.
+18. Dashboard Improvements
+Add procurement-related dashboard cards.
+Dashboard Cards
+Products Compared
+Saved Procurement Items
+Open RFQs
+Supplier Quotes Pending
+Approval Summaries Generated
+Missing Data Alerts
+Recently Viewed Suppliers
+Potential Savings Identified
+Documents Processed
+Each card should be clickable and take the user to the relevant area.
+19. Chat Thread Naming
+The current chat names should be improved.
+Instead of long user messages, generate short professional thread names.
+Examples
+Cordless Drill Comparison
+Safety Boots Search
+Bunnings Timber Fixings
+Blackwoods PPE Options
+Sydney Tools Grinder Search
+Ladder Comparison
+Fall Protection Equipment
+Site Signage Options
+Waterproofing Products
+This makes the left sidebar look more professional.
+20. Demo Prompt Suggestions
+Add clickable prompt suggestions inside the Procurement Assistant.
+Suggested Demo Prompts
+Compare cordless hammer drills from Bunnings and Sydney Tools.
+Find safety boots for construction workers from Blackwoods and Bunnings.
+Compare ladders suitable for commercial fit-out work.
+Find timber screws and structural fixings for framing work.
+Compare PPE starter kits for 20 construction workers.
+Find cutting discs and grinding discs for steel work.
+Compare concrete tools for slab preparation.
+Find temporary site safety signage.
+Compare hi-vis workwear options.
+Find fall protection equipment for roof work.
+Compare tool storage options for a construction crew.
+Find waterproofing products for bathroom and balcony areas.
+Compare steel and aluminium sections for light construction use.
+Find fencing and gate hardware for a site setup.
+21. Source, Confidence, and Missing Data Badges
+Every answer should show badges.
+Example Badges
+Supplier: Bunnings
+Source: Public catalogue page
+Confidence: Medium
+Missing: Bulk pricing, delivery time
+Last Checked: Today
+Confidence Rules
+High Confidence
+Use when:
+Product name is available
+Product image is available
+Brand is available
+Specs are available
+Source URL is available
+Medium Confidence
+Use when:
+Product information is available
+But price, stock, delivery, or warranty is missing
+Low Confidence
+Use when:
+Product details are incomplete
+Source is unclear
+Important specs are missing
+22. Legal / Compliance Disclaimer
+Add this disclaimer inside the demo platform.
+Demo Notice:
+Supplier catalogue results are used for demonstration purposes only. Product details, pricing, availability, delivery terms, and compliance information must be confirmed directly with the supplier before purchase.
+This platform does not claim official partnership, direct purchasing integration, or approval from any supplier unless configured under a client agreement.
+Also make sure the AI does not say:
+We are partnered with Bunnings.
+We are partnered with Blackwoods.
+We are partnered with Sydney Tools.
+You can buy directly through our system.
+This price is final.
+This product is approved for purchase.
+The AI should say:
+This is a supplier catalogue result.
+Please confirm pricing, availability, and compliance directly with the supplier.
+Human approval is required before purchase.
+23. Technical Data Structure Suggestions
+Developer can adapt this based on the current backend.
+supplier_sources
+id
+supplier_name
+website_url
+source_type
+is_demo_source
+allowed_usage_note
+created_at
+updated_at
+Example records:
+Blackwoods | https://www.blackwoods.com.au | public_catalogue_demo | true
+Bunnings | https://www.bunnings.com.au | public_catalogue_demo | true
+Bunnings Trade | https://trade.bunnings.com.au | public_catalogue_demo | true
+Sydney Tools | https://sydneytools.com.au | public_catalogue_demo | true
+product_results
+id
+query_id
+supplier_source_id
+product_name
+brand
+category
+description
+image_url
+product_url
+price
+availability
+specs_json
+missing_fields_json
+confidence_level
+created_at
+updated_at
+product_comparisons
+id
+query_id
+products_json
+comparison_table_json
+recommendation
+missing_info_json
+created_by
+created_at
+updated_at
+procurement_items
+id
+project_id
+product_id
+supplier_id
+quantity
+required_date
+estimated_cost
+source_url
+technical_notes
+ai_recommendation
+status
+approval_status
+created_by
+created_at
+updated_at
+rfqs
+id
+rfq_number
+project_id
+procurement_item_id
+supplier_id
+quantity
+delivery_location
+required_delivery_date
+technical_requirements
+status
+email_subject
+email_body
+created_by
+created_at
+updated_at
+audit_logs
+id
+user_id
+action_type
+module
+record_id
+description
+metadata_json
+created_at
+24. Product Image Handling
+Use safe image handling.
+Rules
+Use image URLs from supplier catalogue pages where technically accessible.
+Do not download and store supplier images unless allowed.
+Do not edit supplier product images.
+Do not remove watermarks.
+Do not present supplier images as our own assets.
+Each image should link back to the source product page.
+If image is unavailable, show a placeholder.
+25. Important Technical Note
+Before scraping, indexing, or storing supplier catalogue data, the developer should check:
+Website terms of use
+robots.txt
+Allowed crawling behaviour
+Image usage rules
+Rate limits
+Blocked pages
+Account-only pricing restrictions
+For demo, safer options are:
+Use public search result previews
+Use source URLs
+Use publicly visible product titles
+Use publicly visible product specs
+Use publicly visible image URLs
+Do not bypass restrictions
+Do not scrape account-only pricing
+Do not automate checkout
+Do not claim direct integration
+Long-term, the better enterprise approach is:
+Supplier API integrations
+Client-approved supplier catalogues
+CSV catalogue uploads
+ERP procurement data
+Approved supplier database
+Manual product feed imports
+Client-specific supplier accounts
+26. AI System Prompt
+Use this prompt for the Procurement Assistant.
+You are a Procurement Assistant AI Agent for construction companies.
+Your job is to help construction teams search supplier catalogues, understand product requirements, compare product options, prepare RFQs, draft supplier emails, and create approval-ready procurement summaries.
+You are not a general chatbot. You behave like a professional procurement officer.
+When the user asks for products, return:
+1. Requirement Summary
+2. Matched Products with product images where available
+3. Supplier Comparison Table
+4. Best Recommendation
+5. Missing Information
+6. Suggested Next Actions
+Use construction procurement language such as project, site, BOQ, supplier quote, RFQ, delivery location, compliance certificate, lead time, stock availability, approval summary, and procurement list.
+When using public supplier catalogues such as Blackwoods, Bunnings, Bunnings Trade, or Sydney Tools, treat them as example supplier sources only.
+Do not claim official partnership, direct integration, direct purchasing rights, or approval from any supplier unless explicitly configured by the business.
+Always include source links where available.
+If price, availability, lead time, compliance, or delivery information is missing, clearly mention it.
+Never approve a purchase. Your role is to support procurement decisions. Human approval is required before purchase.
+Keep answers professional, structured, concise, and decision-ready.
+27. Development Priority
+Phase 1 — Demo Upgrade
+Build this first:
+1. Add Blackwoods, Bunnings, Bunnings Trade, and Sydney Tools as demo supplier sources.
+2. Show product cards with product photos.
+3. Add supplier comparison table.
+4. Add source, confidence, and missing data badges.
+5. Add action buttons under AI answers.
+6. Add clean chat thread names.
+7. Add demo prompt suggestions.
+Phase 2 — Workflow Upgrade
+Build next:
+1. Save to Procurement List.
+2. Create RFQ form.
+3. Draft supplier email.
+4. Generate approval summary.
+5. Export comparison as PDF.
+6. Add procurement dashboard cards.
+Phase 3 — Advanced Features
+Build later:
+1. Document upload and OCR extraction.
+2. Supplier quote comparison.
+3. Approval workflow.
+4. Audit trail.
+5. ERP / CRM / email integration.
+6. Role-based access control.
+7. Client-approved supplier database.
+Final Message for Developer
+Please improve the Procurement Assistant so it can compare products from Blackwoods, Bunnings, Bunnings Trade, and Sydney Tools.
+The demo should show product photos, product cards, supplier comparison tables, best recommendations, missing information, RFQ creation, supplier email drafts, approval summaries, procurement list saving, and PDF export.
+The goal is to make the platform feel like an AI procurement employee for construction companies, not just a chatbot.
+The AI should help construction teams do 80% of the heavy lifting: product research, supplier comparison, RFQ preparation, document summarisation, and procurement recommendation.
+Humans should still do the final 20%: review, approve, negotiate, and make the final purchase decision.
+1. Email Agent Checklist
+Construction Email Management Agent
+Main Purpose
+The Email Agent should help construction companies manage project emails, supplier communication, subcontractor updates, consultant messages, approvals, and internal follow-ups.
+It should act like a construction project admin assistant.
+Core Features Checklist
+Email Reading & Classification
+Connect with company email inbox
+Read incoming emails
+Identify email category
+Classify email as:
+Project enquiry
+Supplier quote
+RFI
+RFQ
+Variation request
+Invoice
+Site issue
+Meeting request
+Document submission
+Approval request
+General admin
+Detect urgent emails
+Detect overdue responses
+Detect emails needing human review
+Construction Context Understanding
+Extract project name
+Extract sender company
+Extract contact person
+Extract site address
+Extract trade/category
+Extract deadline
+Extract requested action
+Extract attachments
+Extract reference numbers
+Identify if email relates to:
+Procurement
+Design
+Site operations
+Consultant response
+Supplier pricing
+Compliance
+Safety
+Contract/admin
+Draft Reply Generation
+Generate professional email draft
+Use construction industry tone
+Keep response short and clear
+Ask for missing information
+Confirm received documents
+Request additional attachments where required
+Draft follow-up emails
+Draft reminder emails
+Draft escalation emails
+Draft supplier clarification emails
+Draft client update emails
+Email Workflow Actions
+Add action buttons:
+Draft Reply
+Send for Approval
+Assign to Team Member
+Create RFI
+Create RFQ
+Save to Project
+Add to Procurement List
+Create Follow-Up Reminder
+Mark as Urgent
+Archive
+Email Dashboard
+Show:
+Unread project emails
+Urgent emails
+RFIs detected
+RFQs detected
+Supplier quotes received
+Emails waiting for approval
+Overdue follow-ups
+Emails assigned to team members
+Human Approval Layer
+AI must not send important emails automatically unless approved
+Show “AI draft only — human review required”
+Allow user to edit draft before sending
+Track who approved/sent the email
+Audit Trail
+Log:
+Email received date
+Sender
+Project
+AI classification
+AI summary
+Draft response
+Assigned user
+Approval status
+Final sent email
+Time/date of action
+2. RFI Agent Checklist
+Request for Information Agent
+Main Purpose
+The RFI Agent should help construction teams manage technical project questions, consultant queries, subcontractor clarifications, drawings, specifications, and response deadlines.
+It should act like a construction RFI coordinator.
+Core Features Checklist
+RFI Detection
+Detect RFI from email
+Detect RFI from uploaded document
+Detect RFI from manual user entry
+Detect RFI from project chat/thread
+Identify if the message is asking for clarification
+Identify if response is required from:
+Architect
+Engineer
+Builder
+Client
+Consultant
+Subcontractor
+Supplier
+RFI Data Extraction
+Extract:
+RFI number
+Project name
+Site address
+Raised by
+Company
+Trade
+Discipline
+Drawing reference
+Specification reference
+Room/area/location
+Issue description
+Required clarification
+Attachments
+Date raised
+Required response date
+Priority level
+Impact on programme
+Cost impact
+Risk level
+RFI Categories
+Classify RFI as:
+Architectural
+Structural
+Civil
+Mechanical
+Electrical
+Hydraulic / Plumbing
+Fire services
+Finishes
+Procurement
+Site condition
+Design conflict
+Compliance issue
+Safety issue
+Access issue
+Variation-related
+RFI Response Drafting
+AI should generate:
+RFI summary
+Suggested response
+Missing information
+Required documents
+Suggested person/team to respond
+Risk note
+Recommended next action
+Response format:
+RFI Summary:
+[Short summary]
+Issue:
+[What needs clarification]
+Reference:
+[Drawing/specification/location]
+Suggested Response:
+[Professional draft]
+Missing Information:
+[List missing items]
+Recommended Next Action:
+[Who should review/respond]
+Human Review Required:
+This is an AI draft. Final technical response must be approved by the responsible person.
+RFI Workflow Statuses
+Use these statuses:
+Draft
+Open
+Assigned
+Waiting for Consultant
+Waiting for Client
+Waiting for Subcontractor
+Response Drafted
+Under Review
+Responded
+Closed
+Overdue
+RFI Action Buttons
+Add buttons:
+Assign RFI
+Draft Response
+Request More Information
+Send to Consultant
+Send to Engineer
+Send to Architect
+Create Follow-Up Reminder
+Mark as Urgent
+Export RFI Log
+Save to Project
+RFI Register
+Create an RFI register table with:
+RFI number
+Project
+Title
+Discipline
+Raised by
+Assigned to
+Date raised
+Due date
+Status
+Priority
+Cost impact
+Programme impact
+Last update
+Attachments
+RFI Dashboard
+Show:
+Open RFIs
+Overdue RFIs
+RFIs due this week
+RFIs waiting for consultant
+RFIs waiting for internal review
+High-risk RFIs
+Closed RFIs
+Average response time
+RFI Audit Trail
+Log:
+Who created RFI
+Original email/document
+AI extracted data
+AI suggested response
+Assigned reviewer
+Final response
+Status changes
+Attachments added
+Date closed
+3. RFQ Agent Checklist
+Request for Quote Agent
+Main Purpose
+The RFQ Agent should help construction teams create, send, track, and manage supplier/subcontractor quote requests.
+It should act like a construction RFQ coordinator.
+Core Features Checklist
+RFQ Creation
+RFQ can be created from:
+User manual entry
+Procurement Agent recommendation
+Supplier product search
+Uploaded BOQ
+Email request
+Project requirement
+Material schedule
+Scope of work
+RFQ Data Fields
+Each RFQ should include:
+RFQ number
+Project name
+Site address
+Requested item/service
+Category
+Trade
+Quantity
+Unit
+Required delivery date
+Delivery location
+Technical specification
+Drawing/specification reference
+Compliance requirements
+Attachments
+Supplier name
+Supplier contact person
+Supplier email
+Due date for quote
+Internal owner
+Status
+RFQ Categories
+Classify RFQs as:
+Material supply
+Subcontractor package
+Equipment hire
+Labour hire
+Site services
+Safety equipment
+Tools and equipment
+Building materials
+Finishes
+MEP services
+Civil works
+Structural works
+RFQ Email Drafting
+AI should generate RFQ emails.
+Example format:
+Subject: Request for Quote – [Item/Service] for [Project Name]
+Hi [Supplier Name],
+We are requesting a quote for the following construction procurement requirement:
+Project:
+Site Address:
+Item/Service:
+Quantity:
+Required Delivery Date:
+Delivery Location:
+Technical Requirements:
+Attachments:
+Please provide:
+- Unit price
+- Total price
+- Lead time
+- Availability
+- Delivery charges
+- Warranty
+- Compliance/certification documents
+- Payment terms
+- Quote validity period
+Kind regards,
+[User Name]
+RFQ Statuses
+Use these statuses:
+Draft
+Ready to Send
+Sent
+Supplier Acknowledged
+Quote Received
+Clarification Required
+Under Comparison
+Under Review
+Approved
+Rejected
+Closed
+Expired
+Overdue
+Supplier Tracking
+For every RFQ:
+Track supplier sent date
+Track supplier response date
+Track quote due date
+Track quote status
+Track missing documents
+Track follow-up reminders
+Track supplier comments
+Track quote validity/expiry
+Quote Comparison
+AI should compare received quotes by:
+Supplier
+Price
+Lead time
+Availability
+Compliance
+Warranty
+Delivery cost
+Payment terms
+Scope coverage
+Exclusions
+Risk notes
+Best value recommendation
+RFQ Action Buttons
+Add buttons:
+Create RFQ
+Send RFQ
+Add Supplier
+Upload Quote
+Compare Quotes
+Draft Follow-Up Email
+Generate Approval Summary
+Export RFQ PDF
+Save to Procurement List
+Close RFQ
+RFQ Dashboard
+Show:
+Open RFQs
+RFQs sent
+Quotes received
+RFQs overdue
+RFQs awaiting supplier response
+RFQs under review
+RFQs approved
+Expiring quotes
+Best-value recommendations
+RFQ Audit Trail
+Log:
+RFQ creation
+Supplier emails sent
+Quote uploads
+AI extraction results
+Quote comparison
+Internal comments
+Approval status
+Final decision
+RFQ closure
+4. Procurement Agent Checklist
+Construction Procurement Agent
+Main Purpose
+The Procurement Agent should help construction teams search products, compare suppliers, manage procurement items, create RFQs, review quotes, and prepare approval-ready summaries.
+It should act like a construction procurement officer.
+Core Features Checklist
+Supplier Catalogue Search
+Use demo supplier catalogues:
+Blackwoods
+Bunnings
+Bunnings Trade
+Sydney Tools
+AI should search relevant suppliers based on product type.
+Product Search
+AI should support search for:
+PPE
+Safety gear
+Tools
+Timber
+Concrete/cement
+Fasteners/fixings
+Roofing
+Insulation
+Doors/windows
+Fencing
+Ladders/access equipment
+Welding supplies
+Abrasives
+Cleaning/site products
+Lifting/rigging
+Site signage
+Workwear
+Waterproofing
+Sealants
+Product Result Cards
+Each product card must show:
+Product image
+Product name
+Supplier
+Brand
+Category
+Description
+Key specs
+Price, if available
+Availability, if available
+Source URL
+Confidence badge
+Missing data badge
+Action buttons
+Comparison Table
+Every multi-product result should show a comparison table.
+Columns:
+Product image
+Product name
+Supplier
+Brand
+Category
+Key specs
+Price
+Availability
+Best for
+Source
+For construction-specific products, add:
+Size
+Material
+Rating
+Compliance
+Pack quantity
+Warranty
+Delivery option
+Lead time
+Recommendation Engine
+AI should provide:
+Best recommended product
+Reason for recommendation
+Best value option
+Best trade-grade option
+Best availability option
+Risk notes
+Missing information
+Human approval note
+Example:
+Recommended Product:
+[Product Name]
+Reason:
+This product appears best suited for construction site use because it matches the required specification, is available from a relevant supplier, and provides the best balance between suitability, price, and availability.
+Missing Information:
+Confirm bulk pricing, delivery time, stock availability, warranty, and compliance documents before purchase.
+Approval Note:
+AI recommendation only. Human review required before purchase.
+Procurement List
+User should be able to save products into a procurement list.
+Fields:
+Item name
+Product image
+Category
+Supplier
+Brand
+Quantity
+Project
+Required date
+Estimated cost
+Source URL
+Technical notes
+AI recommendation
+Status
+Approval status
+Created by
+Created date
+Statuses:
+Researching
+RFQ Needed
+RFQ Sent
+Quote Received
+Approval Needed
+Approved
+Ordered
+Delivered
+Rejected
+Procurement Workflow Actions
+Add buttons:
+Search Products
+Compare Suppliers
+Save to Procurement List
+Create RFQ
+Draft Supplier Email
+Generate Approval Summary
+Export PDF
+Add to Project
+Upload Quote
+Compare Quotes
+Document Upload / OCR
+Support uploads:
+Supplier quotes
+Product datasheets
+BOQs
+Invoices
+Scope of work documents
+Material schedules
+Technical specifications
+Compliance certificates
+Extract:
+Supplier name
+Product name
+Brand
+Quantity
+Unit price
+Total price
+Lead time
+Delivery terms
+Warranty
+Compliance details
+Quote expiry date
+Procurement Dashboard
+Show:
+Products compared
+Saved procurement items
+Open RFQs
+Supplier quotes pending
+Approval summaries generated
+Missing data alerts
+Recently viewed suppliers
+Potential savings identified
+Documents processed
+Overdue procurement tasks
+Source & Confidence Badges
+Every result should show:
+Supplier name
+Source URL
+Confidence level
+Missing information
+Last checked date
+Confidence levels:
+High
+Medium
+Low
+Human Approval Layer
+The agent must show:
+AI recommendation only. Human review and approval required before purchase.
+AI should not:
+Approve purchases automatically
+Claim price is final
+Claim stock is guaranteed
+Claim supplier partnership
+Complete checkout
+Make payment
+Procurement Audit Trail
+Log:
+User query
+Supplier sources searched
+Products found
+Product comparison
+Recommendation
+Missing data
+Saved procurement item
+RFQ created
+Quote uploaded
+Approval summary generated
+PDF exported
+User actions
+Overall Platform Checklist
+Shared Across All Agents
+These should apply to Email Agent, RFI Agent, RFQ Agent, and Procurement Agent.
+User Interface
+Clean dashboard layout
+Left-side navigation
+Agent-specific workspace
+Search/chat input
+Product/document cards
+Tables
+Status badges
+Action buttons
+Filters
+Export buttons
+Project selector
+Team member assignment
+Status Badges
+Use badges like:
+Draft
+Open
+Pending
+Waiting for Supplier
+Waiting for Consultant
+Under Review
+Approved
+Rejected
+Overdue
+Closed
+Integrations
+Plan for:
+Email integration
+Google Calendar / Outlook Calendar
+CRM integration
+ERP integration
+Document storage
+OCR/document parser
+Supplier catalogue sources
+Project management systems
+Internal dashboard
+Security & Permissions
+Role-based access control
+Admin user
+Project manager user
+Procurement user
+Read-only user
+Approval permissions
+Audit logs
+Secure document storage
+No automatic purchase approval
+Demo Disclaimer
+Add this across procurement/RFQ catalogue demo pages:
+Demo Notice:
+Supplier catalogue results are used for demonstration purposes only. Product details, pricing, stock availability, delivery terms, and compliance information must be confirmed directly with the supplier before purchase.
+This platform does not claim official partnership, direct purchasing integration, or approval from any supplier unless configured under a client agreement.
+Recommended Build Priority
+Phase 1: Demo Ready
+Procurement Agent product search
+Product cards with images
+Supplier comparison table
+Blackwoods, Bunnings, Bunnings Trade, Sydney Tools demo sources
+RFQ creation button
+Email draft button
+Approval summary button
+Save to procurement list
+Clean chat thread names
+Phase 2: Construction Workflow
+Email Agent classification
+RFI detection and register
+RFQ tracking module
+Procurement dashboard
+Quote upload
+PDF export
+Follow-up reminders
+Phase 3: Enterprise Layer
+OCR extraction
+ERP/CRM integration
+Email/calendar integration
+Audit trail
+Role-based approval workflow
+Client-approved supplier database
+Reporting and analytics

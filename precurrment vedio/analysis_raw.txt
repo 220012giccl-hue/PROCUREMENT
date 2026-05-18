@@ -1,0 +1,2135 @@
+
+==================================================
+FILE: Procurement Agent Info (1).pdf
+==================================================
+ 
+1) What we are building (read first)  
+Mission  
+Build a Procurement Intelligence & Control Agent  — not a buyer  and not an ERP 
+replacement . 
+It prepares procurement actions, controls workflows, enforces Saudi compliance, keep s audit 
+visibility, and hands approved data to Finance/ERP. AI prepares → Humans approve → 
+Systems execute.  
+Hard failures (if any happen, the system is wrong)  
+ Commits spend  
+ Skips approvals  
+ Hides risk  
+→ Must be prevented by design.  
+Explicitly out of scope  
+ Negotiation  
+ Contract signing  
+ Autonomous PO issuance  
+ ERP replacement / duplicating ERP logic  
+ 
+2) Where this agent sits (system boundaries)  
+Upstream (input source)  
+RFQ & Tender Intelligence Agent  provides: approved scope packages, quantities/BOQs, 
+assumptions/exclusions, drawings/specs, standards.  
+Downstream (execution layer)  
+ Finance Agent  
+ ERP via adapter (SAP / Oracle / MS Dynamics)  
+Side systems (read -only)  
+CRM is visibility + approvals only; not pricing logic, not RFQs, not ERP actions.  
+ 
+3) Inputs: strict contract (intake gate must enforce)  
+Procurement Agent accepts ONLY:  
+ Approved Tender ID  
+ Approved scope packages (by trade)  
+ Validated quantities / BOQs  
+ Assumption s & exclusions  
+ Approved supplier list (AVL)  
+ Budget & cost codes  
+ Approval matrix  
+Rules:  
+ If approval status ≠ APPROVED → STOP  and request approval.  
+ If data missing → ask ONE question only  (one-question rule).  
+ 
+4) Workflow: mandatory state machine (must implement 
+exactly)  
+READY → RFQ_PREPARED → RFQ_SENT → QUOTES_RECEIVED → 
+NORMALIZED → COMPLIANCE_CHECKED → DECISION_PACK_READY → 
+APPROVED → HANDED_TO_FINANCE  
+Rework loops: REJECTE D → REQUOTE_REQUESTED → RFQ_SENT  
+Engineering note:  implement as a real state machine with allowed transitions + audit logs on 
+every transition.  
+ 
+5) Core modules your team must build  
+Module A — Supplier Mapping Engine  
+ Use Approved Vendor List (AVL) only  
+ Filter by trade, geography, certifications, project rules  
+ Never auto -add suppliers; never RFQ inactive vendors  
+Module B — RFQ Pack Builder (critical)  
+For each supplier, create vendor -scoped RFQ pack : 
+ Only relevant drawings/s pecs/BOQ lines/standards  
+ Generate a manifest listing included files  
+ Hard rule: zero information leakage between suppliers  (must be tested)  
+Module C — RFQ Issuance & Tracking  
+ Issue RFQs via email / portal adapter  
+ Track sent/opened/responded/overdue  
+ Reminder s + overdue escalation to humans  
+ AI must not discuss pricing or negotiate  
+Module D — Quote Ingestion & Extraction  
+Store original quote read -only and extract:  
+ Line items, qty, unit rates, lead time, exclusions, payment terms, VAT treatment  
+Each extracted fi eld must include:  
+ Confidence score  
+ Source reference (doc + page)  
+Module E — Quote Normalisation (apple -to-apple)  
+Canonical structure:  
+line_id | description | uom | qty | unit_rate | total  
+Status per line: MATCHED / PARTIAL / MISSING / EXTRA  
+Rules:  
+ Align quantities + flag gaps/exclusions/deviations  
+ Never “fix” quantities automatically  
+Module F — Saudi Compliance Engine (deterministic rules)  
+Must enforce:  
+ VAT/ZATCA registration + correct VAT handling  
+ Supplier certifications  
+ Local content rules (where applicable)  
+ Owner/project packs: Aramco / SEC / RCJY / NEOM / Red Sea / Diriyah  
+Output: passed/failed + severity (HIGH blocks, MEDIUM review)  
+HIGH severity = cannot proceed  
+Module G — Fraud & Risk Controls  
+ Bank details change detection: mismatch vs vendor master → HARD BLOCK + 
+human verification  
+ Procurement risk score per supplier: compliance, delivery, scope, commercial → 
+LOW/MED/HIGH  
+Module H — Approval Orchestration  
+Configurable layers (typical):  
+ Engineering confirmation  
+ Procurement approval  
+ Commercial a pproval  
+ Project Director approval  
+No approval → no Finance handover  
+Module I — Handover to Finance (strict payload)  
+Only after approvals:  
+Generate PO Readiness Payload  including selected supplier, approved pricing/terms, 
+compliance status, audit references . Finance handles PO creation, matching, payments.  
+Use the JSON schemas provided (Proc→Finance PO payload, Finance→Proc status update, 
+optional delivery milestone).  
+Module J — Audit & Security  
+ Secure object storage (S3/Azure Blob)  
+ Originals read -only 
+ Log every action: who/when/what/why + source reference  
+ Saudi data residency respected where required  
+ 
+6) Human Review UI (required for MVP)  
+Must include:  
+ Quote comparison table  
+ Compliance flags  
+ Risk scores  
+ Approval butto ns 
+ Audit trail view  
+ Export decision pack (PDF/Excel)  
+ 
+7) Integrations (what to build now)  
+Day-1 connectors (MVP)  
+ Email sending + tracking (for RFQs)  
+ Portal adapter interface (pluggable)  
+ Secure storage (S3 / Azure Blob)  
+ ERP Adapter Layer (SAP / Oracle / Dynamics) — adapter only, don’t rebuild ERP  
+Saudi market compliance toggles  
+Project config must support enabling rule packs:  
+Aramco / SEC / RCJY / NEOM / Red Sea / Diriyah  
+ 
+8) Testing / a cceptance criteria (non -negotiable)  
+System is not “done” unless:  
+ RFQ packs are vendor -scoped and leak -proof  
+ Quotes normalized + traceable  
+ VAT non -compliance blocks progression  
+ No finance handover without approvals  
+ Audit trail shows every step  
+ Re-quote + addendum flows work  
+ 
+9) Jira -style build plan (copy/paste for tickets)  
+Your spec already includes epics + stories. Use these directly as the baseline backlog:  
+Core Service → RFQ Packaging → Quote Intake/Normal ization → Compliance Engine → 
+Approvals → Finance Handover → Audit/Observability.  
+ 
+ 
+
+==================================================
+FILE: Procurement Intelligence Agent (Information) (1).pdf
+==================================================
+ 
+INTERNAL TEAM INSTRUCTIONS  
+Procurement Intelligence Agent  
+AI Division for Saudi Construction & Infrastructure Companies  
+ 
+1. PURPOSE (WHY THIS AGENT EXISTS)  
+The Procurement Intelligence Agent  is responsible for executing  and controlling the 
+procurement lifecycle AFTER tender intelligence is prepared , ensuring:  
+ Accurate supplier RFQs  
+ Controlled spend  
+ Contract and scope alignment  
+ Approval discipline  
+ Saudi compliance  
+ Full auditability  
+This agent does not negotiate or approve  — it prepares, validates, monitors, and escalates.  
+ 
+2. POSITION IN THE AI DIVISION FLOW  
+Upstream input  
+ RFQ & Tender Intelligence Agent (structured scope, quantities, assumptions)  
+Downstream coordination  
+ Invoice, VAT & Finance Agent  
+ Cost Control & Variations Agent  
+ Compliance & Safety Agent  
+Human oversight  
+ Procurement managers  
+ Commercial managers  
+ Project directors  
+ 
+3. CORE PRINCIPLES (NON -NEGOTIABLE)  
+1. No autonomous purchasing  
+2. No contract  deviation without approval  
+3. Every procurement decision must be traceable  
+4. Saudi procurement & VAT rules must be enforced  
+5. Human approval is mandatory at every commitment point  
+ 
+4. AGENT TRIGGERS (WHEN IT STARTS WORK)  
+The Pr ocurement Agent is triggered when:  
+ Tender scope is approved by engineering  
+ Quantities and BOQs are validated  
+ Procurement stage is authorised by management  
+The agent must never self -trigger . 
+ 
+5. INPUTS FROM TENDER AGENT  
+The Procurement Agent will receive:  
+ Structured scope packages (by trade)  
+ Quantities & take -offs 
+ BOQ mappings  
+ Assumptions & exclusions  
+ Approved RFQ templates  
+ Risk flags & clarifications  
+Team Instruction:  
+Reject incomplete or unapproved inputs.  
+ 
+6. PROCUREMENT WORKFLOW SCOPE  
+6.1 Supplier Mapping & Sourcing  
+The Agent Must:  
+ Identify suitable suppliers per scope/trade  
+ Reference:  
+o Approved vendor lists  
+o Past project suppliers  
+o Saudi localisation requirements  
+Team Instr uctions  
+ Do NOT auto -add new suppliers without approval  
+ Flag single -supplier dependency risks  
+ Maintain supplier metadata (location, VAT status, certifications)  
+ 
+6.2 RFQ Package Preparation  
+The Agent Must:  
+ Prepare supplier -specific RFQ packs including:  
+o Relevant drawings  
+o Scope extracts  
+o Quantities  
+o Standards & compliance requirements  
+o Submission deadlines  
+Team Instructions  
+ Ensure suppliers receive only relevant scope  
+ Prevent information leakage between vendors  
+ Track RFQ issuance timestamps  
+ 
+6.3 RFQ Issuance & Tracking  
+The Agent Must:  
+ Issue RFQs (email / portal integration)  
+ Track:  
+o Sent 
+o Opened  
+o Responded  
+o Overdue  
+Team Instructions  
+ No pricing discussion by AI  
+ Auto -reminders allowed  
+ Escalate non -responses to humans  
+ 
+7. QUOTATION ANALYSIS & COMPARISON  
+7.1 Quote Intake  
+The Agent Must:  
+ Receive supplier quotations  
+ Extract:  
+o Pricing  
+o Lead times  
+o Exclusions  
+o Compliance statements  
+ 
+7.2 Quote Normalisation  
+The Agent Must:  
+ Align quotes against:  
+o Same quantities  
+o Same scope  
+o Same standards  
+ Flag:  
+o Missing items  
+o Under -pricing risks  
+o Scope deviations  
+Team Instructions  
+ Do NOT recommend cheapest blindly  
+ Highlig ht commercial and technical risks  
+ 
+7.3 Comparative Analysis Output  
+The Agent Must Produce:  
+ Side-by-side quote comparison  
+ Cost breakdowns  
+ Risk flags  
+ Compliance gaps  
+All outputs must be review -ready , not final.  
+ 
+8. CONTRACT & PO ALIGNMENT  
+The Agent Must:  
+ Cross -check selected quotes against:  
+o Tender scope  
+o Contract terms  
+o Framework agreements  
+ Validate:  
+o Unit rates  
+o Payment terms  
+o Delivery milestones  
+Team Instructions  
+ No PO generation w ithout approval  
+ Flag scope creep immediately  
+ Maintain document traceability  
+ 
+9. APPROVAL WORKFLOW MANAGEMENT  
+The Agent Must:  
+ Route approvals to correct stakeholders  
+ Track approval delays  
+ Send reminders  
+ Escalate bottleneck s 
+Approval Layers (Typical)  
+ Engineering confirmation  
+ Procurement approval  
+ Commercial approval  
+ Project director approval  
+ 
+10. BUDGET & COST CONTROL  
+The Agent Must:  
+ Track:  
+o Approved budget  
+o Committed spend  
+o Remaining balance  
+ Flag:  
+o Overruns  
+o Unplanned purchases  
+o Emergency procurement patterns  
+Team Instructions  
+ No silent overruns  
+ Always show financ ial impact  
+ 
+11. SAUDI COMPLIANCE & LOCALISATION  
+The Agent Must Enforce:  
+ Saudi VAT registration checks  
+ ZATCA compliance  
+ Local content requirements (where applicable)  
+ Project -specific procurement rules (NEOM, Aramco, SEC, RCJY)  
+Team Instructions  
+ Flag non -compliant suppliers  
+ Never bypass compliance for speed  
+ 
+12. AUDIT TRAIL & GOVERNANCE  
+Mandatory Logging:  
+ RFQ issuance  
+ Supplier responses  
+ Quote comparisons  
+ Approval decisions  
+ PO creation approvals  
+Logs must include:  
+ Who  
+ When  
+ What  
+ Why  
+ 
+13. HAND OVER TO FINANCE & COST CONTROL 
+AGENTS  
+The Agent Must Pass:  
+ Approved supplier selections  
+ Agreed pricing  
+ Payment terms  
+ Delivery schedules  
+ PO references  
+This triggers:  
+ Invoice, VAT & Finance Agent  
+ Cost Control & Variations Agent  
+ 
+14. HUMAN REVIEW & CONTROL UI (REQUIRED)  
+The Procurement Agent must support:  
+ Quote comparison dashboards  
+ Inline comments  
+ Approval buttons  
+ Risk visibility  
+ Downloadable audit reports  
+ 
+15. SECURITY & DATA RULES  
+ Role -based access control  
+ Encrypted documents  
+ Saudi data residency (where required)  
+ Confidential supplier data protection  
+ 
+16. WHAT IS EXPLICITLY OUT OF SCOPE  
+ Supplier negotiation  
+ Contract signing  
+ Final commercial decisions  
+ Emergency procurement authorisation  
+ Replacing ERP or finance systems  
+ 
+17. SUCCESS METRICS  
+ Faster RFQ cycles  
+ Reduced procurement delays  
+ Improved cost visibility  
+ Fewer scope disputes  
+ Stronger audit outcomes  
+ 
+MESSAGE TO THE TEAM  
+This agent is not a buyer . 
+It is a procurement intelligence and control system . 
+If it: 
+ Hides risks  
+ Commits spend  
+ Skips approvals  
+👉 It has failed.  
+ 
+1) System prompts for the Procurement Intelligence Agent  
+1.1 System Prompt (Core)  
+Use this  as the system  / highest -priority  prompt.  
+You are the “Procurement Intelligence Agent” for MultipleAI Solutions’ AI 
+Division, deployed in Saudi construction and infrastructure environments.  
+ 
+PRIMARY ROLE  
+- Prepare, validate, and control procurement workflo ws end-to-end (RFQ 
+packaging, supplier routing, quote intake, quote normalization, compliance 
+checks, approval orchestration, PO readiness packs).  
+- You NEVER make final purchasing decisions, NEVER negotiate, and NEVER 
+commit spend.  
+- You operate with stri ct human oversight: AI prepares → Humans approve → 
+Systems execute.  
+ 
+HARD RULES (NON -NEGOTIABLE)  
+1) No autonomous purchasing. No issuing POs, contracts, or commitments 
+without an explicit APPROVED status from authorized humans.  
+2) No hallucinations. If dat a is missing, say “Missing data” and request 
+the exact missing item.  
+3) Traceability: every extracted field or recommendation must include 
+source references (document name, page/section, email id, or record id).  
+4) Confidentiality: never mix information be tween vendors. RFQ packages 
+must be vendor -scoped and leak -proof. 
+5) Compliance -first: enforce Saudi VAT/ZATCA checks and any project -
+specific standards (Aramco/SEC/RCJY/NEOM/Red Sea/Diriyah) before 
+shortlisting.  
+6) Neutrality: do not recommend “cheapest” by default. Compare on 
+compliance, scope alignment, delivery, risk, and total cost.  
+ 
+INPUTS YOU RECEIVE  
+- Approved tender scope package: trade packages, quantities, 
+drawings/specs, standards list, assumptions/exclusions, deadlines.  
+- Approved vendor list a nd vendor master data (including VAT registration 
+status if available).  
+- Budget and cost codes, project identifiers, approval matrix, and 
+procurement policies.  
+ 
+OUTPUTS YOU PRODUCE  
+- Vendor-specific RFQ packs (only relevant documents and scope).  
+- RFQ issue log and response tracker.  
+- Quote extraction and normalized comparison table.  
+- Compliance risk report (VAT/ZATCA, localization, certifications).  
+- Recommendation pack (ranked options with risks, not final decision).  
+- Procurement→Finance hando ver payload (approved supplier selection + terms 
++ PO readiness fields).  
+ 
+SAFETY / APPROVAL GATES  
+- If approval status != APPROVED, you must stop and request approval.  
+- If VAT compliance status is unknown for a supplier, flag as “Compliance 
+verification r equired”.  
+- If scope/quantity mismatch is detected, you must flag and request 
+clarification before proceeding.  
+ 
+TONE 
+Professional, concise, procurement/contractor language. Ask one question at 
+a time when blocked.  
+1.2 Developer Prompt (How the agent should  work step -by-step)  
+WORKFLOW EXECUTION STEPS  
+1) Validate inputs are approved and complete:  
+   - Tender_ID, project, deadline, trade packages, quantities, standards, 
+assumptions.  
+2) Build RFQ plan:  
+   - Identify work packages → map to approved suppliers by trade/category.  
+3) Prepare vendor -specific RFQ packs:  
+   - Include only relevant drawings/specs/BOQ sections; redact unrelated 
+items. 
+4) Issue RFQs and track:  
+   - Log sent time, due date, follow -up schedule; do not send pricing 
+commentary.  
+5) Ingest quote s: 
+   - Extract pricing, lead time, exclusions, compliance statements, 
+validity, payment terms.  
+6) Normalize quotes:  
+   - Align units, quantities, scope inclusions; flag missing lines and 
+deviations.  
+7) Compliance checks:  
+   - VAT/ZATCA, localization requirements, required certifications, 
+project-specific rules.  
+8) Approval orchestration:  
+   - Produce “Decision Pack” with comparison + risks; route for human 
+approvals.  
+9) After approval:  
+   - Prepare PO readiness pack and hando ver payload to Finance Agent.  
+10) Maintain audit trail:  
+   - Every step writes to logs with who/when/what/source references.  
+1.3 “Ask When Blocked” Prompt (One -question rule)  
+If you are missing any required field to proceed, ask exactly ONE question.  
+Example: “I’m missing the supplier VAT registration status (ZATCA). Please 
+provide the supplier VAT number or confirm ‘Not Registered’.”  
+Do not ask multiple questions in one message.  
+ 
+2) Saudi procurement compliance rules (imp lementable 
+rule set)  
+Below is a rules engine spec  your devs can implement (flags, severities, and required 
+evidence).  
+2.1 Baseline Saudi Compliance (Always On)  
+Rule SA -VAT -01 — Supplier VAT / ZATCA Verification  
+ Check:  Supplier has VAT registration number ( if required by engagement) and 
+provides VAT -compliant invoice capability.  
+ Evidence:  VAT number, tax certificate, or verified vendor master record.  
+ Severity:  HIGH  
+ Action:  Block “Approved Supplier” status until verified.  
+Rule SA -VAT -02 — VAT Rate & Tax Treat ment Consistency  
+ Check:  Quote shows VAT treatment correctly (VAT -exclusive vs inclusive) and does 
+not apply inconsistent tax lines.  
+ Evidence:  Quotation lines + terms.  
+ Severity:  MEDIUM  
+ Action:  Flag for correction before final selection.  
+Rule SA -PO-01 — No PO Without Approval  
+ Check:  PO creation only after approvals recorded (Procurement + Commercial + 
+Project Director where applicable).  
+ Evidence:  Approval log record ids.  
+ Severity:  HIGH  
+ Action:  Hard block.  
+Rule SA -AML -01 — Supplier Identity  & Banking Controls (Basic)  
+ Check:  Supplier legal name matches bank account name; prevent invoice fraud.  
+ Evidence:  Vendor master + bank letter/IBAN verification.  
+ Severity:  HIGH  
+ Action:  Block payment handover until verified.  
+2.2 Localization / Saudi -specifi c Project Requirements (Configurable)  
+Rule SA -LOC -01 — Local Content Requirement  
+ Check:  If project requires Saudi/local content, supplier meets required thresholds or 
+provides compliant subcontracting plan.  
+ Evidence:  Local content declaration.  
+ Severity:  HIGH  
+ Action:  Block shortlist unless exception approved.  
+Rule SA -CERT -01 — Mandatory Certifications  
+ Check:  Supplier holds required certifications (ISO, safety, trade licenses, client -
+specific).  
+ Evidence:  Certificates with expiry dates.  
+ Severity:  HIGH  
+ Action : Block shortlist if missing/expired.  
+2.3 Owner/Authority Specific Rule Packs (Enable per project)  
+Create toggles per project for:  
+ Aramco Pack  (vendor approval, Aramco specs, documentation formatting)  
+ SEC Pack  (electrical compliance, approved material list s) 
+ RCJY Pack  (Royal Commission safety & documentation)  
+ NEOM / Red Sea / Diriyah Pack  (their procurement templates, ESG, reporting)  
+Each pack should include:  
+ Required templates  
+ Required approvals  
+ Required supplier status (e.g., “approved vendor list only”)  
+ Document naming conventions and submission formats  
+2.4 Scope & Commercial Integrity (Always On)  
+Rule SA -SCOPE -01 — Quote vs Scope Deviation  
+ Check:  Quote missing any BOQ line, excludes mandatory scope, or changes spec.  
+ Evidence:  Normalized quote comparison output.  
+ Severity:  HIGH  
+ Action:  Flag and require clarification / revised quote.  
+Rule SA -COMM -01 — Payment Terms Deviation  
+ Check:  Payment terms deviate from project procurement policy.  
+ Severity:  MEDIUM/HIGH (config)  
+ Action:  Route to commercial for explicit a pproval.  
+Rule SA -TIME -01 — Lead Time vs Program Risk  
+ Check:  Lead time exceeds project milestone needs.  
+ Severity:  MEDIUM  
+ Action:  Flag risk; suggest alternate suppliers.  
+ 
+3) Procurement workflow architecture (boxes + flows)  
+3.1 Mermaid Flow (paste into docs/Notion/Markdown)  
+flowchart LR  
+  A[Approved Tender Package \n(Tender Agent Output)] --> B[Procurement Agent 
+Intake Gate]  
+  B -->|Validate approvals & completeness| C{Inputs complete & approved?}  
+  C -- No --> C1[Request missing item \n(1 question at a time)] --> B 
+  C -- Yes --> D[Supplier Mapping \n(AVL + Trade Packages)]  
+ 
+  D --> E[RFQ Pack Builder \nVendor-scoped bundles]  
+  E --> F[RFQ Issuance \nEmail/Portal Adapter]  
+  F --> G[RFQ Tracker \nSent/Open/Overdue]  
+ 
+  G --> H[Quote Intake \nEmail/Portal]  
+  H --> I[Quote Extraction \nPrice/LeadTime/Terms/Exclusions]  
+  I --> J[Normalization Engine \nUnits/Scope/BOQ alignment]  
+  J --> K[Compliance Rules Engine \nVAT/ZATCA/Certs/Local Content]  
+  K --> L[Decision Pack Generator \nComparison + Risks]  
+  L --> M{Human Approvals \nProcurement/Commercial/PD}  
+  M -- Rejected --> M1[Revise pack / clarify \nor request new quotes] --> D 
+  M -- Approved --> N[PO Readiness Pack \nSelected supplier + terms]  
+  N --> O[Procurement→Finance Handove r Payload]  
+  O --> P[Finance Agent \nPO/Invoice/Payment Controls]  
+ 
+  subgraph Logs[Audit Trail & Observability]  
+    B --> L1[Event Log]  
+    F --> L1 
+    H --> L1 
+    M --> L1 
+    O --> L1 
+  end 
+3.2 Key Interfaces (where devs must implement)  
+ Email/Portal Ada pter: intake + send RFQs + track responses  
+ Vendor Master / AVL : supplier metadata + VAT + certifications  
+ Document Store : vendor -scoped RFQ packs  
+ Approvals Service : recorded approvals + approver roles  
+ Finance Interface : PO readiness + payment controls  
+ 
+4) Procurement ↔ Finance data schemas (JSON)  
+Below are practical schemas  (not theoretical). Use them as contract payloads between 
+services/agents.  
+4.1 Procurement → Finance: “PO Readiness Payload”  
+{ 
+  "schema_version": " 1.0", 
+  "tender_id": "TND -2026-00091", 
+  "project": {  
+    "project_id": "KSA -NEOM-ZONEA-001", 
+    "project_name": "NEOM Zone A Package 1",  
+    "client_name": "ClientName",  
+    "currency": "SAR"  
+  }, 
+  "selected_supplier": {  
+    "supplier_id": "SUP -1029", 
+    "legal_name": "Supplier Legal Name LLC",  
+    "vat_registration_status": "VERIFIED",  
+    "vat_number": "300XXXXXXXXX",  
+    "bank_verification_status": "VERIFIED"  
+  }, 
+  "procurement_event": {  
+    "rfq_id": "RFQ -2026-7781", 
+    "issue_date": "2026 -01-19", 
+    "quote_received_date": "2026 -01-25", 
+    "quote_valid_until": "2026 -02-10" 
+  }, 
+  "commercial_terms": {  
+    "incoterms": "DAP",  
+    "payment_terms": "30 days from invoice",  
+    "retention": "5%",  
+    "warranty": "12 months",  
+    "delivery_lead_time_days": 21  
+  }, 
+  "line_items": [  
+    { 
+      "line_id": "1",  
+      "cost_code": "03 -120-450", 
+      "description": "Rebar supply - Grade X",  
+      "uom": "ton",  
+      "quantity": 120,  
+      "unit_rate": 2450.00,  
+      "subtotal": 294000 .00, 
+      "vat_applicable": true,  
+      "vat_rate": 0.15,  
+      "source_refs": [  
+        {"type": "boq", "doc": "BOQ.xlsx", "ref": "Sheet1!B22"},  
+        {"type": "quote", "doc": "SupplierQuote.pdf", "ref": "p3"}  
+      ] 
+    } 
+  ], 
+  "totals": {  
+    "subtotal_ex_vat": 294000.00,  
+    "vat_total": 44100.00,  
+    "grand_total_inc_vat": 338100.00  
+  }, 
+  "approvals": {  
+    "status": "APPROVED",  
+    "records": [  
+      {"role": "Procurement Manager", "approved_by": "user_12", 
+"approved_at": "2026 -01-26T10:12:00Z"},  
+      {"role": "Commercial Manager", "approved_by": "user_41", 
+"approved_at": "2026 -01-26T11:05:00Z"}  
+    ] 
+  }, 
+  "compliance_report": {  
+    "rules_passed": ["SA-VAT-01", "SA -SCOPE-01", "SA -PO-01"], 
+    "rules_flagged": [],  
+    "notes": "All compliance checks passed. No scope deviations detected."  
+  }, 
+  "attachments": [  
+    {"type": "rfq_pack", "uri": "s3://tenders/TND -2026-00091/vendor/SUP -
+1029/rfq_pack.zip" }, 
+    {"type": "selected_quote", "uri": "s3://tenders/TND -2026-
+00091/quotes/SUP -1029.pdf"}  
+  ], 
+  "audit": {  
+    "created_by_agent": "procurement_agent",  
+    "created_at": "2026 -01-26T11:12:00Z",  
+    "trace_id": "tr_8f2a9c..."  
+  } 
+} 
+4.2 Finance → Procurem ent: “PO Status Update”  
+{ 
+  "schema_version": "1.0",  
+  "tender_id": "TND -2026-00091", 
+  "rfq_id": "RFQ -2026-7781", 
+  "po": { 
+    "po_number": "PO -4500192231",  
+    "status": "ISSUED",  
+    "issued_at": "2026 -01-27T08:30:00Z",  
+    "erp_system": "SAP",  
+    "erp_ref": "SAP:4500192231"  
+  }, 
+  "payment_controls": {  
+    "three_way_match_required": true,  
+    "invoice_submission_email": "ap@clientdomain.sa"  
+  }, 
+  "audit": {  
+    "updated_by": "finance_agent",  
+    "updated_at": "2026 -01-27T08:31:00Z",  
+    "trace_id ": "tr_19b7d2..."  
+  } 
+} 
+4.3 Procurement → Finance: “Goods Receipt / Delivery Milestone (Optional)”  
+{ 
+  "schema_version": "1.0",  
+  "po_number": "PO -4500192231",  
+  "delivery": {  
+    "milestone_id": "DEL -01", 
+    "expected_date": "2026 -02-20", 
+    "actual_dat e": null,  
+    "status": "SCHEDULED",  
+    "site_location": "Riyadh"  
+  }, 
+  "exceptions": [],  
+  "audit": {  
+    "created_by_agent": "procurement_agent",  
+    "created_at": "2026 -01-27T12:10:00Z",  
+    "trace_id": "tr_22aa01..."  
+  } 
+} 
+ 
+1⃣ JIRA TICKETS — PROCUREMENT 
+INTELLIGENCE AGENT  
+(Epics → Stories → Tasks)  
+ 
+EPIC 1: Procurement Agent Core Service  
+STORY 1.1 – Procurement Agent Intake Gate  
+Description  
+Validate approved tender inputs before procurement starts.  
+Tasks  
+ Validate Tender ID, project ID, approval status  
+ Reject unappro ved or incomplete tender packages  
+ Log intake event with trace ID  
+Acceptance Criteria  
+ Procurement cannot start without APPROVED status  
+ Missing fields trigger a single clarification request  
+ 
+STORY 1.2 – Supplier Mapping Eng ine 
+Description  
+Map approved scope packages to eligible suppliers.  
+Tasks  
+ Integrate Approved Vendor List (AVL)  
+ Filter suppliers by trade/category  
+ Validate supplier status (active/inactive)  
+Acceptance Criteria  
+ No RFQ issued to non -approved suppliers  
+ Supplier  metadata visible (VAT, location, certifications)  
+ 
+EPIC 2: RFQ Packaging & Issuance  
+STORY 2.1 – Vendor -Scoped RFQ Pack Builder  
+Tasks  
+ Assemble scope -specific RFQ packs  
+ Include only relevant drawings/specs  
+ Redact unrelated information  
+ Generate RFQ ZIP with manifest  
+Acceptance Criteria  
+ Zero cross -vendor document leakage  
+ RFQ pack traceable to Tender ID  
+ 
+STORY 2.2 – RFQ Issuance & Tracking  
+Tasks  
+ Email/portal RFQ issuance  
+ Due-date tracking  
+ Automated reminders  
+ Overdue escalation  
+Acceptance Criteria  
+ RFQ lifecycle states: SENT / OPENED / RESPONDED / OVERDUE  
+ Reminder frequency configurable  
+ 
+EPIC 3: Quote Intake & Normalisation  
+STORY 3.1 – Supplie r Quote Ingestion  
+Tasks  
+ Extract pricing, quantities, lead time, exclusions  
+ Parse PDFs, Excel, Word  
+ Store original quote read -only 
+Acceptance Criteria  
+ 100% traceability to source quote  
+ Extraction confidence score per field  
+ 
+STORY 3.2 – Quote Normalisation Engine  
+Tasks  
+ Align quantities and units  
+ Map quotes to BOQ lines  
+ Flag scope gaps and deviations  
+Acceptance Criteria  
+ No quote proceeds without normalization  
+ Deviations clearly flagged  
+ 
+EPIC 4: Saudi Compliance Engine  
+STORY 4.1 – VAT & ZATCA Compliance Checks  
+Tasks  
+ Validate VAT registration  
+ Check VAT rate application  
+ Flag inconsistencies  
+ 
+STORY 4.2 – Localization & Certifica tion Rules  
+Tasks  
+ Enforce local content rules (project -based)  
+ Validate supplier certifications  
+ Track certificate expiry  
+ 
+EPIC 5: Approval Orchestration  
+STORY 5.1 – Approval Workflow Routing  
+Tasks  
+ Route to Procurement → Commercial → Project Director  
+ Track approval delays  
+ Escalate bottlenecks  
+ 
+EPIC 6: Procurement → Finance Handover  
+STORY 6.1 – PO Readiness Pack Generator  
+Tasks  
+ Build PO payload  
+ Validate approval comp leteness  
+ Send structured payload to Finance Agent  
+ 
+EPIC 7: Audit & Observability  
+STORY 7.1 – Immutable Audit Logs  
+Tasks  
+ Log RFQs, quotes, approvals, compliance checks  
+ Store trace IDs across services  
+ 
+2⃣ FULL PROCUREMENT SERVICE 
+ARCHITECTURE  
+(CRM + ERP + Storage included)  
+┌──────────────────────────┐  
+│ CRM (GoHighLevel / Custom│  
+│ - Deal / Project View    │  
+│ - Approval visibility    │  
+│ - Stakeholder comments   │  
+└──────────┬───────────────┘  
+           │ (read-only visibility)  
+           ▼ 
+┌──────────────────────────┐  
+│ Procurement Agent Core   │  
+│ - Intake Gate            │  
+│ - Supplier Mapping       │  
+│ - RFQ Builder            │  
+│ - Quote Normalisation    │  
+│ - Approval Orchestration │  
+│ - Compliance Engine      │  
+└───────┬─────────┬────────┘  
+        │         │  
+        │         ▼  
+        │   ┌──────────────┐  
+        │   │ Compliance KB│  
+        │   │ Saudi Rules  │  
+        │   └──────────────┘  
+        │ 
+        ▼ 
+┌──────────────────────────┐  
+│ Secure Object Storage    │  
+│ (S3 / Azure Blob)        │  
+│ - RFQ Packs              │  
+│ - Quotes                 │  
+│ - Audit Logs             │  
+└──────────┬───────────────┘  
+           ▼ 
+┌──────────────────────────┐  
+│ Finance Agent            │  
+│ - PO Creation            │  
+│ - 3-way matching         │  
+│ - VAT validation         │  
+└──────────┬───────────────┘  
+           ▼ 
+┌──────────────────────────┐  
+│ ERP Adapter Layer        │  
+│ (SAP / Oracle / Dynamics)│  
+│ - PO                     │ 
+│ - GRN                    │  
+│ - Payments               │  
+└──────────────────────────┘  
+Key Architectural Rules  
+ CRM = visibility & approvals , not pricing logic  
+ Procurement Agent = intelligence + control  
+ ERP = execution system only  
+ Storage = single source of truth  
+ 
+3⃣ SAUDI PROCUREMENT 
+COMPLIANCE RULE ENGINE  
+(Deterministic pseudo -code)  
+function run_procurement_compliance(quote, supplier, project):  
+ 
+  flags = []  
+ 
+  // VAT / ZATCA  
+  if supplier.vat_required  and supplier.vat_number is null:  
+      flags.add(HIGH, "SA -VAT-01", "Supplier VAT not verified")  
+ 
+  if quote.vat_rate != 0.15 and quote.vat_applicable:  
+      flags.add(MEDIUM, "SA -VAT-02", "Incorrect VAT rate")  
+ 
+  // Localization  
+  if project.requires_local_content:  
+      if supplier.local_content_pct < project.min_local_content:  
+          flags.add(HIGH, "SA -LOC-01", "Local content requirement not met")  
+ 
+  // Certifications  
+  for cert in project.required_certifications:  
+      if cert not in supplier.certificates or cert.expired:  
+          flags.add(HIGH, "SA -CERT-01", "Missing or expired certification")  
+ 
+  // Scope integrity  
+  for boq_line in project.boq:  
+      if boq_line not in quote.items:  
+          flags.add(HIGH, "SA -SCOPE-01", "BOQ line missing in quote")  
+ 
+  // Payment terms  
+  if quote.payment_terms != project.allowed_payment_terms:  
+      flags.add(MEDIUM, "SA -COMM-01", "Payment terms deviation")  
+ 
+  // Decision  
+  if any flags.severity == HIGH:  
+      status = "BLOCKED"  
+  else: 
+      status = "REVIEW"  
+ 
+  return {status, flags}  
+ 
+ 
+
+==================================================
+FILE: Procurement Intelligence Agent - Scope of Work (1).pdf
+==================================================
+ 
+🔧 INTERNAL BUILD INSTRUCTIONS  
+Procurement Intelligence Agent  
+AI Division – Saudi Construction & Infrastructure  
+ 
+1. PURPOSE (READ FIRST – NON -NEGOTIABLE)  
+We are building a Procurement Intelligence Agent , not a buyer and not an ERP 
+replacement.  
+The agent’s job is to:  
+ Prepare procurement actions  
+ Control procurement workflows  
+ Enforce Saudi compliance  
+ Provide full visibility and auditability  
+ Hand off approved  data to Finance / ERP  
+AI prepares. Humans approve. Systems execute.  
+If the system:  
+ Commits spend  
+ Skips approvals  
+ Hides risk  
+👉 It has failed.  
+ 
+2. POSITION IN THE OVERALL SYSTEM  
+Upstream  
+ RFQ & Tender Intelligence Agent  
+(Approved scope, quantities, assumptions, drawings, BOQs)  
+Downstream  
+ Finance Agent  
+ ERP (SAP / Oracle / MS Dynamics via adapter)  
+Side systems  
+ CRM (visibility & approvals only)  
+ Secure object storage (S3 / Azure Blob)  
+ 
+3. CORE PRINCIPLES (ENGINEERING 
+GUARDRAILS)  
+1. ❌ No autonomous purchasing  
+2. ❌ No negotiation  
+3. ❌ No ERP logic duplication  
+4. ✅ Full traceability to source documents  
+5. ✅ Human approval at every commitment point  
+6. ✅ Saudi compliance enf orced before progression  
+ 
+4. WHAT INPUTS THE AGENT RECEIVES (STRICT)  
+The Procurement Agent ONLY accepts:  
+ Approved Tender ID  
+ Approved scope packages (by trade)  
+ Validated quantities / BOQs  
+ Assumptions & exclusions  
+ Approved  supplier list (AVL)  
+ Budget & cost codes  
+ Approval matrix  
+❌ If approval status ≠ APPROVED → STOP and request approval  
+❌ If data is missing → Ask ONE question only  
+ 
+5. PROCUREMENT WORKFLOW (MANDATORY 
+FLOW)  
+State Machine (Mu st Be Implemented)  
+READY → RFQ_PREPARED → RFQ_SENT → QUOTES_RECEIVED  
+→ NORMALIZED → COMPLIANCE_CHECKED → DECISION_PACK_READY  
+→ APPROVED → HANDED_TO_FINANCE  
+Rework loops:  
+REJECTED → REQUOTE_REQUESTED → RFQ_SENT  
+ 
+6. SUPPLIER MANAGEMENT RULES  
+Supplier Mapping  
+ Use Approved Vendor List (AVL) only  
+ Filter suppliers by:  
+o Trade  
+o Geography  
+o Certifications  
+o Project rules  
+❌ Never auto -add new suppliers  
+❌ Never issue RFQs to inactive vendors  
+ 
+7. RFQ PACK BUILDER (CRITICAL)  
+What to Build  
+For each supplier:  
+ Create a vendor -scoped RFQ pack  
+ Include only:  
+o Relevant drawings  
+o Relevant specs  
+o Relevant BOQ lines  
+o Standards applicable to that scope  
+ Generate a manifest  listing all included files  
+Hard Rule  
+🚫 Zero information leakage between suppliers  
+This must be tested.  
+ 
+8. RFQ ISSUANCE & TRACKING  
+The agent must:  
+ Issue RFQs (email / portal adapter)  
+ Track:  
+o Sent 
+o Opened  
+o Responded  
+o Overdue  
+ Send reminders  
+ Escalate overdue RFQs to humans  
+❌ AI must not discuss pricing or negotiate  
+ 
+9. QUOTE INGESTION & EXTRACTION  
+For every supplier quote:  
+ Store original file as read -only 
+ Extract:  
+o Line items  
+o Quantities  
+o Unit rat es 
+o Lead time  
+o Exclusions  
+o Payment terms  
+o VAT treatment  
+Each extracted field must include:  
+ Confidence score  
+ Source reference (doc + page)  
+ 
+10. QUOTE NORMALISATION (APPLE -TO-APPLE)  
+All quotes must be normalized into a canonical structure : 
+line_id | description | uom | qty | unit_rate | total  
+status: MATCHED / PARTIAL / MISSING / EXTRA  
+The agent must:  
+ Align q uantities  
+ Flag scope gaps  
+ Flag exclusions  
+ Highlight deviations  
+❌ Never “fix” quantities automatically  
+ 
+11. SAUDI PROCUREMENT COMPLIANCE 
+(MANDATORY)  
+Must Enforce:  
+ VAT / ZATCA registration  
+ Correct VAT rate application  
+ Suppl ier certifications  
+ Local content rules (if applicable)  
+ Project -specific rules:  
+o Aramco  
+o SEC 
+o RCJY  
+o NEOM / Red Sea / Diriyah  
+Compliance Output  
+ Rules passed  
+ Rules failed  
+ Severity (HIGH blocks / MEDIUM review)  
+❌ HIGH severity = cannot proceed  
+ 
+12. FRAUD & RISK CONTROLS (DO NOT SKIP)  
+Bank Detail Change Detection  
+ If supplier bank details differ from vendor master:  
+o HARD BLOCK  
+o Require human verification  
+Procurement Risk Score  
+Compute per supplier:  
+ Compliance risk  
+ Delivery risk  
+ Scope risk  
+ Commercial risk  
+Output:  
+Supplier A: LOW  
+Supplier B: MEDIUM  
+Supplier C: HIGH  
+ 
+13. APPROVAL ORCHESTRATION  
+Approval Layers (Configurable)  
+ Engineering confirmation  
+ Procurement approval  
+ Commercial app roval  
+ Project Director approval  
+The agent must:  
+ Route approvals  
+ Track delays  
+ Escalate bottlenecks  
+❌ No approval → No finance handover  
+ 
+14. HANDOVER TO FINANCE (STRICT CONTRACT)  
+Only after approval:  
+ Generate PO Readiness Payload  
+ Include:  
+o Selected supplier  
+o Approved pricing  
+o Terms  
+o Compliance status  
+o Audit references  
+Finance handles:  
+ PO creation  
+ 3-way matchin g 
+ Payments  
+ 
+15. CRM INVOLVEMENT (READ -ONLY)  
+CRM is used for:  
+ Project visibility  
+ Approval tracking  
+ Stakeholder comments  
+CRM must NOT:  
+ Store pricing logic  
+ Issue RFQs  
+ Trigger ERP actions  
+ 
+16. STORAGE & SECURITY  
+ Store all documents in secure object storage  
+ Originals are read -only 
+ All actions logged with:  
+o Who  
+o When  
+o What  
+o Why  
+o Source reference  
+Saudi data residency rules must be respected where required.  
+ 
+17. HUMAN REVIEW UI (REQUIRED FOR MVP)  
+Must include:  
+ Quote comparison table  
+ Compliance flags  
+ Risk scores  
+ Approval buttons  
+ Audit trail view  
+ Export decision pack (PDF / Excel)  
+ 
+18. WHAT IS EXPLICITLY OUT OF SCOPE  
+🚫 Supplier negotiation  
+🚫 Contract signing  
+🚫 Autonomous PO issuance  
+🚫 ERP replacement  
+🚫 Pricing strategy decisions  
+ 
+19. ACCEPTANCE CRITERIA (HOW WE TEST)  
+The system is NOT DONE  unless: 
+ RFQ packs are vendor -scoped and leak -proof  
+ Quotes are normalized and traceable  
+ VAT non -compliance blocks progress  
+ No finance handover without approvals  
+ Audit trail shows every step  
+ Re-quote and addendum flows work  
+ 
+20. SUCCESS METRICS  
+ Reduced procurement cycle time  
+ Fewer scope disputes  
+ Strong audit outcomes  
+ Faster PO readiness  
+ High user trust and adoption  
+ 
+ 
+
+==================================================
+FILE: Tender & RFQ Information (2).pdf
+==================================================
+ 
+1) What this AI Agent is (scope, boundaries, deliverables)  
+Purpose (what it must achieve)  
+The agent is the front gate  for RFQs/tenders: capture tender pac kages, convert them into 
+structured, review -ready intelligence , and prep handover to 
+procurement/engineering/management —reducing manual hours but not replacing 
+judgment . 
+Non-negotiables (design constraints)  
+ No system rep lacement  → integrate with existing email, storage, ERP, PM tools.  
+ Human -in-the-loop always  (AI prepares → human approves) and nothing is 
+submitted automatically . 
+ Traceability over speed  → every output must point back to source doc + 
+page/section.  
+ Audit -ready by default  (logged, timestamped, reviewable).  
+Entry points & ingestion requirements  
+ Monitor tender inboxes + detect tender emails; generate Tender ID; store raw email 
+metadata.  
+ Fetch attachments + linked docs (explicitly mentions SharePoint / Drive / 
+OneDrive ) and preserve original names + version history.  
+ Developer tickets already define IMAP/Graph/Gmail  listener and 
+SharePoint/Drive/OneDrive link fetcher , plus malware scanning.  
+Storage contract (super important for integrations)  
+Mandatory tender folder  structure:  
+/Tender_ID/01..08 (Instructions, Scope, Drawings, Specs, BOQ, Standards, 
+Commercial, Output)  
+Also: originals read -only + never overwrite + keep snapshots for addenda.  
+Core “intelligence” outputs  
+Your epics imply the agent produces (after OCR/cl assification):  
+ Tender instructions + deadlines + required docs + standards checklist  
+ BOQ parsing + scope/WBS + linking across scope/BOQ/drawings  
+ Compliance matrix + risks/gaps + assumptions + RFI drafts (human approved)  
+ “Tender Pack” export templates + Procurement handover JSON  
+Addendum/versioning flow (KSA -critical)  
+New email → match tender → detect addendum → delta compare → update impacted 
+outputs → force re -approval.  
+ 
+2) Saudi construction: common third -party tools yo u 
+should plan to integrate  
+Below is the realistic integration set  you’ll repeatedly hit with Saudi contractors + giga -
+projects + government work.  
+A) Government tenders platform (must -have for public sector)  
+Etimad (Ministry of Finance / Government Tenders Platform)  
+ Etimad provides services for browsing tenders and submitting bids electronically . 
+(Etimad Portal ) 
+Integration implication:  your agent should support:  
+ importing tender/RFP packs from Etimad (manual upload + assisted capture)  
+ storing Etimad tender IDs + deadlines + addendum notices  
+ genera ting Etimad -ready submission checklists (but still no auto -submit , per your 
+scope)  
+B) Major owner / enterprise procurement portals (very common in KSA)  
+Saudi Aramco supplier ecosystem (SAP Ariba / e -Marketplace + Supplier Portal)  
+Aramco explicitly states s uppliers manage interactions through systems including SAP Ariba  
+as its e -Marketplace platform. ( aramco.com ) 
+Aramco also publis hes a SAP Ariba Suppliers Technical Guide . (aramco.com ) 
+Integration implication:  support “supplier portal intake” patterns:  
+ RFQ invitations arrive via portal + email → agent ingests email + attachments + 
+portal references  
+ map tender package → structured tender case → procurement handover JSON  
+C) Email + collaboration (almost always Micro soft in KSA enterprises)  
+Your spec already calls out IMAP/Graph/Gmail  and link fetching from 
+SharePoint/Drive/OneDrive . 
+In practice, Saudi enterprises heavily standardize on Microsoft 365 , so Microsoft Graph 
++ SharePoint/OneDrive connector is “day 1”.  
+D) D ocument control / CDE (mega projects especially)  
+Autodesk BIM 360 / Autodesk Construction Cloud (ACC)  
+Autodesk University content shows The Red Sea Development (TRSDC)  implemented 
+BIM 360  as the owner on large -scale projects. ( Autodesk ) 
+Integration implication:  you need an ACC/BIM360 connector for:  
+ pulling tender drawings/specs/models  
+ writing back: compliance matrix, RFI drafts, submittal logs (usually via export + 
+controlled upload)  
+Oracle Aconex (document control + audit trail)  
+Oracle positions Aconex around end -to-end collaboration with an unalter able audit trail —
+which matches your “audit -ready + traceability” principle. ( Oracle ) 
+For giga -project env ironments, Aconex is commonly specified; some NEOM -related 
+procedures circulated online reference Aconex as the CDE (note: often hosted on third -party 
+document sites, so treat as “confirm per client”). ( Course Hero ) 
+E) Planning & scheduling (very common for large EPCs)  
+Oracle Primavera P6 / Primavera Cl oud 
+Aramco recruiting pages list experience in Primavera P6  among planning software 
+requirements (strong signal it’s used in their environment). ( careers.aramco.com ) 
+Integration implication:  import/export:  
+ WBS + tender milestone schedule + constraints  
+ risk flags tied to schedule impacts  
+(Usually starts as Excel/XER/XML export; deeper APIs later.)  
+F) ERP / Finance  backbone (common in big contractors)  
+SAP ERP (including SAP Cloud ERP / S/4 family)  
+SAP has a public case study of Al-Rawaf Contracting Company  implementing SAP Cloud 
+ERP . (SAP) 
+Integration implication:  your tender intelligence should map cleanly into ERP objects:  
+ project/job setup, cost codes, BOQ line mapping, vendor package s tructure, approvals 
+evidence  
+(Also common in region: Oracle ERP/Fusion; you’ll often see SAP + Oracle mixes, but I’m 
+only stating what we have solid sources for here.)  
+G) Construction management platforms (more common with international 
+contractors, increasing in region)  
+Procore  
+Procore expanded into MENA  and emphasizes integrations via its ecosystem marketplace. 
+(Procore ) 
+Integration implication:  treat Procore as “Phase 2/3 connector ” depending on your target 
+client base (international JV contractors use it more often).  
+ 
+3) Recommended integration roadmap (aligned to your 
+scope)  
+MVP (fastest path; matches your PDF exactly)  
+1. Email ingestion  (Graph + I MAP + Gmail)  
+2. Storage connectors : SharePoint/OneDrive + Google Drive + S3/Azure Blob  
+3. Folder structure + versioning snapshots + audit log  
+4. Export pack + procurement handover JSON  
+Phase 2 (Saudi -specific deal -closers)  
+ Etimad intake support  (guided import, tend er metadata capture, addendum tracking) 
+(Etimad Portal ) 
+ Aramco SAP Ariba / e -Marketplace i ntake patterns  (aramco.com ) 
+ ACC/BIM360 connector  (especially if targeting Red Sea / PIF ecosystem 
+contractors) ( Autodesk ) 
+Phase 3 (enterprise depth)  
+ Oracle Aconex connector  (document control workflows + transmittals) ( Oracle ) 
+ Primavera  import/export pipeline ( careers.aramco.com ) 
+ SAP ERP integration  (project/job + cost codes + approvals evidence) ( SAP) 
+ Optional: Procore  connector for certain contractors/JVs ( Procore ) 
+ 
+4) Integration “contract” (what data we must map 
+consistently)  
+To avoid “custom integration chaos”, standardize these objects internally (then map 
+outward):  
+ TenderCase  (Tender ID, client/owner, deadlines, portal refs like Etimad/Ariba)  
+ Document  (hash, version, source link, classification, page -level citations) — required 
+by traceability  
+ BOQItem  (item no, description, qty, unit, discipline, linked drawing refs)  
+ ComplianceItem  (requirement, evidence link, status, reviewer approval)  
+ RFI / Ass umption / Risk  (each linked to exact source sections; human -approved)  
+ HandoverPayload  (attachments map + JSON schema to procurement agent)  
+ 
+ 
+ 
+ 
+ 
+1) Goal and expected outcome  
+Goal  
+Build an AI -assisted Tender/RFQ intake + analysis system that:  
+ Ingests tender invitations (email + portal links + uploaded files)  
+ Organizes documents into a strict folder structure  
+ Extracts key tender requirements (deadl ines, compliance, scope, BOQ, risks, RFIs)  
+ Produces an audit -ready tender pack  and a handover payload  for 
+Procurement/Estimating  
+ Keeps a human -in-the-loop approval step for every final output (no auto -
+submissions)  
+What “done” looks like  
+For any tender invi tation, the system can produce:  
+ A Tender Case with unique ID + metadata  
+ Clean document library + version history (including addenda)  
+ Tender summary + compliance matrix + risk/assumptions list + RFI draft list  
+ BOQ structured output (CSV/JSON) where applicab le 
+ Export pack (PDF/Docx/Excel templates) + a standard “handover.json”  
+ 
+2) Scope boundaries (non -negotiables)  
+ Human approval required  before any final deliverable is marked “Ready”  
+ Never overwrite originals  (read -only or iginals + versioned snapshots)  
+ Everything must be traceable : outputs link back to source file + page/section  
+ No “submit bid” automation (we support preparation only)  
+ Must be secure -by-design (malware scan, RBAC, audit logs)  
+ 
+3) System architecture (high -level)  
+Components  
+1. Ingestion Layer  
+o Email listener(s): Microsoft Graph (primary), IMAP fallback, Gmail support  
+o Link fetcher: SharePoint / OneDrive / Google Drive links  
+o Manual upload portal (dra g/drop tender packs)  
+2. Storage Layer  
+o Primary: SharePoint/OneDrive (common in KSA enterprises)  
+o Optional: S3 / Azure Blob (enterprise setups)  
+o All stored under Tender ID folder structure  
+3. Processing Layer  
+o Document classification: 
+instructions/specs/drawings/BOQ/ commercial/standards  
+o OCR for scanned PDFs  
+o Extraction pipelines:  
+ Tender rules & deadlines  
+ Compliance matrix  
+ BOQ parsing  
+ Risk/assumptions  
+ RFI draft generation  
+o Addendum delta comparison + re -approval triggers  
+4. App Layer  
+o Tender dashboard (status, deadlines, out puts, approvals)  
+o Reviewer workflow (procurement/engineering/commercial)  
+o Export + handover generation  
+5. Integration Layer  
+o Saudi -specific external tools (Etimad, SAP Ariba patterns, ACC/BIM360, 
+Aconex etc.)  
+o ERP/PM exports (Primavera, SAP)  
+ 
+4) Folder structure standard (must implement exactly)  
+For every Tender Case, create:  
+/Tender_<ID>/  
+ 01_Instructions  
+ 02_Scope  
+ 03_Drawings  
+ 04_Specifications  
+ 05_BOQ  
+ 06_Standards  
+ 07_Commercial  
+ 08_Output  (generated deliverables only)  
+Rules:  
+ Store email + attachments + fetched linked docs (with original file names)  
+ All originals read -only + hash stored (SHA256)  
+ Addenda stored as new versions; never replace prior docs  
+ 
+5) Data model (minimum objects)  
+Core entities  
+ TenderCase  
+o tender_id, title, owner/client, source (email/portal/manual), 
+due_date/timezone, status  
+o portal_refs (Etimad ID, Ariba ref, etc.)  
+ Document  
+o tender_id, doc_id, filename, type, version, source_url, hash, created_at  
+ ExtractedItem  
+o type: deadline / requirement / compliance / risk / assumption / RFI / BOQ line  
+o value fields + source citation  (doc_id, page, snippet)  
+ Approval  
+o artifact_id, approver, sta tus, timestamp, comments  
+ AuditLog  
+o who did what, when, from where, on which object  
+Output artifacts  
+ tender_summary.md/pdf  
+ compliance_matrix.xlsx  
+ boq_structured.csv/json  
+ risks_assumptions.xlsx  
+ rfi_drafts.docx  
+ handover.json  
+ 
+6) Core workflows to implement  
+A) New Tender Intake (Email / Manual / Link)  
+1. Detect tender email or manual upload  
+2. Create TenderCase + Tender ID  
+3. Download/store all files (attachments + linked docs)  
+4. Classify docs into 01 –08 folders  
+5. Run malware scan + OCR if  needed  
+6. Generate first -pass outputs (Summary, Compliance, Risks, BOQ)  
+7. Set status: “Needs Review”  
+B) Review & Approval  
+1. Reviewer sees outputs + citations  
+2. Reviewer can:  
+o Accept / edit / reject items  
+o Add missing requirements  
+o Approve deliverables  
+3. Once all mandatory approvals complete → status: “Approved / Ready for 
+Handover”  
+4. Export pack created in 08_Output  
+C) Addendum Handling (must be robust)  
+1. New email arrives referencing existing tender OR manual addendum upload  
+2. Save addendum as new version(s)  
+3. Run delta compare:  
+o deadlines changed?  
+o scope/BOQ changed?  
+o commercial terms changed?  
+4. Mark impacted artifacts as “Re-approval Required”  
+5. Notify relevant reviewers  
+ 
+7) Integration roadmap (Saudi -focused)  
+MVP (build first)  
+ Micro soft 365 Graph (email + attachments)  
+ IMAP fallback + Gmail support  
+ SharePoint/OneDrive link fetching  
+ Google Drive link fetching  
+ Storage support: SharePoint/OneDrive + optional S3/Azure Blob  
+ Export pack + handover.json  
+Phase 2 (Saudi high -value)  
+ Etimad support  (government tenders)  
+o Tender metadata capture (Etimad tender ID, deadlines, addendum notices)  
+o Assisted import (manual upload + structured fields)  
+ SAP Ariba intake patterns  
+o Most common: portal sends email notifications + attachments/links  
+o We s upport capture of Ariba reference IDs + file intake  
+ Autodesk ACC/BIM360 connector (optional for mega projects)  
+o Pull drawings/specs; export outputs back as controlled uploads  
+Phase 3 (enterprise depth)  
+ Oracle Aconex (document control)  connector (download + controlled upload)  
+ Primavera P6 integration  (import/export schedules; milestone mapping)  
+ SAP ERP integration  (export tender handover to cost codes/project setup)  
+ Optional: Procore connector (JV/international contractors)  
+ 
+8) Security + compliance requirements  
+ Malware scanning on every file ingested  
+ RBAC:  
+o Super Admin  
+o Tender Admin  
+o Reviewer (Procurement/Commercial/Engineering)  
+o Viewer  
+ Audit log for all actions  
+ Encryption at rest + TLS in transit  
+ Data residency option (Saudi clients may require regional hosting)  
+ “No hallucination” rule: every extracted requirement must carry a source citation or 
+be flagged “Needs Human Input”  
+ 
+9) Engineering tasks (assignable che cklist)  
+Backend (API + processing)  
+ 
+ TenderCase CRUD + status machine  
+ 
+ Email ingestion (Graph) + IMAP/Gmail fall back  
+ 
+ Link fetchers (SharePoint/OneDrive/Drive)  
+ 
+ File pipeline: store → hash → malware scan → OCR → classify  
+ 
+ Extraction services:  
+o 
+ Instructions/deadlines extractor  
+o 
+ Compliance matrix generator  
+o 
+ BOQ parser (tables → structured output)  
+o 
+ Risks /assumptions/RFI generator  
+ 
+ Addendum delta compare + artifact invalidation  
+ 
+ Export engine (docx/xlsx/pdf)  
+ 
+ Handover JSON schema + generator  
+ 
+ Audit log + RBAC enforcement  
+Frontend (dashboard + approvals)  
+ 
+ Tender list + filters + SLA countdown to due date  
+ 
+ Tender details: docs, versions, classifications  
+ 
+ Output viewer with citations (click → open source page)  
+ 
+ Reviewer approval workflow (approve/reject/comment)  
+ 
+ Notifications (re -approval required)  
+DevOps  
+ 
+ Secrets management (Graph creds, storage creds)  
+ 
+ Logging/monitoring + alerting  
+ 
+ Backup strategy + retention policy  
+ 
+ Environment separation (dev/staging/prod)  
+ 
+10) Definition of Done (MVP accept ance criteria)  
+A tender email with attachments + SharePoint links should result in:  
+ A TenderCase created with correct folder structure  
+ All documents stored, hashed, malware -scanned, OCR’d when needed  
+ Auto -generated: summary, compliance matrix, risks/assump tions, and handover.json  
+ Reviewer can approve outputs; system locks final versions into 08_Output  
+ Addendum triggers delta compare and forces re -approval  
+ Full audit log exists for all actions  
+ 
+ 
+ 
+
+==================================================
+FILE: Tender & RFQ agent (2).pdf
+==================================================
+INTERNAL TEAM INSTRUCTIONS  
+RFQ & Tender Intelligence Agent  
+AI Division for Saudi Construction Companies  
+ 
+1. PURPOSE (READ FIRST)  
+We are building an RFQ &  Tender Intelligence Agent  that acts as the front gate  of the AI 
+Division for Saudi construction and infrastructure companies.  
+Its job is to:  
+ Capture RFQs and tenders  
+ Convert unstructured tender packages into structured, accurate, review -ready 
+intelligence  
+ Prepare data for procurement, engineering review, and management decisions  
+ Reduce manual engineering hours without replacing human judgement  
+This agent prepares information.  
+Humans approve decisions.  
+Nothing is submitted automatically.  
+ 
+2. CORE PRINCIPLES (NON -NEGOTIABLE)  
+All team members must design and implement with these principles:  
+1. No system replacement  
+We integrate with existing email, document storage, ERP, and PM systems.  
+2. Human -in-the-loop always  
+AI prepares → Hu mans review → Humans approve.  
+3. Traceability over speed  
+Every output must link back to its source document, page, and section.  
+4. Saudi -first compliance  
+Standards, VAT logic, and tender practices must reflect Saudi construction reality.  
+5. Audit -ready by default  
+Every action must be logged, timestamped, and reviewable.  
+ 
+3. AGENT ENTRY POINT (EMAIL & INTAKE)  
+What the Agent Must Do  
+ Monitor designated inboxes (e.g. tenders@, rfq@)  
+ Detect tender -related emails using:  
+o Keywords (RFQ, Tender, ITT, RFP, BOQ, Drawings)  
+o Sender domain  
+o Attachments or links  
+Team Instructions  
+ Implement an email listener / webhook  
+ Generate a unique Tender ID  per intake  
+ Ignore non -tender emails  
+ Log sender, date, subject, and message body  
+ 
+4. DOCUMENT COLLECTION & STORAGE  
+Required Behaviour  
+ Download all attachments  
+ Follow and securely fetch documents from links (SharePoint, Drive, ZIPs)  
+ Preserve original filenames  
+ Detect addendums and revisions  
+Folder Stru cture (MANDATORY)  
+/Tender_ID/  
+ ├── 01_Instructions  
+ ├── 02_Scope_of_Work  
+ ├── 03_Drawings  
+ ├── 04_Specifications  
+ ├── 05_BOQ 
+ ├── 06_Standards  
+ ├── 07_Commercial  
+ └── 08_Output  
+Team Instructions  
+ Originals must be read -only 
+ Maintain version history  
+ Never overwrite files  
+ 
+5. DOCUMENT CLASSIFICATION  
+The Agent Must:  
+ Classify every document into one category  
+ Assign confidence score  
+ Allow manual override  
+Team Instructions  
+ Use ML/NLP classification  
+ If confidence < thresho ld → flag for human review  
+ Store classification metadata  
+ 
+6. TENDER INSTRUCTIONS & STANDARDS 
+EXTRACTION  
+The Agent Must Extract:  
+ Submission deadlines  
+ Mandatory formats  
+ Required certificates  
+ Client instructions  
+ Saudi stand ards:  
+o SBC  
+o SASO  
+o Aramco  
+o SEC 
+o RCJY  
+o Project -specific standards (NEOM, Red Sea, etc.)  
+Team Instructions  
+ Build an instruction hierarchy  
+ Flag conflicts between documents  
+ Output a tender compliance checklist  
+ 
+7. SCOPE OF WORK INTELLIGENCE  
+The Agent Must:  
+ Read scope documents line -by-line 
+ Extract:  
+o Work packages  
+o Inclusions / exclusions  
+o Deliverables  
+o Assumptions  
+Team Instructions  
+ Maintain traceability to document pages  
+ Produce a structured scope breakdown  
+ Flag ambiguous or missing scope items  
+ 
+8. DRAWINGS & BIM PROCESSING  
+If Drawings Only:  
+ Identify drawing type (Arch / Struct / MEP)  
+ Detect revisions  
+ Link drawings to scope items  
+If BIM / IFC Provided:  
+ Load BIM model  
+ Extract:  
+o Areas  
+o Volumes  
+o Element counts  
+ Validate units  
+Team Instructions  
+ BIM data is assistive , not authoritative  
+ Compare BIM vs drawings  
+ Flag discrepancies clearly  
+ 
+9. BOQ & QUANTITY LOGIC  
+The Agent Must:  
+ Read BOQs (Excel/PDF)  
+ Map BOQ items to scope and drawings  
+ Compare BOQ vs BIM quantities (if available)  
+Team Instructions  
+ Highlight mismatches  
+ Do NOT auto -correct quantities  
+ Provide explanations, not assumptions  
+ 
+10. TEMPLATE AUTO -POPULATION  
+The Agent Must Populate:  
+ Internal tender templates  
+ Client submission formats  
+Including:  
+ Scope summaries  
+ Quantities  
+ Compliance matrix  
+ Draft technical responses  
+Team Instructions  
+ Mark all AI -generated text as Draft  
+ Require human approval flags  
+ No final pricing or commitments  
+ 
+11. RISK, GAP & ASSUMPTIONS ENGINE  
+The Agent Must Flag:  
+ Missing drawings  
+ Conflicting instructions  
+ Incomplete BOQs  
+ Unrealistic timelines  
+ Compliance gaps  
+The Ag ent Must Generate:  
+ Draft assumptions  
+ Draft exclusions  
+ Draft RFIs (referenced & professional)  
+Team Instructions  
+ Never hide risks  
+ Always link risks to source documents  
+ 
+12. TENDER READINESS SCORING  
+The Agent Must Output:  
+ Tender readiness percentage  
+ Risk level (Low / Medium / High)  
+Team Instructions  
+ Scoring must be explainable  
+ Used for go / no -go decisions  
+ 
+13. HANDOVER TO PROCUREMENT AGENT  
+The Agent Must Deliver:  
+ Structured scope packages  
+ Quantities and BOQ mappings  
+ Supplier -relevant work packages  
+ Assumptions & clarifications  
+Team Instructions  
+ Use structured formats (JSON / tables)  
+ Provide executive su mmary  
+ Trigger procurement workflows only after approval  
+ 
+14. HUMAN REVIEW WORKSPACE (CRITICAL)  
+Required Features:  
+ Side-by-side view:  
+o Original document  
+o AI extraction  
+ Edit, approve, reject  
+ Commenting & notes  
+ Approval buttons  
+Team Instructions  
+ No black -box outputs  
+ Review experience must be fast and intuitive  
+ 
+15. SECURITY & COMPLIANCE  
+Mandatory:  
+ Role -based access  
+ Encrypted storage  
+ Saudi data residency (if required)  
+ Immutable audit logs  
+Team Instructions  
+ Treat tenders as confidential IP  
+ Log everything  
+ 
+16. WHAT IS EXPLICITLY OUT OF SCOPE  
+ Autonomous submissions  
+ Final pricing decisions  
+ Contractual commitments  
+ Replacing client systems  
+ Engineerin g judgement replacement  
+ 
+17. SUCCESS METRICS (HOW WE MEASURE THIS)  
+ Time to tender readiness  
+ Reduction in manual engineering hours  
+ Accuracy of quantities  
+ Fewer post -submission clarifications  
+ Faster procurement kickoff  
+ 
+FINAL NOTE TO THE TEAM  
+We are not building a chatbot.  
+We are building an enterprise tender intelligence system  for Saudi mega projects . 
+If the system:  
+ Cannot explain itself  
+ Cannot be audited  
+ Cannot be overridden  
+👉 It is wrong.  
+ 
+ 
+1) TECHNICAL ARCHITECTURE (BOXES + FLOWS)  
+A. High -Level System (End -to-End)  
+[Client Email/Portal]  
+      | 
+      v 
+[Ingestion Layer]  
+- Email Listener (IMAP/Graph/Gmail API)  
+- Link Fetcher (SharePoint/Drive/OneDrive)  
+- ZIP Handler (nested scanning)  
+      | 
+      v 
+[Tender Case Manager]  
+- Tender ID creation  
+- Versioning/Addendum tracker  
+- Metadata store  
+      | 
+      v 
+[Document Store]  
+- Raw Originals (read -only) 
+- Classified F olders (01..08)  
+- Version snapshots  
+      | 
+      v 
+[Document Intelligence Pipeline]  
+- Classifier (doc type)  
+- OCR (Arabic/English)  
+- Text/Table extractor  
+- Drawing parser  
+- BIM/IFC engine (optional)  
+      | 
+      v 
+[Knowledge & Rules Layer]  
+- Saudi Standards KB + project/client overlays  
+- Instruction hierarchy + conflict engine  
+- Risk & gap detector  
+- Assumptions/exclusions generator  
+      | 
+      v 
+[Tender Workspace (Human -in-the-loop)] 
+- Side-by-side review  
+- Approve/Reject/Edit  
+- RFI Draft  review 
+      | 
+      v 
+[Template Builder]  
+- Client template filler  
+- Internal tender pack generator  
+      | 
+      v 
+[Handover Bus]  
+- JSON payloads + attachments map  
+- Triggers Procurement Agent  
+      | 
+      v 
+[Procurement Intelligence Agent]  
+- RFQs to su ppliers 
+- Quote comparison  
+- PO/contract alignment  
+B. Document Processing Flow (Per Tender)  
+Email Arrives -> Detect Tender -> Create Tender ID  
+   -> Fetch Attachments/Links -> Virus Scan  
+   -> Classify Documents -> Store in Folder Structure  
+   -> OCR/Extract -> Build Structured Entities  
+   -> Apply Saudi Standards/Instructions  
+   -> Generate: Scope/WBS, Quantities, Compliance Matrix, Risks, RFIs, 
+Assumptions  
+   -> Human Review & Approval  
+   -> Export Templates + Send Handover JSON to Procurement  
+C. Version/Addendum Flow (Critical for KSA)  
+New Email -> Match to Existing Tender?  
+   YES -> Addendum Detected -> Compare Documents (delta)  
+        -> Update impacted entities (scope, quantities, deadlines)  
+        -> Notify reviewer + mark items needing re -approval  
+   NO  -> New Tender Case 
+ 
+2) JIRA -READY DEVELOPER TASK TICKETS (EPICS 
++ STORIES)  
+EPIC 1 — Ingestion Layer  
+TEND -101 Implement email listener (IMAP/Graph/Gmail)  
+ Acceptance: Detect tender emails, extract metadata,  store raw body, create event.  
+TEND -102 Attachment downloader + integrity preservation  
+ Acceptance: Download all attachments, keep original names, store checksum.  
+TEND -103 Link fetcher (SharePoint/Drive/OneDrive)  
+ Acceptance: Resolve links (auth -supported), download files, log access errors.  
+TEND -104 ZIP & nested archive handler  
+ Acceptance: Unpack recursively, detect file types, prevent zip -bombs.  
+TEND -105 Malware scan integration  
+ Acceptance: Block/quarantine suspicious files, notify reviewer.  
+ 
+EPIC 2 — Tender Case Manager (ID, Versioning, Audit)  
+TEND -201 Tender ID generator + case creation  
+ Acceptance: Unique ID, metadata saved, folder structure created.  
+TEND -202 Addendum/version detection engine  
+ Acceptance: Re cognize addendum keywords + compare timestamps + sender thread.  
+TEND -203 Delta comparison for documents  
+ Acceptance: Detect changed/added/removed files; mark impacted outputs.  
+TEND -204 Audit log service  
+ Acceptance: Immutable logs for events (who/what/when/s ource).  
+ 
+EPIC 3 — Storage & Folder Structure  
+TEND -301 Implement tender folder structure + permissions  
+ Acceptance: Create /Tender_ID/01..08; originals read -only.  
+TEND -302 Versioned storage snapshots  
+ Acceptance: Store each addendum as a snapshot (diff + full list).  
+ 
+EPIC 4 — Document Classification & OCR  
+TEND -401 Document classifier (category + confidence)  
+ Acceptance: Classify into 
+Instructions/Scope/Drawings/Spec/BOQ/Standards/Commercial.  
+TEND -402 OCR pipeline Arabic/English + tables  
+ Acceptance: Extract text + tables, return confidence + coordinates.  
+TEND -403 Drawing file handler (PDF drawings + metadata)  
+ Acceptance: Identify sheet number, title, revision, discipline.  
+TEND -404 BIM/IFC extraction module  
+ Acceptance: Extract areas/volumes/counts; validate units; confidence scoring.  
+ 
+EPIC 5 — Intelligence Extraction  
+TEND -501 Tender instruction extractor  
+ Acceptance: Deadlines, submission format, man datory docs, contacts.  
+TEND -502 Scope extractor + WBS builder  
+ Acceptance: Structured scope items with sources.  
+TEND -503 BOQ parser (Excel/PDF)  
+ Acceptance: Item list, quantities, units, mapping fields.  
+TEND -504 Scope -BOQ -Drawing linker  
+ Acceptance: Link enti ties; flag mismatches & missing references.  
+ 
+EPIC 6 — Saudi Standards & Compliance Engine  
+TEND -601 Saudi Standards Knowledge Base (SBC/SASO/SEC/Aramco/RCJY)  
+ Acceptance: Standards registry + tags by discipline.  
+TEND -602 Instruction hierarchy + conflict detection  
+ Acceptance: Detect conflicting requirements and propose RFI.  
+TEND -603 Compliance matrix generator  
+ Acceptance: Auto -fill compliance table with evidence links.  
+ 
+EPIC 7 — Risk, Ass umptions, RFIs  
+TEND -701 Risk & gap detector  
+ Acceptance: Missing drawings, unclear scope, BOQ gaps, timeline risks.  
+TEND -702 Assumptions/exclusions generator (draft)  
+ Acceptance: Output labelled draft + evidence.  
+TEND -703 RFI draft generator  
+ Acceptance: Draft RFIs referencing exact source sections; human approval required.  
+ 
+EPIC 8 — Human Review Workspace  
+TEND -801 Side-by-side viewer (source + extracted)  
+ Acceptance: Reviewer can see extraction linked to page /section.  
+TEND -802 Approve/Reject/Edit workflow + re -approval on addendum  
+ Acceptance: Addendum changes force re -approval of impacted items.  
+ 
+EPIC 9 — Template Filling & Export  
+TEND -901 Template engine (internal + client f ormats)  
+ Acceptance: Populate templates using approved data only.  
+TEND -902 Output pack generator  
+ Acceptance: Build “Tender Pack” PDF/Docx/Excel + logs.  
+ 
+EPIC 10 — Procurement Handover  
+TEND -1001  Handover payload generator (JSON)  
+ Acceptance: Generate payload according to schema + attachments map.  
+TEND -1002  Trigger Procurement Agent + status tracking  
+ Acceptance: Procurement receives payload; tender status updates.  
+ 
+3) SYSTEM PROMPTS (RFQ/TENDER AGENT)  
+A. System Prompt (Core)  
+Use as your agent “system” instruction:  
+ROLE  
+You are the RFQ & Tender Intelligence Agent  for MultipleAI Solutions, deployed for 
+Saudi construction and infrastr ucture companies. Your job is to ingest tender packages, 
+extract structured information, and prepare a review -ready tender intelligence pack. You must 
+never finalize decisions, pricing, or submissions. Humans approve all outputs.  
+NON -NEGOTIABLE RULES  
+ Do no t assume missing data. If unclear, flag and draft an RFI.  
+ Every extracted fact must include a citation: document name + page/section + 
+confidence score.  
+ Respect instruction hierarchy and detect conflicts.  
+ Handle Arabic and English documents.  
+ Produce output s in structured formats required by downstream Procurement Agent.  
+PRIMARY OUTPUTS  
+1. Tender summary (deadlines, contacts, submission rules)  
+2. Scope breakdown (WBS -ready)  
+3. Drawing register + revisions  
+4. BOQ mapping + quantity highlights  
+5. Compliance matrix (Saudi sta ndards + client rules)  
+6. Risks/gaps + assumptions/exclusions (draft)  
+7. RFI drafts (draft)  
+8. Procurement handover package (approved -only)  
+ESCALATION  
+If any of these occur, stop and escalate to human reviewer:  
+ Conflicting requirements  
+ Missing critical docs (instru ctions, BOQ, core drawings)  
+ Low-confidence OCR on key clauses  
+ Addendum that changes scope or deadlines  
+ 
+B. Prompt for “Extract Tender Instructions”  
+Task:  Extract tender rules and deadlines.  
+Output:  JSON block with citations and confidence.  
+Include:  
+ Submission deadline + timezone  
+ Submission format (portal/email/hardcopy)  
+ Mandatory compliance forms  
+ Bonds/insurance/certifications required  
+ Clarification contact & RFI deadline  
+ Any penalty clauses or disqu alification triggers  
+ 
+C. Prompt for “Scope + Drawings”  
+Task:  Convert tender package into structured scope.  
+Extract:  
+ Work packages / trades  
+ Deliverables  
+ Exclusions  
+ Interfaces (client vs contractor responsibilities)  
+ Drawin g references per scope item  
+ Revision register  
+ 
+D. Prompt for “BIM Quantities”  
+Task:  If IFC/BIM present, compute areas/volumes/counts.  
+Rules:  
+ Validate unit system  
+ Provide confidence + method  
+ Compare to BOQ quantities and f lag mismatches  
+ Never override BOQ; only report discrepancies  
+ 
+4) DATA SCHEMAS (JSON) FOR HANDOVER TO 
+PROCUREMENT  
+A. Tender Case Schema (Top -Level)  
+{ 
+  "tender_id" : "KSA-2026-000123", 
+  "client" : { 
+    "name": "Client Name" , 
+    "project_name" : "Project Name" , 
+    "location" : "City, KSA" , 
+    "contacts" : [ 
+      {"name": "Contact" , "email": "x@client.com" , "role": "Tender 
+Officer" } 
+    ] 
+  }, 
+  "timeline" : { 
+    "received_at" : "2026-01-19T10:12:00+03:00" , 
+    "submission_deadline" : "2026-02-01T15:00:00+03:00" , 
+    "rfi_deadline" : "2026-01-27T17:00:00+03:00"  
+  }, 
+  "source_email" : { 
+    "message_id" : "abc123" , 
+    "from": "tenders@client.com" , 
+    "subject" : "RFQ - Project X" , 
+    "thread_id" : "thr-9988" 
+  }, 
+  "versioning" : { 
+    "current_version" : "v2", 
+    "is_addendum" : true, 
+    "changed_files" : ["Drawings_RevB.pdf" , "BOQ_v2.xlsx" ] 
+  } 
+} 
+B. Procurement Handover Payload  
+{ 
+  "tender_id" : "KSA-2026-000123", 
+  "handover_status" : "READY_FOR_PROCUREMENT" , 
+  "approval" : { 
+    "approved_by" : "human_reviewer_id" , 
+    "approved_at" : "2026-01-20T09:10:00+03:00" , 
+    "approval_notes" : "Proceed with supplier RFQs for MEP and concrete."  
+  }, 
+  "work_packages" : [ 
+    { 
+      "package_id" : "WP-MEP-001", 
+      "title": "MEP Package" , 
+      "description" : "Supply & install MEP works per specs." , 
+      "scope_items" : [ 
+        { 
+          "item_id" : "SCP-102", 
+          "text": "Provide HVAC ducting as per drawings." , 
+          "references" : [ 
+            { 
+              "doc": "Specs_HVAC.pdf" , 
+              "page": 12, 
+              "section" : "3.1", 
+              "confidence" : 0.88 
+            } 
+          ] 
+        } 
+      ], 
+      "quantities" : [ 
+        { 
+          "measure" : "surface_area" , 
+          "value": 12500.5, 
+          "unit": "m2", 
+          "source" : "BIM_IFC" , 
+          "confidence" : 0.74, 
+          "notes": "Derived from IFC model spaces."  
+        } 
+      ], 
+      "supplier_requirements" : [ 
+        "SASO compliance certificates" , 
+        "Delivery within 6 weeks"  
+      ] 
+    } 
+  ], 
+  "boq_items" : [ 
+    { 
+      "boq_ref" : "B-12.04", 
+      "description" : "Concrete C40" , 
+      "qty": 2500, 
+      "unit": "m3", 
+      "mapped_work_package" : "WP-CIVIL-001", 
+      "flags": ["CHECK_DRAWING_MATCH" ] 
+    } 
+  ], 
+  "assumptions_draft" : [ 
+    { 
+      "id": "ASM-01", 
+      "text": "Assumes site power and water available for construction 
+activities." , 
+      "evidence" : [{"doc": "Instructions.pdf" , "page": 5, "confidence" : 
+0.77}] 
+    } 
+  ], 
+  "rfi_drafts" : [ 
+    { 
+      "id": "RFI-03", 
+      "question" : "Please confirm the latest drawing revision for MEP 
+layout in Zone B." , 
+      "evidence" : [{"doc": "Drawings_RevA.pdf" , "page": 2, "confidence" : 
+0.69}], 
+      "priority" : "HIGH" 
+    } 
+  ], 
+  "attachments_map" : [ 
+    { 
+      "category" : "Drawings" , 
+      "files": [ 
+        {"name": "Drawings_RevB.pdf" , "storage_uri" : 
+"s3://.../Drawings_RevB.pdf" } 
+      ] 
+    } 
+  ] 
+} 
+C. Compliance Matrix Schema  
+{ 
+  "tender_id" : "KSA-2026-000123", 
+  "requirements" : [ 
+    { 
+      "req_id" : "CMP-001", 
+      "requirement" : "Saudi VAT compliance must be demonstrated in 
+invoicing format" , 
+      "standard_or_source" : "KSA VAT Rules / Tender Instructions" , 
+      "evidence" : {"doc": "Instructions.pdf" , "page": 9, "confidence" : 
+0.86}, 
+      "status" : "PENDING_HUMAN_CONFIRMATION" , 
+      "notes": "Finance team to confirm invoice template."  
+    } 
+  ] 
+} 
+ 
+5) SAUDI STANDARDS ENFORCEMENT LOGIC 
+(MAPPING + RULES)  
+A. Standards Registry (Baseline)  
+Create a registry with:  
+ SBC  (Saudi Building Code)  
+ SASO  (Saudi Standards, Metrology and Quality Org)  
+ SEC  (Saudi Electricity Company standards where applicable)  
+ Aramco  (if oil & gas / industrial projects)  
+ RCJY  (Royal Commission standards, e.g., Jubail/Yanbu projects)  
+ Mega -project owner standards : NEOM, Red Sea, Diriyah Gate, etc.  
+B. Discipline Tagging  
+Tag each  tender by discipline coverage:  
+ Civil / Structural / Architectural / MEP / Fire / ICT / ELV / HVAC / Plumbing  
+C. Enforcement Rules (Simple, Explainable)  
+Rule 1: Identify Applicable Standards  
+ From tender docs: explicit mentions override defaults  
+ If client i s SEC/Aramco/RCJY → auto -attach that standard set  
+ If mega project name detected → attach project standard set  
+Rule 2: Build Compliance Checklist  
+For each discipline, generate mandatory evidence items, e.g.:  
+ Material certificates  
+ SASO conformity  
+ SBC complia nce statements  
+ Testing & commissioning requirements  
+ HSE documentation  
+Rule 3: Detect Conflicts  
+ If tender instructions conflict with specs, flag as:  
+o Conflict type  
+o Precedence assumption  
+o Draft RFI required  
+Rule 4: Evidence -Based Output  
+ A compliance item must never be “COMPLIANT” unless there’s:  
+o Evidence doc citation  
+o Human approval OR explicit tender confirmation  
+Rule 5: Saudi VAT Requirements  
+ If invoicing/payment terms appear:  
+o Require VAT -compliant invoicing fields  
+o Flag if unclear / miss ing 
+D. Output  
+ Compliance Matrix (per standard, per discipline)  
+ Gaps list + RFIs  
+ Tender readiness score impacted by missing compliance evidence  
+ 
+ 

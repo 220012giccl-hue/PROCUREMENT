@@ -1,0 +1,320 @@
+let currentEmails = [];
+let currentProducts = [];
+let currentVendorDrafts = [];
+
+// --- View Management ---
+
+function switchView(viewName) {
+    // Hide all views
+    document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
+    // Deactivate all nav links
+    document.querySelectorAll('.nav-links li').forEach(l => l.classList.remove('active'));
+
+    // Show target view
+    document.getElementById(`${viewName}-view`).style.display = 'block';
+    // Activate link
+    const link = Array.from(document.querySelectorAll('.nav-links li'))
+        .find(l => l.innerText.toLowerCase() === viewName);
+    if (link) link.classList.add('active');
+
+    // Update header title
+    const titles = {
+        'inbox': 'Inbound Emails',
+        'vendors': 'Vendor Management',
+        'drafts': 'Draft Emails',
+        'comparison': 'Price Comparison'
+    };
+    document.getElementById('view-title').innerText = titles[viewName];
+}
+
+// --- API Calls ---
+
+async function fetchEmails(provider) {
+    const list = document.getElementById('email-list');
+    list.innerHTML = '<li>Loading...</li>';
+
+    try {
+        const response = await fetch(`/api/emails?provider=${provider}`);
+        currentEmails = await response.json();
+        renderEmailList();
+
+        // Auto-analyze work-related emails
+        autoAnalyzeEmails();
+    } catch (error) {
+        console.error('Error fetching emails:', error);
+        list.innerHTML = '<li>Failed to load emails.</li>';
+    }
+}
+
+async function autoAnalyzeEmails() {
+    // Load relevance keywords from backend config
+    let workKeywords = ['order', 'purchase', 'quote', 'rfq', 'request', 'supply', 'material', 'equipment', 'procurement'];
+
+    try {
+        const configResponse = await fetch('/data/config.json');
+        const config = await configResponse.json();
+        workKeywords = config.email_relevance_keywords || workKeywords;
+    } catch (error) {
+        console.log('Using default keywords for email filtering');
+    }
+
+    for (const email of currentEmails) {
+        const subject = email.subject.toLowerCase();
+        const body = email.body.toLowerCase();
+
+        // Check if email is work-related
+        const isWorkRelated = workKeywords.some(keyword =>
+            subject.includes(keyword) || body.includes(keyword)
+        );
+
+        if (isWorkRelated) {
+            try {
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email_body: email.body, email_id: email.id })
+                });
+                const data = await response.json();
+
+                if (data.products && data.products.length > 0) {
+                    currentProducts = data.products;
+                    // Auto-generate drafts for the first work-related email found
+                    await generateDrafts();
+                    break;
+                }
+            } catch (error) {
+                console.error('Auto-analysis failed for email:', email.subject);
+            }
+        }
+    }
+}
+
+function renderEmailList() {
+    const list = document.getElementById('email-list');
+    list.innerHTML = '';
+
+    currentEmails.forEach(email => {
+        const li = document.createElement('li');
+        li.className = 'email-item';
+        li.innerHTML = `<strong>${email.subject}</strong><br><small>${email.from}</small>`;
+        li.onclick = () => selectEmail(email);
+        list.appendChild(li);
+    });
+}
+
+function selectEmail(email) {
+    document.querySelectorAll('.email-item').forEach(el => el.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+
+    analyzeEmail(email);
+}
+
+async function analyzeEmail(email) {
+    const section = document.getElementById('analysis-section');
+    const content = document.getElementById('analysis-content');
+    section.style.display = 'block';
+    content.innerHTML = '<p>Analyzing with LLM...</p>';
+
+    try {
+        const response = await fetch('/api/analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email_body: email.body, email_id: email.id })
+        });
+        const data = await response.json();
+        currentProducts = data.products;
+
+        content.innerHTML = '<ul>' +
+            currentProducts.map(p => `<li><strong>${p.product}</strong>: ${p.quantity}</li>`).join('') +
+            '</ul>';
+    } catch (error) {
+        content.innerHTML = '<p>Analysis failed.</p>';
+    }
+}
+
+async function generateDrafts() {
+    const section = document.getElementById('drafts-section');
+    const content = document.getElementById('drafts-content');
+
+    // Switch to drafts view to show progress
+    switchView('drafts');
+    content.innerHTML = '<p>Generating vendor drafts based on category...</p>';
+
+    try {
+        const response = await fetch('/api/generate-drafts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ products: currentProducts })
+        });
+        currentVendorDrafts = await response.json();
+        renderDrafts();
+    } catch (error) {
+        console.error('Draft generation error:', error);
+        content.innerHTML = '<p>Draft generation failed. Please check console for details.</p>';
+    }
+}
+
+function renderDrafts() {
+    const content = document.getElementById('drafts-content');
+    content.innerHTML = '';
+
+    if (currentVendorDrafts.length === 0) {
+        content.innerHTML = '<p>No vendors found matching the requested categories.</p>';
+        return;
+    }
+
+    currentVendorDrafts.forEach(draft => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.style.marginTop = '1rem';
+        card.innerHTML = `
+            <h3>To: ${draft.vendor_name} (${draft.recipient})</h3>
+            <p><strong>Subject:</strong> ${draft.subject}</p>
+            <pre style="white-space: pre-wrap; margin: 1rem 0; background: rgba(0,0,0,0.2); padding: 1rem;">${draft.body}</pre>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="badge badge-${draft.status}">${draft.status.toUpperCase()}</span>
+                ${draft.status === 'pending' ? `<button class="btn btn-success" onclick="sendDraft('${draft.id}')">Verify & Send Email</button>` : ''}
+            </div>
+        `;
+        content.appendChild(card);
+    });
+}
+
+async function sendDraft(draftId) {
+    try {
+        const response = await fetch(`/api/send-draft?draft_id=${draftId}`, { method: 'POST' });
+        if (response.ok) {
+            alert('Email sent successfully!');
+            // Update status locally
+            const draft = currentVendorDrafts.find(d => d.id === draftId);
+            if (draft) draft.status = 'sent';
+            renderDrafts();
+        }
+    } catch (error) {
+        alert('Failed to send email.');
+    }
+}
+
+// --- Vendor Management ---
+
+let editingVendor = null;
+
+async function loadVendors() {
+    const ids = ['electrician', 'plumber', 'builder', 'other'];
+    ids.forEach(id => document.getElementById(`vendor-list-${id}`).innerHTML = '');
+
+    try {
+        const response = await fetch('/api/vendors');
+        const vendors = await response.json();
+
+        vendors.forEach(v => {
+            const cat = v.category.toLowerCase();
+            let targetId = 'other';
+            if (cat.includes('electric')) targetId = 'electrician';
+            else if (cat.includes('plumb')) targetId = 'plumber';
+            else if (cat.includes('build') || cat.includes('steel') || cat.includes('ac')) targetId = 'builder';
+
+            const li = document.createElement('li');
+            li.className = 'email-item vendor-item';
+            li.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong>${v.name}</strong><br>
+                        <small>${v.email}</small>
+                    </div>
+                    <div class="vendor-actions">
+                        <button class="btn-icon" onclick="editVendor('${v.email}')" title="Edit">✏️</button>
+                        <button class="btn-icon btn-danger" onclick="deleteVendor('${v.email}')" title="Delete">🗑️</button>
+                    </div>
+                </div>
+            `;
+            document.getElementById(`vendor-list-${targetId}`).appendChild(li);
+        });
+    } catch (error) {
+        console.error('Error loading vendors:', error);
+    }
+}
+
+async function editVendor(email) {
+    try {
+        const response = await fetch('/api/vendors');
+        const vendors = await response.json();
+        const vendor = vendors.find(v => v.email === email);
+
+        if (vendor) {
+            editingVendor = email;
+            document.getElementById('v-name').value = vendor.name;
+            document.getElementById('v-email').value = vendor.email;
+            document.getElementById('v-category').value = vendor.category;
+            document.getElementById('v-desc').value = vendor.description || '';
+            document.getElementById('modal-title').innerText = 'Edit Vendor';
+            showVendorModal();
+        }
+    } catch (error) {
+        console.error('Error loading vendor for edit:', error);
+    }
+}
+
+async function deleteVendor(email) {
+    if (!confirm(`Are you sure you want to delete vendor: ${email}?`)) return;
+
+    try {
+        const response = await fetch(`/api/vendors/${encodeURIComponent(email)}`, {
+            method: 'DELETE'
+        });
+        if (response.ok) {
+            alert('Vendor deleted successfully!');
+            loadVendors();
+        }
+    } catch (error) {
+        alert('Failed to delete vendor.');
+    }
+}
+
+function showVendorModal() {
+    document.getElementById('vendor-modal').style.display = 'flex';
+}
+
+function hideVendorModal() {
+    document.getElementById('vendor-modal').style.display = 'none';
+    editingVendor = null;
+    document.getElementById('modal-title').innerText = 'Add New Vendor';
+    document.getElementById('v-name').value = '';
+    document.getElementById('v-email').value = '';
+    document.getElementById('v-category').value = 'Builder';
+    document.getElementById('v-desc').value = '';
+}
+
+async function saveVendor() {
+    const vendor = {
+        name: document.getElementById('v-name').value,
+        email: document.getElementById('v-email').value,
+        category: document.getElementById('v-category').value,
+        description: document.getElementById('v-desc').value
+    };
+
+    try {
+        if (editingVendor) {
+            // Update existing vendor
+            await fetch(`/api/vendors/${encodeURIComponent(editingVendor)}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(vendor)
+            });
+        } else {
+            // Add new vendor
+            await fetch('/api/vendors', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(vendor)
+            });
+        }
+        hideVendorModal();
+        loadVendors();
+    } catch (error) {
+        alert('Failed to save vendor.');
+    }
+}
+
+// Initial Load
+loadVendors();

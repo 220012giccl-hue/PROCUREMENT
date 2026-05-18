@@ -1,0 +1,128 @@
+[
+    {
+        "name": "Saudi Basic Industries Corp (SABIC)",
+        "email": "jomy@sabic.com",
+        "category": "Petrochemical/Builder",
+        "region": "Saudi Arabia",
+        "description": "One of the world\u00e2\u20ac\u2122s largest petrochemical manufacturers."
+    },
+    {
+        "name": "360 Environmental (SLR Consulting)",
+        "email": "perth-adminau@slrconsulting.com",
+        "category": "Environmental/Engineering",
+        "region": "Perth",
+        "description": "Environmental consultancy and engineering."
+    },
+    {
+        "name": "Abbotts Pty Ltd",
+        "email": "admin@abbotts.net.au",
+        "category": "Business/Finance",
+        "region": "Perth",
+        "description": "Business advisers, accountants, and financial planners."
+    },
+    {
+        "name": "John Kosovich Wines",
+        "email": "johnkosovichwines@westnet.com.au",
+        "category": "Beverage",
+        "region": "Perth",
+        "description": "Local winery and specialty beverage supplier."
+    },
+    {
+        "name": "South Regional TAFE",
+        "email": "aboriginalprograms@srtafe.wa.edu.au",
+        "category": "Education",
+        "region": "Perth",
+        "description": "Educational and training services provider."
+    },
+    {
+        "name": "Almarai Co. Ltd",
+        "email": "marketing@almarai.com",
+        "category": "Other",
+        "region": "",
+        "description": "A leading dairy and food processing company."
+    },
+    {
+        "name": "Saudi Electricity Co",
+        "email": "ceo@seco.com",
+        "category": "Plumber",
+        "region": "",
+        "description": "The primary provider of electrical services in the Kingdom."
+    },
+    {
+        "name": "Ragusa Minerals",
+        "email": "admin@ragusaminerals.com.au",
+        "category": "Electrician",
+        "region": "",
+        "description": "Mining exploration and resource company."
+    },
+    {
+        "name": "Zamil Industrial Investment Co",
+        "email": "info@zamil.com",
+        "category": "Builder",
+        "region": "",
+        "description": "Provider of air conditioning and steel products."
+    },
+    {
+        "name": "99 Bikes (Osborne Park/Perth)",
+        "email": "osbournepark@99bikes.com.au",
+        "category": "Electrician",
+        "region": "",
+        "description": "Major retailer for bicycles and parts."
+    },
+    {
+        "name": "Saudi Telecom Company (STC)",
+        "email": "sdaweesh@stc.com.sa",
+        "category": "Plumber",
+        "region": "",
+        "description": "The leading telecommunications provider."
+    },
+    {
+        "name": "Al Rasheed Trading",
+        "email": "pinoy@rasheedsfood.com",
+        "category": "Plumber",
+        "region": "",
+        "description": "Importer of various ethnic foods and commodities."
+    },
+    {
+        "name": "Saudi Cable Company",
+        "email": "info@scc-telecom.com",
+        "category": "Electrician",
+        "region": "",
+        "description": "Supplier of electrical and communication cables."
+    },
+    {
+        "name": "Savola Group",
+        "email": "expserve@savolaexports.com",
+        "category": "Plumber",
+        "region": "",
+        "description": "Major food retailer and producer."
+    },
+    {
+        "name": "Etihad Etisalat (Mobily)",
+        "email": "k.alkaf@mobily.com.sa",
+        "category": "Electrician",
+        "region": "",
+        "description": "Major mobile and data services provider."
+    },
+    {
+        "name": "BinDawood Holding",
+        "email": "cs@bindawood.com",
+        "category": "Builder",
+        "region": "",
+        "description": "Large-scale hypermarket and grocery retailer."
+    },
+    {
+        "name": "Talijancich Wines",
+        "email": "admin@taliwine.com.au",
+        "category": "Electrician",
+        "region": "",
+        "description": "Heritage wine producer and wholesale supplier."
+    },
+    {
+        "name": "Mati\u00c4\u2021 Group",
+        "email": "admin@maticgroup.com.au",
+        "category": "Builder",
+        "region": "",
+        "description": "Large-scale transport and logistics provider."
+    }
+]

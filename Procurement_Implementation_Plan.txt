@@ -1,0 +1,252 @@
+PROCUREMENT PLATFORM IMPLEMENTATION PLAN
+Based on Project Goal Document Analysis
+Prepared for Development Team
+
+
+DOCUMENT SUMMARY
+
+The uploaded document outlines a plan to upgrade an existing Procurement Assistant AI Agent from a basic chatbot into a full professional procurement workflow platform for construction companies. The platform will serve construction, infrastructure, oil and gas, and engineering companies by handling product research, supplier comparison, RFQ management, document extraction, email drafting, approvals, and audit tracking. The demo will integrate with public supplier catalogues from Blackwoods, Bunnings, Bunnings Trade, and Sydney Tools.
+
+There are four agents described in the document: Procurement Agent, RFQ Agent, RFI Agent, and Email Agent. All agents share a common UI structure, audit trail, approval workflow, and status badge system.
+
+
+PHASE 1: DEMO-READY PROCUREMENT AGENT UPGRADE
+Target: Make the existing AI agent look and behave like a professional procurement tool.
+Timeline Suggestion: 3 to 5 weeks.
+
+1.1 Improve AI Response Format
+
+The AI currently returns plain chat-style text. This needs to change to a structured procurement response format.
+
+Every AI answer must follow this exact output structure:
+
+Section 1: Requirement Summary. A short paragraph describing what the user is asking for in procurement terms.
+
+Section 2: Matched Products or Suppliers. Display products as cards, not just text. Each card must include product image, product name, supplier name, brand, category, short description, key technical specifications, price if available, availability if available, source URL, and action buttons.
+
+Section 3: Supplier Comparison Table. A structured table comparing multiple products or suppliers side by side. The columns should change based on product type. For tools: product, supplier, brand, voltage, battery included, warranty, price, best for, source. For PPE: product, supplier, brand, safety rating, size range, material, price, best for, source. For building materials: product, supplier, category, material, size, pack quantity, compliance, price, source.
+
+Section 4: Best Recommendation. A clear statement of which product or supplier is recommended and why. Include a note that this is an AI recommendation only and human approval is required before purchase.
+
+Section 5: Missing Information. A clear list of what is unknown, such as bulk pricing, stock availability, delivery timeframe, warranty, compliance certificates, lead time, minimum order quantity, and trade account pricing.
+
+Section 6: Suggested Next Actions. Action buttons shown at the bottom of every AI answer.
+
+1.2 Add Action Buttons Under Every AI Answer
+
+These buttons must appear below every procurement response:
+
+Create RFQ, Compare Suppliers, Save to Procurement List, Draft Supplier Email, Generate Approval Summary, Export PDF, Add to Project, Compare More Suppliers.
+
+Each button triggers a specific workflow. The forms that open should be pre-filled with data already found in the AI answer.
+
+1.3 Add Source, Confidence, and Missing Data Badges
+
+Under every AI answer, display small informational badges:
+
+Supplier: the supplier name. Source: the URL or supplier catalogue page. Confidence Level: High, Medium, or Low based on completeness of data. Missing: list of missing fields. Last Checked: the date the data was retrieved.
+
+Confidence rules: High means product name, image, brand, specs, and source URL are all available. Medium means product info is available but price, stock, or warranty is missing. Low means product details are incomplete or source is unclear.
+
+1.4 Improve Chat Thread Naming
+
+Instead of using the raw user message as the thread title, the AI should auto-generate short, professional thread names such as Cordless Drill Comparison, Safety Boots Search, Timber Fixings Bunnings, Fall Protection Equipment, and Waterproofing Products.
+
+1.5 Add Demo Supplier Catalogue Sources
+
+Add the following as demo supplier sources. These are public catalogue examples only. The platform must not claim official partnership, purchasing integration, or approval from these companies.
+
+Sources: Blackwoods at blackwoods.com.au for PPE, safety gear, lifting, rigging, welding, and abrasives. Bunnings at bunnings.com.au for general building materials, hardware, paint, sealants, insulation, doors, windows, and fasteners. Bunnings Trade at trade.bunnings.com.au for the same categories at trade level. Sydney Tools at sydneytools.com.au for professional power tools, hand tools, cordless systems, laser levels, compressors, and generators.
+
+The AI must decide which supplier to search based on the product type. For tool-related queries, prioritise Sydney Tools and Bunnings. For building material queries, prioritise Bunnings and Bunnings Trade. For PPE and safety queries, prioritise Blackwoods and Bunnings. For lifting and rigging, prioritise Blackwoods and Sydney Tools. For welding and abrasives, prioritise Blackwoods, Sydney Tools, and Bunnings.
+
+1.6 Add Demo Prompt Suggestions
+
+Inside the Procurement Agent, show clickable example prompts to help users get started quickly. Examples: Compare cordless hammer drills from Bunnings and Sydney Tools. Find safety boots for construction workers from Blackwoods and Bunnings. Compare ladders for commercial fit-out work. Find timber screws and structural fixings. Compare PPE starter kits for 20 workers. Find fall protection equipment for roof work. Compare concrete tools for slab preparation.
+
+1.7 Add Product Image Handling
+
+Every product card must attempt to display a product image from the supplier catalogue page URL. If the image is not available, show a clean placeholder labelled Product image unavailable. Do not download or store supplier images. Do not edit or remove watermarks. Each image must link back to the original product source.
+
+1.8 Update AI System Prompt
+
+The system prompt for the Procurement Assistant must be updated to reflect the construction context. The AI must behave like a professional procurement officer, understand construction procurement language such as BOQ, RFQ, RFI, scope of work, lead time, compliance certificate, delivery location, and approval summary, and structure every response using the six-section format described above. It must never claim to approve purchases and must always state that human approval is required.
+
+1.9 Demo Legal Disclaimer
+
+Add the following disclaimer to all procurement and catalogue pages: Supplier catalogue results are used for demonstration purposes only. Product details, pricing, availability, delivery terms, and compliance information must be confirmed directly with the supplier before purchase. This platform does not claim official partnership, direct purchasing integration, or approval from any supplier unless configured under a client agreement.
+
+
+PHASE 2: CORE WORKFLOW MODULES
+Target: Build the full procurement workflow so users can take action from within the platform.
+Timeline Suggestion: 4 to 6 weeks after Phase 1.
+
+2.1 RFQ Creation and Tracking Module
+
+When the user clicks Create RFQ, a form opens that is pre-filled with data from the AI answer.
+
+Form fields: RFQ number, project name, site address, product or service, category, trade, quantity, unit, required delivery date, delivery location, technical specification, drawing or specification reference, compliance requirements, attachments, supplier name, supplier contact person, supplier email, quote due date, internal owner, status.
+
+RFQ statuses: Draft, Ready to Send, Sent, Supplier Acknowledged, Quote Received, Clarification Required, Under Comparison, Under Review, Approved, Rejected, Closed, Expired, Overdue.
+
+The AI should be able to generate the RFQ email draft automatically using the pre-filled data. The email format must include project name, site address, item requested, quantity, required delivery date, delivery location, and a request for unit price, total price, lead time, availability, delivery charges, warranty, compliance documents, payment terms, and quote validity period.
+
+Track for each RFQ: supplier sent date, supplier response date, quote due date, quote status, missing documents, follow-up reminders, supplier comments, and quote validity expiry date.
+
+2.2 Save to Procurement List Module
+
+The user should be able to save any product from the AI answer into a procurement list.
+
+Fields: item name, product image, category, supplier, brand, quantity, project, required date, estimated cost, source URL, technical notes, AI recommendation, status, approval status, created by, created date.
+
+Item statuses: Researching, RFQ Needed, RFQ Sent, Quote Received, Approval Needed, Approved, Ordered, Delivered, Rejected.
+
+2.3 Supplier Email Draft Generation
+
+When the user clicks Draft Supplier Email, the AI generates a professional email pre-filled with the product details, project name, quantity, delivery location, required date, and a list of information the supplier should provide. The user must be able to edit the draft before sending. The email must not be sent automatically.
+
+2.4 Approval Summary Generation
+
+When the user clicks Generate Approval Summary, the AI generates a short internal summary formatted for manager review. The summary must include: project name, item requested, supplier options compared, recommended supplier, recommended product, reason for selection, estimated cost if available, missing information, risk notes, recommended next action, and an approval note confirming that human approval is required before purchase.
+
+2.5 Supplier Database
+
+Create a supplier database where the team can store and reference supplier information.
+
+Fields: supplier name, contact person, email, phone, website, product categories, location, notes, rating, past RFQs, past quotes, preferred supplier yes or no, created at, updated at.
+
+The Procurement Agent should be able to reference this database when recommending suppliers or generating email drafts.
+
+2.6 Procurement Dashboard Cards
+
+Add procurement-related dashboard cards visible to the user on the main dashboard.
+
+Cards: Open RFQs showing number of active RFQs, Supplier Quotes Received showing quotes waiting for review, Pending Approvals showing items waiting for manager sign-off, Overdue Supplier Responses showing suppliers who have not replied, Recommended Savings showing AI-estimated savings based on supplier comparison, Recently Compared Products showing the last five comparisons, High Priority Procurement Items showing urgent items based on deadlines, Documents Processed showing number of PDFs and quotes processed.
+
+Each card must be clickable and take the user to the relevant module.
+
+2.7 PDF Export
+
+The user should be able to export any AI procurement response as a formatted PDF.
+
+The PDF must include: company logo, project name, date generated, user query, requirement summary, matched products with photos, comparison table, best recommendation, missing information, source links, approval note, and next action summary.
+
+2.8 Human Approval Layer
+
+The AI must never automatically approve a purchase or send an important email without human review. Every AI response must include the statement: AI recommendation only. Human review and approval required before purchase.
+
+Add an approval flow display showing: Prepared by AI, Reviewed by procurement team, Approved by manager, Sent to supplier.
+
+
+PHASE 3: ADVANCED FEATURES AND ENTERPRISE LAYER
+Target: Build the document processing, multi-agent workflow, integrations, and access control.
+Timeline Suggestion: 6 to 10 weeks after Phase 2.
+
+3.1 Document Upload and OCR Extraction
+
+Allow users to upload supplier quotes, product datasheets, invoices, purchase orders, scope of work documents, tender documents, material lists, and technical specifications.
+
+The AI must extract from uploaded documents: product name, supplier name, price, quantity, lead time, warranty, technical specs, compliance information, delivery terms, payment terms, and quote expiry date.
+
+After extraction, the user should be able to save the extracted data, compare it against another quote, generate an approval summary, create a supplier follow-up email, and export the result as a PDF.
+
+3.2 Email Agent
+
+The Email Agent reads incoming construction project emails and classifies them by category: project enquiry, supplier quote, RFI, RFQ, variation request, invoice, site issue, meeting request, document submission, approval request, or general admin.
+
+The agent must extract: project name, sender company, contact person, site address, trade or category, deadline, requested action, attachments, reference numbers, and the nature of the email.
+
+The agent must be able to generate draft replies, follow-up emails, reminder emails, escalation emails, supplier clarification emails, and client update emails.
+
+Workflow buttons under each email: Draft Reply, Send for Approval, Assign to Team Member, Create RFI, Create RFQ, Save to Project, Add to Procurement List, Create Follow-Up Reminder, Mark as Urgent, Archive.
+
+The Email Agent must not send important emails automatically. Every draft must be reviewed and approved by a human before sending.
+
+3.3 RFI Agent
+
+The RFI Agent detects requests for information from emails, uploaded documents, manual entry, or project threads.
+
+It must extract: RFI number, project name, site address, raised by, company, trade, discipline, drawing reference, specification reference, room or area, issue description, required clarification, attachments, date raised, required response date, priority level, impact on programme, cost impact, and risk level.
+
+It must classify the RFI by discipline: Architectural, Structural, Civil, Mechanical, Electrical, Hydraulic, Fire Services, Finishes, Procurement, Site Condition, Design Conflict, Compliance Issue, Safety Issue, Access Issue, or Variation-Related.
+
+It must generate a suggested response including a short summary, the clarification needed, drawing or specification reference, suggested response text, missing information, recommended person to respond, risk note, and a human review note.
+
+RFI statuses: Draft, Open, Assigned, Waiting for Consultant, Waiting for Client, Waiting for Subcontractor, Response Drafted, Under Review, Responded, Closed, Overdue.
+
+The RFI Register must display: RFI number, project, title, discipline, raised by, assigned to, date raised, due date, status, priority, cost impact, programme impact, last update, and attachments.
+
+3.4 Audit Trail
+
+Every major action across all agents must be logged in an audit trail.
+
+What to log: who asked the AI, what the AI recommended, which sources were used, which document was uploaded, who created the RFQ, who approved or rejected, when the supplier email was drafted or sent, when the PDF was exported, who assigned the RFI, when the status changed, and what the final decision was.
+
+3.5 Role-Based Access Control
+
+Implement the following roles: Admin with full access to all modules, settings, and audit logs. Project Manager with access to all agents, RFI and RFQ registers, and approval workflows. Procurement User with access to procurement agent, procurement list, RFQ creation, and supplier database. Read-Only User with access to view-only dashboards and registers. Each role must have clearly defined permissions especially around approval and sending actions.
+
+3.6 ERP, CRM, and Email Integrations
+
+Plan integrations for: company email inbox such as Gmail or Outlook, Google Calendar or Outlook Calendar for deadline tracking, CRM for supplier and contact data, ERP for purchase order and financial data, document storage for file management, project management systems for project linking, and approved supplier catalogues or CSV imports for client-specific supplier data.
+
+
+DATABASE STRUCTURE SUMMARY
+
+The following tables are required. Developer should adapt these based on the existing backend schema.
+
+Table: procurement_items
+Fields: id, project_id, item_name, category, supplier_id, quantity, required_date, estimated_cost, source_url, technical_notes, ai_recommendation, status, approval_status, created_by, created_at, updated_at.
+
+Table: suppliers
+Fields: id, name, contact_person, email, phone, website, category, location, rating, preferred_supplier, notes, created_at, updated_at.
+
+Table: supplier_sources
+Fields: id, supplier_name, website_url, source_type, is_demo_source, allowed_usage_note, created_at, updated_at.
+
+Table: product_results
+Fields: id, query_id, supplier_source_id, product_name, brand, category, description, image_url, product_url, price, availability, specs_json, missing_fields_json, confidence_level, created_at, updated_at.
+
+Table: product_comparisons
+Fields: id, query_id, products_json, comparison_table_json, recommendation, missing_info_json, created_by, created_at, updated_at.
+
+Table: rfqs
+Fields: id, rfq_number, project_id, procurement_item_id, supplier_id, quantity, delivery_location, required_delivery_date, technical_requirements, status, email_subject, email_body, created_by, created_at, updated_at.
+
+Table: supplier_quotes
+Fields: id, rfq_id, supplier_id, quoted_price, lead_time, warranty, compliance_notes, attachment_url, ai_extracted_summary, status, created_at, updated_at.
+
+Table: procurement_documents
+Fields: id, file_name, file_type, file_url, extracted_text, extracted_data_json, uploaded_by, created_at, updated_at.
+
+Table: rfis
+Fields: id, rfi_number, project_id, title, discipline, raised_by, assigned_to, drawing_reference, specification_reference, issue_description, required_clarification, priority, cost_impact, programme_impact, status, due_date, response_draft, attachments_json, created_at, updated_at.
+
+Table: email_threads
+Fields: id, project_id, sender_email, sender_company, contact_person, classification, summary, extracted_data_json, ai_draft_reply, status, assigned_to, created_at, updated_at.
+
+Table: audit_logs
+Fields: id, user_id, action_type, module, record_id, description, metadata_json, created_at.
+
+
+UI GUIDELINES
+
+Keep the design professional and corporate. Use white background with light grey cards. Use blue for highlights and interactive elements. Use green for approved and success states. Use orange for pending and waiting states. Use red for overdue and rejected states.
+
+Add loading states while the AI is searching or processing. Show thinking steps such as: Searching supplier data, Reading product specs, Comparing technical requirements, Preparing recommendation. Add icons for each module: RFQ, supplier, document, approval, and email. Keep action buttons visible at all times within the AI response area.
+
+Do not make the interface look like a general chatbot. Every screen should feel like a purpose-built construction procurement tool.
+
+
+IMPORTANT TECHNICAL NOTE FOR DEVELOPER
+
+Before scraping, indexing, or storing supplier catalogue data, check the website terms of use, the robots.txt file, allowed crawling behaviour, image usage rules, rate limits, blocked pages, and account-only pricing restrictions.
+
+For the demo, safer options are to use public search result previews, source URLs, publicly visible product titles and specs, and publicly visible image URLs.
+
+Do not bypass any restrictions, scrape account-only pricing, automate checkout, or claim direct integration with any supplier.
+
+For the long-term enterprise version, the recommended approach is supplier API integrations, client-approved supplier catalogues, CSV catalogue uploads, ERP procurement data, approved supplier database, manual product feed imports, and client-specific supplier accounts.
+
+
+END OF IMPLEMENTATION PLAN

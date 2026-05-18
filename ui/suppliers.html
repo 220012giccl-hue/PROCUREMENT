@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suppliers - RFI Dashboard</title>
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23FF5C35%22/><text y=%22.9em%22 font-size=%2280%22 x=%2250%25%22 text-anchor=%22middle%22 fill=%22white%22 font-family=%22serif%22 font-weight=%22bold%22>R</text></svg>">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/components.css">
+
+    <style>
+        .layout {
+            min-height: 100vh;
+            background: var(--bg-light);
+        }
+
+        .main-content {
+            margin-left: 200px;
+            margin-top: 64px;
+            padding: var(--space-8);
+        }
+
+        .page-header {
+            margin-bottom: var(--space-8);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Professional Category Card */
+        .category-card {
+            background: white;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-xl);
+            margin-bottom: var(--space-8);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+        }
+
+        .category-header {
+            background: #f8fafc;
+            padding: var(--space-4) var(--space-6);
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .category-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+            text-transform: capitalize;
+        }
+
+        .category-icon {
+            width: 28px;
+            height: 28px;
+            background: var(--primary-orange);
+            color: white;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .vendor-count {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            background: white;
+            padding: 2px 10px;
+            border-radius: 12px;
+            border: 1px solid var(--border-light);
+        }
+
+        /* Professional List View */
+        .vendor-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .vendor-row {
+            border-bottom: 1px solid #f1f5f9;
+            transition: background 0.2s;
+        }
+
+        .vendor-row:last-child {
+            border-bottom: none;
+        }
+
+        .vendor-row:hover {
+            background: #fdf2f0;
+        }
+
+        .vendor-cell {
+            padding: var(--space-4) var(--space-6);
+            vertical-align: middle;
+        }
+
+        .vendor-name-cell {
+            font-weight: 600;
+            color: var(--text-primary);
+            width: 30%;
+        }
+
+        .vendor-contact-cell {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            width: 40%;
+        }
+
+        .vendor-location-cell {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            width: 20%;
+        }
+
+        .vendor-action-cell {
+            width: 10%;
+            text-align: right;
+        }
+
+        .btn-edit {
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-edit:hover {
+            background: white;
+            color: var(--primary-orange);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .contact-info {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .contact-info svg {
+            width: 14px;
+            height: 14px;
+            color: var(--text-muted);
+        }
+
+        /* Modal & Header Styles */
+        .btn-add-supplier {
+            background: var(--primary-orange);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(255, 92, 53, 0.2);
+            transition: all 0.2s;
+        }
+
+        .btn-add-supplier:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(255, 92, 53, 0.3);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(8px);
+        }
+
+        .modal-content {
+            background: white;
+            width: 500px;
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .form-group { margin-bottom: 16px; }
+        .form-label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.9rem; color: #334155; }
+        .form-input { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; font-family: inherit; }
+        .form-input:focus { border-color: var(--primary-orange); outline: none; box-shadow: 0 0 0 3px rgba(255, 92, 53, 0.1); }
+        .btn-submit { background: var(--primary-orange); color: white; border: none; padding: 14px; border-radius: 10px; font-weight: 700; cursor: pointer; width: 100%; margin-top: 10px; }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary-orange)"
+                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+                <span>RFI</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html" class="nav-link">Dashboard</a></li>
+                <li><a href="calendar.html" class="nav-link">Calendar</a></li>
+                <li><a href="threads.html" class="nav-link">Threads</a></li>
+                <li><a href="settings.html" class="nav-link">Settings</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="layout">
+        <!-- Sidebar -->
+                <aside class="sidebar">
+            <!-- Sidebar content is unified via js/sidebar.js -->
+            <ul class="sidebar-menu">
+                <li class="sidebar-item"><a href="index.html" class="sidebar-link">Loading...</a></li>
+            </ul>
+        </aside>
+
+
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title" style="font-size: 1.75rem; font-weight: 800; color: #0f172a;">Supplier Directory</h1>
+                    <p class="page-subtitle" style="color: #64748b;">Manage vendors and category classifications.</p>
+                </div>
+                <button class="btn-add-supplier" onclick="openSupplierModal()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    New Vendor
+                </button>
+            </div>
+
+            <div id="categoryList">
+                <!-- Grouped categories will be rendered here -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal -->
+    <div id="supplierModal" class="modal">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <h2 id="modalTitle" style="margin: 0; font-weight: 800; color: #0f172a;">Add Vendor</h2>
+                <span onclick="closeSupplierModal()" style="cursor: pointer; color: #94a3b8; font-size: 24px;">&times;</span>
+            </div>
+            <form id="supplierForm">
+                <input type="hidden" id="supplierId">
+                <div class="form-group">
+                    <label class="form-label">Vendor Name</label>
+                    <input type="text" id="supplierName" class="form-input" required placeholder="Enter company name">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Categories (e.g. Plumbing, Tools, HVAC)</label>
+                    <input type="text" id="supplierCategories" class="form-input" required placeholder="Comma separated values">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" id="supplierEmail" class="form-input" placeholder="vendor@example.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Office Location</label>
+                    <input type="text" id="supplierLocation" class="form-input" placeholder="City, State">
+                </div>
+                <button type="submit" class="btn-submit">Save Vendor Information</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/sidebar.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", async function() {
+            var u = await Auth.checkSession();
+            if (!u) { window.location.href = "/"; }
+        });
+    </script>
+    <script src="js/api.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadSuppliers();
+            document.getElementById('supplierForm').addEventListener('submit', handleSupplierSubmit);
+        });
+
+        async function loadSuppliers() {
+            try {
+                const response = await window.api.getSuppliers();
+                const mainContainer = document.getElementById('categoryList');
+                mainContainer.innerHTML = '';
+
+                if (!response || response.length === 0) {
+                    mainContainer.innerHTML = '<div style="text-align: center; padding: 60px; color: #94a3b8;">No vendors found. Click "New Vendor" to get started.</div>';
+                    return;
+                }
+
+                // Group by category
+                const groups = {};
+                response.forEach(s => {
+                    const cats = s.categories ? s.categories.split(',').map(c => c.trim().toLowerCase()) : ['other'];
+                    cats.forEach(cat => {
+                        if (!groups[cat]) groups[cat] = [];
+                        groups[cat].push(s);
+                    });
+                });
+
+                // Render groups
+                Object.keys(groups).sort().forEach(catName => {
+                    const vendors = groups[catName];
+                    const card = document.createElement('div');
+                    card.className = 'category-card';
+                    card.innerHTML = `
+                        <div class="category-header">
+                            <div class="category-title">
+                                <div class="category-icon">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+                                </div>
+                                ${catName}
+                                <span class="vendor-count">${vendors.length}</span>
+                            </div>
+                        </div>
+                        <table class="vendor-table">
+                            <tbody>
+                                ${vendors.map(v => `
+                                    <tr class="vendor-row">
+                                        <td class="vendor-cell vendor-name-cell">${v.name}</td>
+                                        <td class="vendor-cell vendor-contact-cell">
+                                            <div class="contact-info">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path></svg>
+                                                ${v.email || 'N/A'}
+                                            </div>
+                                        </td>
+                                        <td class="vendor-cell vendor-location-cell">${v.location || 'N/A'}</td>
+                                        <td class="vendor-cell vendor-action-cell">
+                                            <div class="btn-edit" onclick="editSupplier(${JSON.stringify(v).replace(/"/g, '&quot;')})">
+                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                    mainContainer.appendChild(card);
+                });
+
+            } catch (err) {
+                console.error('Failed to load directory:', err);
+            }
+        }
+
+        function openSupplierModal() {
+            document.getElementById('modalTitle').innerText = 'Add Vendor';
+            document.getElementById('supplierId').value = '';
+            document.getElementById('supplierForm').reset();
+            document.getElementById('supplierModal').style.display = 'flex';
+        }
+
+        function closeSupplierModal() {
+            document.getElementById('supplierModal').style.display = 'none';
+        }
+
+        function editSupplier(s) {
+            document.getElementById('modalTitle').innerText = 'Edit Vendor';
+            document.getElementById('supplierId').value = s.id;
+            document.getElementById('supplierName').value = s.name;
+            document.getElementById('supplierCategories').value = s.categories || '';
+            document.getElementById('supplierEmail').value = s.email || '';
+            document.getElementById('supplierLocation').value = s.location || '';
+            document.getElementById('supplierModal').style.display = 'flex';
+        }
+
+        async function handleSupplierSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('supplierId').value;
+            const data = {
+                name: document.getElementById('supplierName').value,
+                categories: document.getElementById('supplierCategories').value,
+                email: document.getElementById('supplierEmail').value,
+                location: document.getElementById('supplierLocation').value
+            };
+
+            try {
+                if (id) await window.api.updateSupplier(id, data);
+                else await window.api.addSupplier(data);
+                closeSupplierModal();
+                await loadSuppliers();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+# Environments
+.env
+.env.example
+.venv/
+env/
+venv/
+ENV/
+
+# Legacy folders (Exclude from tracking)
+"RFQ agent/"
+
+# Database
+*.db
+*.sqlite3
+
+# Tokens & Secrets
+.gmail_oauth_token.json
+.outlook_oauth_token.json
+token.json
+credentials.json
+
+# Storage & Temporary
+storage/
+temp/
+tmp/
+*.log
+*.zip
+*.rar
+*.7z
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDEs
+.vscode/
+.idea/

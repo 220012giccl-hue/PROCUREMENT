@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comparison - RFI Dashboard</title>
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23FF5C35%22/><text y=%22.9em%22 font-size=%2280%22 x=%2250%25%22 text-anchor=%22middle%22 fill=%22white%22 font-family=%22serif%22 font-weight=%22bold%22>R</text></svg>">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        .layout {
+            min-height: 100vh;
+            background: var(--bg-light);
+        }
+
+        .main-content {
+            margin-left: 200px;
+            margin-top: 64px;
+            padding: var(--space-8);
+        }
+
+        /* Comparison Header */
+        .comp-header { margin-bottom: 32px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .comp-title h1 { font-size: 1.8rem; font-weight: 800; color: #0f172a; margin: 0 0 8px 0; }
+        .comp-title p { color: #64748b; margin: 0; }
+
+        /* AI Recommendation Section */
+        .recommendation-banner {
+            background: linear-gradient(135deg, #fff 0%, #fff7ed 100%);
+            border: 1px solid #ffedd5;
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 32px;
+            display: flex;
+            gap: 20px;
+            box-shadow: 0 4px 15px rgba(251, 146, 60, 0.05);
+        }
+
+        .ai-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--primary-orange);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .recommendation-content h3 { margin: 0 0 8px 0; font-weight: 700; color: #9a3412; }
+        .recommendation-content p { margin: 0; color: #4b5563; line-height: 1.6; }
+
+        /* Professional Comparison Table */
+        .comparison-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+        }
+
+        .table-responsive { overflow-x: auto; }
+        .comp-table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        
+        .comp-table th {
+            background: #f1f5f9;
+            padding: 20px 24px;
+            text-align: left;
+            font-weight: 700;
+            color: #475569;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .comp-table td {
+            padding: 24px;
+            border-bottom: 1px solid #f1f5f9;
+            color: #1e293b;
+            font-size: 0.95rem;
+        }
+
+        .attribute-col {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #64748b;
+            width: 200px;
+            border-right: 1px solid #e2e8f0;
+        }
+
+        .supplier-header-cell {
+            text-align: center;
+            min-width: 250px;
+        }
+
+        .supplier-name { font-size: 1.1rem; font-weight: 800; color: #0f172a; margin-bottom: 4px; }
+        .supplier-brand { color: var(--primary-orange); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; }
+
+        .price-val { font-weight: 800; color: #10b981; font-size: 1.2rem; }
+        .best-badge {
+            background: #dcfce7;
+            color: #166534;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            display: inline-block;
+            margin-top: 8px;
+        }
+
+        /* Action Buttons */
+        .btn-action-group { display: flex; gap: 8px; justify-content: center; margin-top: 16px; }
+        .btn-sm { padding: 8px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; border: none; transition: 0.2s; }
+        .btn-approve { background: #10b981; color: white; }
+        .btn-approve:hover { background: #059669; }
+        .btn-rfq { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+        .btn-rfq:hover { background: #e2e8f0; }
+
+        /* Confidence & Missing Section */
+        .comp-footer {
+            margin-top: 32px;
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 24px;
+        }
+
+        .footer-card { background: white; padding: 24px; border-radius: 20px; border: 1px solid #e2e8f0; }
+        .footer-card h4 { margin: 0 0 12px 0; font-weight: 700; font-size: 0.9rem; color: #1e293b; display: flex; align-items: center; gap: 8px; }
+        
+        .confidence-high { color: #10b981; }
+        .missing-tag {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            margin-right: 6px;
+            display: inline-block;
+            margin-bottom: 6px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary-orange)"
+                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+                <span>RFI</span>
+            </a>
+
+            <ul class="nav-links">
+                <li><a href="index.html" class="nav-link">Dashboard</a></li>
+                <li><a href="calendar.html" class="nav-link">Calendar</a></li>
+                <li><a href="threads.html" class="nav-link">Threads</a></li>
+                <li><a href="settings.html" class="nav-link">Settings</a></li>
+            </ul>
+
+            <div class="flex items-center gap-4">
+                <span class="badge badge-success">
+                    <span class="status-indicator status-online"></span>
+                    Online
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <!-- Sidebar content is unified via js/sidebar.js -->
+            <ul class="sidebar-menu">
+                <li class="sidebar-item"><a href="index.html" class="sidebar-link">Loading...</a></li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <div class="comp-header">
+                <div class="comp-title">
+                    <h1 id="pageTitle">Side-by-Side Comparison</h1>
+                    <p id="pageSubtitle">Technical analysis and pricing benchmark.</p>
+                </div>
+            </div>
+
+            <!-- AI Recommendation Banner -->
+            <div id="aiRecommendation" class="recommendation-banner" style="display: none;">
+                <div class="ai-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path></svg>
+                </div>
+                <div class="recommendation-content">
+                    <h3>AI Recommendation</h3>
+                    <p id="recommendationText"></p>
+                </div>
+            </div>
+
+            <!-- Comparison Table Card -->
+            <div class="comparison-card">
+                <div class="table-responsive">
+                    <table class="comp-table" id="comparisonTable">
+                        <!-- Dynamic content -->
+                    </table>
+                </div>
+            </div>
+
+            <!-- Footer Details -->
+            <div class="comp-footer">
+                <div class="footer-card">
+                    <h4>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                        Confidence Level
+                    </h4>
+                    <div id="confidenceLevel" style="font-weight: 800; font-size: 1.2rem;">--</div>
+                </div>
+                <div class="footer-card">
+                    <h4>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                        Missing Information
+                    </h4>
+                    <div id="missingInfoContainer">
+                        <!-- Tags -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Check if we have a comparison ID in URL, otherwise show latest or demo
+            const urlParams = new URLSearchParams(window.location.search);
+            const compId = urlParams.get('id');
+            
+            if (compId) {
+                await loadComparison(compId);
+            } else {
+                renderDemoComparison(); // For testing/first look
+            }
+        });
+
+        async function loadComparison(id) {
+            try {
+                const data = await window.api.getComparisonDetail(id);
+                renderTable(data);
+            } catch (err) {
+                console.error('Error loading comparison:', err);
+            }
+        }
+
+        function renderTable(data) {
+            const table = document.getElementById('comparisonTable');
+            const products = data.products || [];
+            const attributes = Object.keys(data.table_data || {});
+
+            // 1. Build Header
+            let headerHtml = '<thead><tr><th class="attribute-col">Technical Specs</th>';
+            products.forEach(p => {
+                headerHtml += `
+                    <th class="supplier-header-cell">
+                        <div class="supplier-brand">${p.brand || 'Vendor'}</div>
+                        <div class="supplier-name">${p.supplier_name || p.name}</div>
+                        <div class="btn-action-group">
+                            <button class="btn-sm btn-approve">Select Best</button>
+                            <button class="btn-sm btn-rfq">Draft RFQ</button>
+                        </div>
+                    </th>
+                `;
+            });
+            headerHtml += '</tr></thead>';
+
+            // 2. Build Body
+            let bodyHtml = '<tbody>';
+            attributes.forEach(attr => {
+                bodyHtml += `<tr><td class="attribute-col">${attr}</td>`;
+                products.forEach(p => {
+                    const val = data.table_data[attr][p.id] || '--';
+                    const isPrice = attr.toLowerCase().includes('price');
+                    bodyHtml += `<td class="${isPrice ? 'price-val' : ''}">${val}</td>`;
+                });
+                bodyHtml += '</tr>';
+            });
+            bodyHtml += '</tbody>';
+
+            table.innerHTML = headerHtml + bodyHtml;
+
+            // 3. Update Banner & Footer
+            if (data.recommendation) {
+                document.getElementById('aiRecommendation').style.display = 'flex';
+                document.getElementById('recommendationText').innerText = data.recommendation;
+            }
+            document.getElementById('confidenceLevel').innerText = data.confidence_level || 'Medium';
+            document.getElementById('confidenceLevel').className = `confidence-${(data.confidence_level || 'medium').toLowerCase()}`;
+            
+            const missingBox = document.getElementById('missingInfoContainer');
+            missingBox.innerHTML = (data.missing_info || []).map(m => `<span class="missing-tag">${m}</span>`).join('');
+        }
+
+        function renderDemoComparison() {
+            // Professional Demo Data matching the plan
+            const demoData = {
+                title: "Cordless Hammer Drill Comparison",
+                category: "Tools",
+                recommendation: "Sydney Tools option is recommended due to the 3-year commercial warranty and included bulk battery kit, providing better long-term value for site work.",
+                confidence_level: "High",
+                missing_info: ["Bulk shipping lead time", "Trade account discount", "Sustainability certification"],
+                products: [
+                    { id: 1, name: "M18 Fuel Hammer Drill", supplier_name: "Sydney Tools", brand: "Milwaukee" },
+                    { id: 2, name: "18V LXT Brushless Drill", supplier_name: "Bunnings Trade", brand: "Makita" },
+                    { id: 3, name: "20V MAX XR Hammer Drill", supplier_name: "Total Tools", brand: "Dewalt" }
+                ],
+                table_data: {
+                    "Unit Price": { 1: "$349.00", 2: "$325.00", 3: "$355.00" },
+                    "Voltage": { 1: "18V", 2: "18V", 3: "20V Max" },
+                    "Torque": { 1: "135 Nm", 2: "125 Nm", 3: "95 Nm" },
+                    "Battery Included": { 1: "Yes (2x 5.0Ah)", 2: "No (Skin only)", 3: "Yes (1x 4.0Ah)" },
+                    "Warranty": { 1: "3 Years", 2: "1 Year", 3: "2 Years" },
+                    "Best For": { 1: "Heavy Duty Site Use", 2: "General Maintenance", 3: "Light Construction" }
+                }
+            };
+            renderTable(demoData);
+        }
+    </script>
+    <script src="js/sidebar.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", async function() {
+            var u = await Auth.checkSession();
+            if (!u) { window.location.href = "/"; }
+        });
+    </script>
+</body>
+</html>

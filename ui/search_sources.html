@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Sources - RFI Dashboard</title>
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23FF5C35%22/><text y=%22.9em%22 font-size=%2280%22 x=%2250%25%22 text-anchor=%22middle%22 fill=%22white%22 font-family=%22serif%22 font-weight=%22bold%22>R</text></svg>">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        .layout { min-height: 100vh; background: var(--bg-light); }
+        .main-content { margin-left: 200px; margin-top: 64px; padding: var(--space-8); }
+        
+        .page-header { margin-bottom: 32px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .page-title h1 { font-size: 1.8rem; font-weight: 800; color: #0f172a; margin: 0 0 8px 0; }
+        .page-title p { color: #64748b; margin: 0; }
+
+        .source-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: 0.2s;
+        }
+        .source-card:hover { border-color: var(--primary-orange); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        
+        .source-info h3 { margin: 0 0 4px 0; font-size: 1rem; font-weight: 700; color: #1e293b; }
+        .source-info p { margin: 0; font-size: 0.85rem; color: #64748b; }
+        .priority-badge {
+            background: #f1f5f9;
+            color: #475569;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 12px;
+        }
+
+        .btn-add {
+            background: var(--primary-orange);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.2s;
+        }
+        .btn-add:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 32px;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+        }
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; color: #1e293b; }
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            font-family: inherit;
+        }
+        .form-input:focus { border-color: var(--primary-orange); outline: none; }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary-orange)" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                <span>RFI</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html" class="nav-link">Dashboard</a></li>
+                <li><a href="calendar.html" class="nav-link">Calendar</a></li>
+                <li><a href="threads.html" class="nav-link">Threads</a></li>
+                <li><a href="settings.html" class="nav-link">Settings</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="layout">
+                <aside class="sidebar">
+            <!-- Sidebar content is unified via js/sidebar.js -->
+            <ul class="sidebar-menu">
+                <li class="sidebar-item"><a href="index.html" class="sidebar-link">Loading...</a></li>
+            </ul>
+        </aside>
+
+
+        <main class="main-content">
+            <div class="page-header">
+                <div class="page-title">
+                    <h1>Priority Search Sources</h1>
+                    <p>Websites the AI Assistant prioritizes during product research.</p>
+                </div>
+                <button class="btn-add" onclick="openModal()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    Add Search Link
+                </button>
+            </div>
+
+            <div id="sourcesList">
+                <div style="text-align: center; padding: 3rem; color: #64748b;">
+                    <p>Loading your priority sources...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal -->
+    <div id="sourceModal" class="modal">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <h2 id="modalTitle" style="margin: 0; font-weight: 800; color: #0f172a;">Add Search Source</h2>
+                <span onclick="closeModal()" style="cursor: pointer; color: #94a3b8; font-size: 24px;">&times;</span>
+            </div>
+            <form id="sourceForm" onsubmit="saveSource(event)">
+                <input type="hidden" id="sourceId">
+                <div class="form-group">
+                    <label class="form-label">Website Name</label>
+                    <input type="text" id="sourceName" class="form-input" required placeholder="e.g. Bunnings, Amazon">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Base URL</label>
+                    <input type="url" id="sourceUrl" class="form-input" required placeholder="https://www.example.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Search Priority (1-10)</label>
+                    <input type="number" id="sourcePriority" class="form-input" min="1" max="10" value="1">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Priority For (Optional)</label>
+                    <input type="text" id="sourcePriorityFor" class="form-input" placeholder="e.g. PPE, Tools, Building Materials">
+                </div>
+                <button type="submit" id="btnSubmit" class="btn-add" style="width: 100%; justify-content: center;">Save Search Source</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        let sourcesData = [];
+
+        async function loadSources() {
+            const list = document.getElementById('sourcesList');
+            try {
+                sourcesData = await window.api.getSearchSources();
+                const sources = sourcesData;
+                if (sources.length === 0) {
+                    list.innerHTML = `
+                        <div style="text-align: center; padding: 4rem; background: white; border-radius: 24px; border: 1px dashed #cbd5e1;">
+                            <h3 style="color: #1e293b; margin-bottom: 8px;">No priority sources added</h3>
+                            <p style="color: #64748b;">Add websites that you want the AI to check first during research.</p>
+                        </div>`;
+                    return;
+                }
+
+                list.innerHTML = sources.map(s => `
+                    <div class="source-card">
+                        <div class="source-info">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <h3 style="margin:0;">${s.name}</h3>
+                                <span class="priority-badge">Priority ${s.priority}</span>
+                                ${s.priority_for ? `<span class="priority-badge" style="background: rgba(255, 92, 53, 0.1); color: var(--primary-orange);">For: ${s.priority_for}</span>` : ''}
+                            </div>
+                            <p style="margin-top: 4px;">${s.url}</p>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button onclick='editSource(${s.id})' style="background: #f1f5f9; color: #475569; border: none; padding: 8px; border-radius: 8px; cursor: pointer; transition: 0.2s;">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 00 2 2h14a2 2 0 00 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            </button>
+                            <button onclick="deleteSource(${s.id})" style="background: #fee2e2; color: #ef4444; border: none; padding: 8px; border-radius: 8px; cursor: pointer; transition: 0.2s;">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                list.innerHTML = `<div style="color: red; padding: 2rem;">Error loading sources: ${err.message}</div>`;
+            }
+        }
+
+        function openModal(isEdit = false) {
+            document.getElementById('sourceModal').style.display = 'flex';
+            document.getElementById('modalTitle').innerText = isEdit ? 'Edit Search Source' : 'Add Search Source';
+            document.getElementById('btnSubmit').innerText = isEdit ? 'Update Source' : 'Save Search Source';
+            if (!isEdit) {
+                document.getElementById('sourceForm').reset();
+                document.getElementById('sourceId').value = '';
+            }
+        }
+
+        function closeModal() { document.getElementById('sourceModal').style.display = 'none'; }
+
+        function editSource(id) {
+            const source = sourcesData.find(s => s.id === id);
+            if (!source) return;
+            
+            document.getElementById('sourceId').value = source.id;
+            document.getElementById('sourceName').value = source.name;
+            document.getElementById('sourceUrl').value = source.url;
+            document.getElementById('sourcePriority').value = source.priority;
+            document.getElementById('sourcePriorityFor').value = source.priority_for || '';
+            
+            openModal(true);
+        }
+
+        async function saveSource(e) {
+            e.preventDefault();
+            const id = document.getElementById('sourceId').value;
+            const data = {
+                name: document.getElementById('sourceName').value,
+                url: document.getElementById('sourceUrl').value,
+                priority: parseInt(document.getElementById('sourcePriority').value),
+                priority_for: document.getElementById('sourcePriorityFor').value
+            };
+            
+            try {
+                let res;
+                if (id) {
+                    res = await window.api.updateSearchSource(id, data);
+                } else {
+                    res = await window.api.addSearchSource(data);
+                }
+                
+                if (res) {
+                    closeModal();
+                    loadSources();
+                    document.getElementById('sourceForm').reset();
+                }
+            } catch (err) { alert("Error saving: " + err.message); }
+        }
+
+        async function deleteSource(id) {
+            if (!confirm("Are you sure you want to remove this search source?")) return;
+            try {
+                await window.api.deleteSearchSource(id);
+                loadSources();
+            } catch (err) { alert("Error deleting: " + err.message); }
+        }
+
+        window.addEventListener('load', loadSources);
+    </script>
+    <script src="js/sidebar.js"></script>
+</body>
+</html>
