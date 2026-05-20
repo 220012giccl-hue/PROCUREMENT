@@ -13,11 +13,12 @@ const voiceBtn = document.getElementById('voiceBtn');
 const convList = document.getElementById('convList');
 
 let currentContext = null;
+let currentMode = localStorage.getItem('assistant_mode') || 'procurement'; // Default to Procurement Assistant
 let currentConversationId = null;
-let currentMode = 'procurement'; // Default to Procurement Assistant
 
-function setMode(mode) {
+function setMode(mode, loadDefault = true) {
     currentMode = mode;
+    localStorage.setItem('assistant_mode', mode);
 
     // Update UI
     const btnRFI = document.getElementById('btnRFIMode');
@@ -60,10 +61,12 @@ function setMode(mode) {
 
     console.log(`[Assistant] Mode switched to: ${mode}`);
 
-    // Reload conversations for this mode
-    currentConversationId = null;
-    loadConversations(mode);
-    startNewChat();
+    if (loadDefault) {
+        // Reload conversations for this mode
+        currentConversationId = null;
+        loadConversations(mode);
+        startNewChat();
+    }
 }
 
 const PROMPT_CHIPS = {
@@ -151,10 +154,29 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function initAssistant() {
-    renderPromptChips(currentMode);
-    await loadConversations();
-    // Load latest conversation by default if none selected
-    if (convList && convList.querySelector('.conv-item')) {
+    // Synchronize UI active classes and settings for currentMode without resetting
+    setMode(currentMode, false);
+    
+    // Load conversations for the current mode
+    await loadConversations(currentMode);
+    
+    // Retrieve last active conversation for this mode
+    const savedConvId = localStorage.getItem('assistant_conv_id_' + currentMode);
+    let found = false;
+    
+    if (savedConvId && convList) {
+        const items = convList.querySelectorAll('.conv-item');
+        for (const item of items) {
+            if (String(item.dataset.id) === String(savedConvId)) {
+                await selectConversation(savedConvId);
+                found = true;
+                break;
+            }
+        }
+    }
+    
+    // If not found or no saved conversation, load latest one by default (or start new if none exists)
+    if (!found && convList && convList.querySelector('.conv-item')) {
         const latest = convList.querySelector('.conv-item');
         selectConversation(latest.dataset.id);
     }
@@ -198,6 +220,11 @@ async function loadConversations(mode = currentMode) {
 
 async function selectConversation(id) {
     currentConversationId = id;
+    if (id) {
+        localStorage.setItem('assistant_conv_id_' + currentMode, id);
+    } else {
+        localStorage.removeItem('assistant_conv_id_' + currentMode);
+    }
     // Update UI
     document.querySelectorAll('.conv-item').forEach(el => {
         el.classList.toggle('active', el.dataset.id == id);
@@ -207,6 +234,7 @@ async function selectConversation(id) {
 
 async function startNewChat() {
     currentConversationId = null;
+    localStorage.removeItem('assistant_conv_id_' + currentMode);
     if (chatMessages) {
         chatMessages.innerHTML = `
             <div class="empty-state">
@@ -225,6 +253,10 @@ async function deleteConversation(id) {
     try {
         const response = await window.RFQAgentAPI.deleteConversation(id);
         if (response.success) {
+            const savedConvId = localStorage.getItem('assistant_conv_id_' + currentMode);
+            if (String(savedConvId) === String(id)) {
+                localStorage.removeItem('assistant_conv_id_' + currentMode);
+            }
             if (currentConversationId == id) {
                 startNewChat();
             }

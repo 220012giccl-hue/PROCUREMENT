@@ -272,6 +272,10 @@ if (typeof API_BASE_URL === 'undefined') {
             return await this.request(`/api/assistant/conversations/${id}`, { method: 'DELETE' });
         }
 
+        async locateThreadByItem(itemName) {
+            return await this.request(`/api/assistant/locate-thread-by-item?item_name=${encodeURIComponent(itemName)}`);
+        }
+
         // --- SEARCH SOURCES ---
         async getSearchSources() {
             return await this.request('/api/procurement/search-sources');

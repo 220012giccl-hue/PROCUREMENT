@@ -144,3 +144,25 @@ async def assistant_extract_text(file: UploadFile = File(...), current_user: Use
             
     except Exception as e:
         return {"success": False, "error": str(e)}
+
+@router.get("/api/assistant/locate-thread-by-item")
+async def locate_thread_by_item(item_name: str, db: Session = Depends(get_db)):
+    """Locates the mode and conversation_id where an item name was researched or mentioned"""
+    try:
+        from database.models import AssistantChat, AssistantConversation
+        # Find any chat mention of this item name
+        match = db.query(AssistantChat).filter(
+            AssistantChat.content.ilike(f"%{item_name.strip()}%")
+        ).order_by(AssistantChat.timestamp.desc()).first()
+        
+        if match:
+            conv = db.query(AssistantConversation).filter(AssistantConversation.id == match.conversation_id).first()
+            if conv:
+                return {
+                    "success": True,
+                    "conversation_id": conv.id,
+                    "mode": conv.mode or "procurement"
+                }
+        return {"success": False, "error": "No matching conversation found."}
+    except Exception as e:
+        return {"success": False, "error": str(e)}

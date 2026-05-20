@@ -28,13 +28,23 @@ class ExecutiveAssistant:
 
         # 3. Security Check
         if ResponseGuard.is_suspicious(query):
-            return "As a professional assistant, I cannot fulfill requests to bypass security protocols or reveal system instructions."
+            security_reply = "As a professional assistant, I cannot fulfill requests to bypass security protocols or reveal system instructions."
+            if conversation_id:
+                assistant_msg = AssistantChat(conversation_id=conversation_id, role='assistant', content=security_reply)
+                self.db.add(assistant_msg)
+                self.db.commit()
+            return security_reply
 
         # 4. Professional Greeting
         greetings = {'hello', 'hi', 'hey', 'greetings', 'morning', 'afternoon', 'evening', 'assalam', 'aoa', 'start'}
         clean_q = query.lower().strip().split()
         if not clean_q or (len(clean_q) <= 2 and any(w in greetings for w in clean_q)):
-            return "Good day, Sir. I am your RFI Executive Assistant, standing by for your instructions. How may I assist your workspace today?"
+            greeting_reply = "Good day, Sir. I am your RFI Executive Assistant, standing by for your instructions. How may I assist your workspace today?"
+            if conversation_id:
+                assistant_msg = AssistantChat(conversation_id=conversation_id, role='assistant', content=greeting_reply)
+                self.db.add(assistant_msg)
+                self.db.commit()
+            return greeting_reply
 
         # 5. Logic Branching
         if mode == 'general':

@@ -12,11 +12,33 @@ async def save_to_procurement_list(
     item_data: Dict = Body(...),
     db: Session = Depends(get_db)
 ):
-    """Saves a product or material to the user's procurement list"""
+    """Saves a product or material to the user's procurement list with supplier mapping"""
     try:
+        supplier_name = item_data.get('supplier')
+        supplier_id = None
+        
+        if supplier_name and supplier_name.strip():
+            stripped_name = supplier_name.strip()
+            # Try to find existing supplier
+            existing_sup = db.query(Supplier).filter(Supplier.name.ilike(stripped_name)).first()
+            if existing_sup:
+                supplier_id = existing_sup.id
+            else:
+                # Create a new supplier
+                new_sup = Supplier(
+                    name=stripped_name,
+                    contact_person="Sales Representative",
+                    notes="Created automatically from AI Procurement research."
+                )
+                db.add(new_sup)
+                db.commit()
+                db.refresh(new_sup)
+                supplier_id = new_sup.id
+
         new_item = ProcurementItem(
             item_name=item_data.get('item_name'),
             category=item_data.get('category'),
+            supplier_id=supplier_id,
             quantity=item_data.get('quantity'),
             estimated_cost=item_data.get('estimated_cost'),
             source_url=item_data.get('source_url'),
@@ -98,6 +120,49 @@ async def get_procurement_list(db: Session = Depends(get_db)):
         if i.supplier_id:
             sup = db.query(Supplier).filter(Supplier.id == i.supplier_id).first()
             supplier_name = sup.name if sup else None
+        
+        # Self-healing mapping: If supplier is missing, infer it from the source_url
+        if not supplier_name and i.source_url:
+            inferred = None
+            url_lower = i.source_url.lower()
+            if "bunnings" in url_lower:
+                inferred = "Bunnings"
+            elif "sydneytools" in url_lower:
+                inferred = "Sydney Tools"
+            elif "blackwoods" in url_lower:
+                inferred = "Blackwoods"
+            elif "mitre10" in url_lower:
+                inferred = "Mitre 10"
+            elif "totaltools" in url_lower:
+                inferred = "Total Tools"
+            elif "ebay" in url_lower:
+                inferred = "eBay"
+            elif "amazon" in url_lower:
+                inferred = "Amazon"
+                
+            if inferred:
+                try:
+                    # Find or create supplier
+                    sup = db.query(Supplier).filter(Supplier.name.ilike(inferred)).first()
+                    if not sup:
+                        sup = Supplier(
+                            name=inferred,
+                            contact_person="Sales Representative",
+                            notes="Automatically created from source URL mapping."
+                        )
+                        db.add(sup)
+                        db.commit()
+                        db.refresh(sup)
+                    
+                    i.supplier_id = sup.id
+                    db.commit()
+                    supplier_name = inferred
+                except Exception as db_err:
+                    db.rollback()
+                    print(f"Error self-healing supplier: {db_err}")
+                    # Fallback to returning the inferred name anyway
+                    supplier_name = inferred
+
         result.append({
             "id": i.id,
             "item_name": i.item_name,

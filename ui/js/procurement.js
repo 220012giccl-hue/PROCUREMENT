@@ -291,7 +291,7 @@ function handleProcAction(action) {
     } else if (action === 'email') {
         draftEmailToSuppliers();
     } else if (action === 'pdf') {
-        exportToPDF();
+        openPdfExportModal();
     }
 }
 
@@ -328,15 +328,31 @@ function extractAndOpenRFQ() {
 }
 
 function openRFQModal() {
-    document.getElementById('rfqModal').style.display = 'flex';
-    // Set default date to 1 week from now
-    const nextWeek = new Date();
-    nextWeek.setDate(nextWeek.getDate() + 7);
-    document.getElementById('rfqDate').value = nextWeek.toISOString().split('T')[0];
+    const modal = document.getElementById('rfqModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        // Set default date to 1 week from now
+        const nextWeek = new Date();
+        nextWeek.setDate(nextWeek.getDate() + 7);
+        const elDate = document.getElementById('rfqDate');
+        if (elDate) elDate.value = nextWeek.toISOString().split('T')[0];
+    }
 }
 
 function closeRFQModal() {
-    document.getElementById('rfqModal').style.display = 'none';
+    const modal = document.getElementById('rfqModal');
+    if (modal) {
+        modal.style.display = 'none';
+        
+        // Dynamic UX Redirect: Go back to originating page instead of leaving user stranded in chat
+        const urlParams = new URLSearchParams(window.location.search);
+        const action = urlParams.get('action');
+        if (action === 'rfq_new') {
+            window.location.href = 'rfq.html';
+        } else if (action === 'rfq') {
+            window.location.href = 'procurement.html';
+        }
+    }
 }
 
 async function submitRFQ(event, status = 'SENT') {
@@ -360,6 +376,10 @@ async function submitRFQ(event, status = 'SENT') {
         if (response.success) {
             if (typeof showToast === 'function') showToast(status === 'SENT' ? `RFQ ${response.rfq_number} Sent Successfully!` : 'RFQ Saved as Draft', 'success');
             closeRFQModal();
+
+            if (typeof loadRFQs === 'function') {
+                loadRFQs();
+            }
 
             if (status === 'SENT') {
                 if (typeof appendMessage === 'function') {
@@ -609,7 +629,32 @@ async function sendDraftEmail() {
     }
 }
 
-function exportToPDF() {
+function openPdfExportModal() {
+    const lastMsg = document.querySelector('.message.assistant.procurement:last-of-type');
+    if (!lastMsg) {
+        if (typeof showToast === 'function') showToast("No data available to export.", "error");
+        return;
+    }
+    const modal = document.getElementById('pdfExportModal');
+    if (modal) modal.style.display = 'flex';
+}
+
+function closePdfExportModal() {
+    const modal = document.getElementById('pdfExportModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function triggerBrowserPrint() {
+    closePdfExportModal();
+    exportToPDF('print');
+}
+
+function triggerDirectDownload() {
+    closePdfExportModal();
+    exportToPDF('download');
+}
+
+function exportToPDF(actionType = 'print') {
     const lastMsg = document.querySelector('.message.assistant.procurement:last-of-type');
     if (!lastMsg) {
         if (typeof showToast === 'function') showToast("No data available to export.", "error");
@@ -632,7 +677,7 @@ function exportToPDF() {
         const link = card.querySelector('.btn-view-source')?.href || '#';
 
         productCardsHtml += `
-            <div style="border:1px solid #e2e8f0; border-radius:10px; padding:16px; margin-bottom:12px; break-inside:avoid;">
+            <div style="border:1px solid #e2e8f0; border-radius:10px; padding:16px; margin-bottom:12px; break-inside:avoid; background:#ffffff;">
                 <div style="font-weight:700; font-size:1rem; color:#1e293b; margin-bottom:6px;">${name}</div>
                 <div style="display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap;">
                     <span style="background:#FFF4F0; color:#FF5C35; padding:3px 10px; border-radius:20px; font-size:0.75rem; font-weight:600;">${supplier}</span>
@@ -700,9 +745,134 @@ function exportToPDF() {
         </body>
         </html>`;
 
+    if (actionType === 'download') {
+        if (typeof showToast === 'function') showToast("Preparing PDF download...", "info");
+        
+        // Dynamically load html2pdf if not already loaded
+        if (typeof html2pdf === 'undefined') {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+            script.crossOrigin = 'anonymous';
+            script.referrerPolicy = 'no-referrer';
+            script.onload = () => {
+                generateHtml2Pdf(printContent);
+            };
+            script.onerror = (err) => {
+                console.error("html2pdf load failed:", err);
+                if (typeof showToast === 'function') showToast("Could not load PDF library. Using direct print fallback...", "error");
+                triggerBrowserPrintFallback(printContent);
+            };
+            document.head.appendChild(script);
+        } else {
+            generateHtml2Pdf(printContent);
+        }
+    } else {
+        triggerBrowserPrintFallback(printContent);
+    }
+}
+
+function triggerBrowserPrintFallback(printContent) {
     const printWindow = window.open('', '_blank');
     printWindow.document.write(printContent);
     printWindow.document.close();
     printWindow.focus();
     setTimeout(() => printWindow.print(), 500);
+}
+
+function generateHtml2Pdf(htmlContent) {
+    const element = document.createElement('div');
+    element.innerHTML = htmlContent;
+    
+    // Style adjustments for standard html2pdf layout
+    element.style.padding = '30px';
+    element.style.background = '#ffffff';
+    element.style.width = '790px'; // Consistent A4 width
+    
+    const opt = {
+        margin:       10,
+        filename:     `procurement_report_${new Date().toISOString().split('T')[0]}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, logging: false },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    
+    html2pdf().set(opt).from(element).save().then(() => {
+        if (typeof showToast === 'function') showToast("PDF downloaded successfully!", "success");
+    }).catch(err => {
+        console.error("PDF generation failed:", err);
+        if (typeof showToast === 'function') showToast("Download failed. Opening printer dialog instead...", "error");
+        triggerBrowserPrintFallback(htmlContent);
+    });
+}
+
+// Close PDF modal on backdrop click and check for RFQ URL parameters
+document.addEventListener('DOMContentLoaded', () => {
+    const pdfModal = document.getElementById('pdfExportModal');
+    if (pdfModal) {
+        pdfModal.addEventListener('click', function(e) {
+            if (e.target === this) closePdfExportModal();
+        });
+    }
+
+    // Check for RFQ URL parameters to open prefilled RFQ Modal
+    if (window.RFQAgentAPIReady) {
+        handleUrlParams();
+    } else {
+        window.addEventListener('RFQAgentAPIReady', handleUrlParams);
+    }
+});
+
+async function handleUrlParams() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const action = urlParams.get('action');
+    const id = urlParams.get('id');
+
+    if (action === 'rfq' && id) {
+        try {
+            console.log(`[RFQ Action Triggered] Fetching item ID: ${id}`);
+            const response = await window.api.getProcurementList();
+            const items = response.data || [];
+            const item = items.find(i => String(i.id) === String(id));
+
+            if (item) {
+                console.log("[RFQ Action Triggered] Item found! Prefilling RFQ modal...", item);
+                const elItemName = document.getElementById('rfqItemName');
+                const elSupplier = document.getElementById('rfqSupplier');
+                const elBrand = document.getElementById('rfqBrand');
+                const elSpecs = document.getElementById('rfqSpecs');
+
+                if (elItemName) elItemName.value = item.item_name || '';
+                if (elSupplier) elSupplier.value = item.supplier || '';
+                if (elBrand) elBrand.value = item.category || 'General Procurement';
+                if (elSpecs) elSpecs.value = item.technical_notes || '';
+                
+                // Show modal
+                openRFQModal();
+            } else {
+                console.warn(`[RFQ Action Triggered] Item with ID ${id} not found in procurement list.`);
+            }
+        } catch (err) {
+            console.error("Error populating RFQ from URL params:", err);
+        }
+    } else if (action === 'rfq_new' || (action === 'rfq' && !id)) {
+        console.log("[RFQ Action Triggered] Opening fresh blank RFQ modal...");
+        try {
+            const elItemName = document.getElementById('rfqItemName');
+            const elSupplier = document.getElementById('rfqSupplier');
+            const elBrand = document.getElementById('rfqBrand');
+            const elSpecs = document.getElementById('rfqSpecs');
+            const elQuantity = document.getElementById('rfqQuantity');
+
+            if (elItemName) elItemName.value = '';
+            if (elSupplier) elSupplier.value = '';
+            if (elBrand) elBrand.value = '';
+            if (elSpecs) elSpecs.value = '';
+            if (elQuantity) elQuantity.value = '';
+
+            // Show modal
+            openRFQModal();
+        } catch (err) {
+            console.error("Error opening blank RFQ modal from URL params:", err);
+        }
+    }
 }
