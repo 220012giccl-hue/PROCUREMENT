@@ -89,7 +89,7 @@ const PROMPT_CHIPS = {
     ],
     general: [
         "What is a Bill of Quantities (BOQ)?",
-        "Explain the RFQ vs RFI process",
+        "Explain the RFQ vs Procurement process",
         "What should I check before approving a supplier quote?",
         "What does lead time mean in procurement?",
         "Explain trade account pricing vs retail pricing"
@@ -129,7 +129,7 @@ function usePromptChip(text) {
 
 
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('RFI page loaded...');
+    console.log('Procurement page loaded...');
 
     // Auto-resize textarea
     if (chatInput) {

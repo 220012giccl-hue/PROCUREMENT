@@ -1,0 +1,493 @@
+# Product Requirements Document (PRD)
+## Executive RFQ Assistant — Gap Implementation Plan
+**Version:** 2.1 (Table Name Conflicts Resolved)
+**Date:** May 2026  
+**Principle:** Add what is missing. Never remove what already exists.
+
+> **v2.0 Change:** Corrected CRM terminology to match `database/models.py`.
+> `Contact` (table: `contacts`) = clients. `Topic` (table: `topics`) = projects.
+> Aliases `Client = Contact` and `Project = Topic` already exist at bottom of `models.py`.
+
+> **v2.1 Change:** Fixed 2 table name conflicts found during codebase cross-check:
+> 1. `email_threads` → corrected to `threads` (Python model: `Thread`) — fixed everywhere in PRD.
+> 2. `product_results` does not exist in DB — PRD now explicitly creates it in migration `004`.
+>    Alternatively, devs may use existing `product_comparisons` table (both options documented).
+
+---
+
+## 1. OVERVIEW & GOAL
+
+Your project already has a solid foundation:
+- ✅ FastAPI backend with routes, tasks, agents
+- ✅ Email listeners (Gmail OAuth, Outlook OAuth)
+- ✅ Auth system (sessions, audit, security)
+- ✅ AI agents (executive agent, rfq_agent)
+- ✅ Frontend UI (index.html, rfq.html, tenders.html, admin.html)
+- ✅ Database: `contacts` table (your "clients"), `topics` table (your "projects"), migrations
+- ✅ Docker support
+
+**What this PRD adds (gaps only):**
+1. ~~Client CRM layer~~ — Already exists as `contacts` + `topics`. **No new tables needed.**
+2. Context Resolver Agent (which topic/project does this email belong to?)
+3. Async Market Research Worker (background task, no timeouts)
+4. Vendor Matcher & Routing Engine
+5. Quarantine/Triage Queue (low-confidence routing)
+6. RFQ Workflow KPI Tracker (`rfq_workflows` table — the only new table)
+7. Frontend additions (progress stepper, triage queue view, contacts management in admin)
+
+---
+
+## 2. WHAT ALREADY EXISTS (DO NOT TOUCH)
+
+| Module | Status | Notes |
+|--------|--------|-------|
+| `api/main.py` | ✅ Exists | FastAPI entry point — do not modify core setup |
+| `api/tasks.py` | ✅ Exists | Add new background tasks here only |
+| `api/routes/` | ✅ Exists | Add new route files, don't edit existing ones |
+| `agents/executive/` | ✅ Exists | Do not modify — only add new agents alongside |
+| `agents/rfq_agent/` | ✅ Exists | Extend with new logic files only |
+| `auth/` (all files) | ✅ Exists | Do not touch |
+| `config/` (all files) | ✅ Exists | Add new settings; don't overwrite existing |
+| `database/models.py` | ✅ Exists | `Contact`, `Topic`, aliases `Client=Contact`, `Project=Topic` already here |
+| `integrations/email_listeners/` | ✅ Exists | Add new listener hooks only |
+| `ui/` (all HTML/CSS/JS) | ✅ Exists | Add new pages/components; don't modify existing UI |
+
+### Existing Schema You Must Know (from `models.py`)
+
+```
+contacts table  ←→  "Client" in business language
+  - id, contact_name, email_domain, contact_emails (ARRAY), status, created_at
+
+topics table    ←→  "Project" in business language
+  - id, contact_id (FK → contacts.id), topic_name, status, created_at, ...
+
+# Bottom of models.py already has:
+Client = Contact
+Project = Topic
+```
+
+**Rule:** Always use `Contact` / `Topic` in code. Never create new `clients` or `projects` tables.
+
+---
+
+## 3. DATABASE CHANGES (Additive Only)
+
+### 3.1 What to ADD
+
+The CRM layer already exists. We only need **one new table** and **one new column**.
+
+#### New Column: Add `site_address` to existing `topics` table
+
+```sql
+-- topics is your "projects" table
+ALTER TABLE topics ADD COLUMN site_address TEXT;
+```
+
+#### New Table: `rfq_workflows`
+Tracks the state of each RFQ as it moves through the pipeline.
+
+```sql
+CREATE TABLE rfq_workflows (
+    id               SERIAL PRIMARY KEY,
+    topic_id         INT REFERENCES topics(id),  -- "topic" = your project
+    thread_id        INT REFERENCES threads(id), -- ✅ correct table: "threads" (model: Thread)
+    status           VARCHAR(100) DEFAULT 'ingested',
+    -- Status values: ingested | triage | researching | drafts_ready | sent | quotes_received
+    confidence_score FLOAT,       -- from Context Resolver Agent (0.0 to 1.0)
+    assigned_by      VARCHAR(100), -- 'ai' or 'human'
+    created_at       TIMESTAMP DEFAULT NOW(),
+    updated_at       TIMESTAMP DEFAULT NOW()
+);
+```
+
+#### New Table: `product_results`
+Stores market research prices per topic. This table does **not** exist in the current DB — create it in migration 004.
+
+> ⚠️ **Dev note:** If `product_comparisons` already exists in your DB with a compatible structure,
+> you may write market research data there instead and skip this CREATE TABLE. Check before running migration.
+
+```sql
+CREATE TABLE product_results (
+    id           SERIAL PRIMARY KEY,
+    topic_id     INT REFERENCES topics(id),
+    item_name    TEXT NOT NULL,
+    supplier     TEXT,           -- e.g. "Bunnings", "Sydney Tools", "Blackwoods"
+    unit_price   NUMERIC(10, 2),
+    unit         VARCHAR(50),    -- e.g. "each", "m", "box"
+    source_url   TEXT,
+    fetched_at   TIMESTAMP DEFAULT NOW()
+);
+```
+
+#### Migration File Location
+Create: `database/migrations/004_add_site_address_and_rfq_workflow.sql`
+
+Full contents of this migration file (in order):
+1. `ALTER TABLE topics ADD COLUMN site_address TEXT;`
+2. `CREATE TABLE rfq_workflows (...)`
+3. `CREATE TABLE product_results (...)` — skip if using `product_comparisons` instead
+
+### 3.2 What NOT to Create (Already Exists)
+
+| ❌ Do NOT create | ✅ Already exists as |
+|-----------------|---------------------|
+| `clients` table | `contacts` table |
+| `client_contacts` table | `contacts.contact_emails` (ARRAY column) |
+| `ALTER TABLE projects ADD COLUMN client_id` | `topics.contact_id` already exists |
+
+---
+
+## 4. NEW BACKEND MODULES (Add, Don't Replace)
+
+### 4.1 New Route File: `api/routes/contacts.py`
+
+Purpose: Expose contact lookup and management for the admin panel.
+Uses the **existing** `Contact` SQLAlchemy model from `database/models.py`.
+
+Endpoints to build:
+- `GET /contacts` — list all contacts
+- `POST /contacts` — create a new contact (company name + email domain)
+- `GET /contacts/{id}/topics` — get all topics (projects) for a contact
+- `GET /contacts/lookup?email=x` — check if an email address exists in `contact_emails` array
+
+Register in `main.py` by adding one line:
+```python
+from api.routes.contacts import router as contacts_router
+app.include_router(contacts_router, prefix="/api/contacts")
+```
+
+---
+
+### 4.2 New Route File: `api/routes/rfq_workflow.py`
+
+Purpose: KPI state machine endpoints (for the dashboard).
+Uses the new `rfq_workflows` table + existing `Topic` model.
+
+Endpoints to build:
+- `GET /rfq-workflows` — list all workflows with status
+- `GET /rfq-workflows/{id}` — get one workflow detail
+- `PATCH /rfq-workflows/{id}/status` — human manually updates status
+- `GET /rfq-workflows/triage` — list all items in triage/quarantine queue
+
+Register in `main.py`:
+```python
+from api.routes.rfq_workflow import router as rfq_workflow_router
+app.include_router(rfq_workflow_router, prefix="/api/rfq-workflows")
+```
+
+---
+
+### 4.3 New Agent: `agents/context_resolver/`
+
+**Purpose:** Given an incoming email, figure out which topic (project) it belongs to.
+
+**Files to create:**
+- `agents/context_resolver/__init__.py` (empty)
+- `agents/context_resolver/resolver.py`
+
+**Logic (plain English):**
+
+```
+Step 1: Receive sender_email + email_body
+
+Step 2: Search the contacts table
+        Query: WHERE sender_email = ANY(contact_emails)
+        (contact_emails is a PostgreSQL ARRAY column)
+
+Step 3: If no contact found
+        → Return {"status": "triage", "confidence": 0, "reason": "unknown sender"}
+
+Step 4: If contact found
+        → Get contact_id
+        → Fetch all active Topic records WHERE contact_id = that contact's id
+
+Step 5: If no active topics found
+        → Return {"status": "triage", "confidence": 0, "reason": "no active projects for this contact"}
+
+Step 6: Call LLM (Claude API) with the prompt from config/prompts.py
+        Pass: email_body + list of topics (id, topic_name, site_address, recent_materials)
+
+Step 7: Parse LLM JSON response
+        If confidence >= 0.85 → return {"status": "researching", "topic_id": X, "confidence": 0.92}
+        If confidence < 0.85  → return {"status": "triage", "topic_id": X, "confidence": 0.71}
+```
+
+**LLM Prompt (goes in `config/prompts.py` as `CONTEXT_RESOLVER_PROMPT`):**
+
+```
+You are a procurement project classifier.
+
+Given the email below and the list of active projects for this client,
+determine which project this email most likely belongs to.
+
+Email:
+{email_body}
+
+Active Projects:
+{topic_list}
+
+Respond ONLY in valid JSON — no explanation, no markdown:
+{"topic_id": 12, "confidence": 0.92, "reason": "email mentions steel beams matching site address"}
+```
+
+---
+
+### 4.4 New Agent: `agents/vendor_matcher/`
+
+**Purpose:** Given extracted product categories from an email, find which suppliers to contact.
+
+**Files to create:**
+- `agents/vendor_matcher/__init__.py` (empty)
+- `agents/vendor_matcher/matcher.py`
+
+**Logic:**
+1. Receive: list of items from `procurement_items` table (with categories like "PPE", "Timber")
+2. Query the existing `suppliers` table: filter by `category` column matching item categories
+3. Return: `[{supplier_id, supplier_name, email, matched_categories}]`
+4. Hand off results to existing `rfq_agent` which drafts the emails
+
+---
+
+### 4.5 Background Tasks: Add to `api/tasks.py`
+
+Add these two functions **at the bottom** of the existing `tasks.py` (do not touch or remove existing functions):
+
+**Task 1: `run_market_research(topic_id: int, items: list)`**
+- Triggered after context resolver successfully assigns a topic
+- Searches supplier sources (Bunnings, Sydney Tools, Blackwoods) for item prices
+- Saves results to `product_results` table (created in migration 004) linked to `topic_id`
+- Updates `rfq_workflows.status` → `drafts_ready` when done
+
+**Task 2: `trigger_vendor_drafting(topic_id: int)`**
+- Triggered after market research completes
+- Calls `vendor_matcher` → passes matched suppliers to `rfq_agent`
+- `rfq_agent` generates draft emails and saves to `rfqs` table with `status = 'Draft'`
+- ⚠️ Does NOT auto-send — human approval required (existing Phase 2.8 rule)
+
+---
+
+### 4.6 Email Listener Hook: `integrations/email_listeners/intake_hook.py`
+
+New file. Glues the email listener to the context resolver and background tasks.
+
+**On new email received, this hook does:**
+
+```python
+# Pseudocode — implement in intake_hook.py
+
+def on_email_received(sender_email, subject, body, thread_id):
+
+    # 1. Save to existing threads table (already exists — use existing model)
+    thread = save_to_threads(sender_email, subject, body, thread_id)
+
+    # 2. Call context resolver
+    result = context_resolver.resolve(sender_email, body)
+
+    # 3. Create rfq_workflow record
+    workflow = create_rfq_workflow(
+        topic_id         = result.get("topic_id"),
+        thread_id        = thread.id,
+        status           = result["status"],         # "researching" or "triage"
+        confidence_score = result["confidence"],
+        assigned_by      = "ai"
+    )
+
+    # 4. Branch on result
+    if result["status"] == "researching":
+        # Kick off async background task — does NOT block the webhook
+        background_tasks.add_task(run_market_research, workflow.topic_id, parsed_items)
+
+    elif result["status"] == "triage":
+        # Do nothing automatically — wait for human assignment on triage.html
+        pass
+```
+
+---
+
+### 4.7 Config: Add to `config/prompts.py`
+
+Add these constants at the **bottom** of the existing file (do not touch existing prompts):
+
+```python
+# Context Resolver Agent
+CONTEXT_RESOLVER_PROMPT = """
+You are a procurement project classifier.
+Given the email below and the list of active projects for this client,
+determine which project this email most likely belongs to.
+
+Email:
+{email_body}
+
+Active Projects:
+{topic_list}
+
+Respond ONLY in valid JSON — no explanation, no markdown:
+{"topic_id": 12, "confidence": 0.92, "reason": "..."}
+"""
+
+# Vendor Matcher
+VENDOR_MATCH_PROMPT = """
+Given these procurement items and their categories, list the most suitable
+suppliers from the database to contact for quotes. Return JSON only.
+Items: {items}
+"""
+
+# Triage Summary (shown on triage.html to explain why email wasn't auto-assigned)
+TRIAGE_SUMMARY_PROMPT = """
+Explain in 1-2 sentences why this email could not be automatically assigned
+to a project. Be specific about what was ambiguous.
+Email: {email_body}
+Candidates: {topic_list}
+AI Score: {confidence}
+"""
+```
+
+---
+
+## 5. FRONTEND ADDITIONS (New Files Only)
+
+### 5.1 New Page: `ui/triage.html`
+
+**Purpose:** Shows all RFQs the AI couldn't confidently assign (confidence < 85%).
+Human reviewer sees the email, the AI's best guess, and manually assigns it.
+
+**UI Elements:**
+- Table columns: Email Subject | Sender | Date Received | AI's Best Guess (topic name) | Confidence %
+- "Assign" button per row → opens a dropdown of active topics for that contact
+- On assign: calls `PATCH /api/rfq-workflows/{id}/status` with `{status: "researching", topic_id: X, assigned_by: "human"}`
+- After assignment: background task `run_market_research` is triggered
+
+**Style:** Use existing `ui/css/` stylesheets. Do not introduce a new CSS framework.
+
+---
+
+### 5.2 Add RFQ Progress Stepper to `ui/rfq.html`
+
+Add the stepper widget **below** the existing content in `rfq.html` (do not replace anything).
+
+**6 steps — each turns green when its condition is met:**
+
+| Step | Label | Green When |
+|------|-------|-----------|
+| 1 | 📧 Email Received | `threads` record exists for this RFQ |
+| 2 | 🔍 Topic Assigned | `rfq_workflows.status` is not `triage` |
+| 3 | 📊 Market Research Done | `product_results` has rows for this `topic_id` |
+| 4 | 📝 Drafts Ready | `rfqs` table has draft entries for this RFQ |
+| 5 | 📤 Sent to Vendors | `rfqs.status = 'Sent'` |
+| 6 | 💬 Quotes Received | `supplier_quotes` has entries |
+
+**Implementation:**
+- Create: `ui/js/rfq_stepper.js` (fetches `/api/rfq-workflows/{id}` and renders stepper)
+- Add to `rfq.html`: `<script src="js/rfq_stepper.js"></script>` at the bottom
+
+---
+
+### 5.3 Add Contacts Section to `ui/admin.html`
+
+Add a new collapsible tab/section to the **existing** admin panel (do not remove other sections).
+
+- "Contacts" tab: table listing all contacts (company name, email domain, number of topics)
+- "Add Contact" form: contact_name + email_domain fields → calls `POST /api/contacts`
+- "View Topics" link per contact → shows their active topics/projects
+- Uses the existing `Contact` model data — no new DB queries needed beyond the new endpoints
+
+---
+
+## 6. FULL WORKFLOW (End-to-End)
+
+```
+1. Email arrives in inbox
+        ↓
+2. Email Listener (existing) picks it up
+   → intake_hook.py saves to threads table
+        ↓
+3. Context Resolver Agent runs
+   → Looks up sender email in contacts.contact_emails (ARRAY)
+   → If found: fetches active topics for that contact_id
+   → Calls LLM to score which topic this email belongs to
+        ↓
+   [Confidence ≥ 85%?]
+    YES → rfq_workflows record: status = "researching"
+    NO  → rfq_workflows record: status = "triage"
+          (appears on triage.html — human assigns manually)
+        ↓
+4. Background Task: run_market_research()
+   (async — does NOT block webhook)
+   Searches Bunnings, Sydney Tools, Blackwoods for prices
+   Saves to product_results table
+        ↓
+5. Background Task: trigger_vendor_drafting()
+   vendor_matcher finds right suppliers from suppliers table
+   rfq_agent (existing) drafts emails
+   Saved to rfqs table as DRAFT — NOT sent
+        ↓
+6. Human reviews drafts in rfq.html
+   Progress stepper shows current stage
+   Human approves → status = "Sent" → emails go out
+        ↓
+7. Supplier replies → saved to supplier_quotes
+        ↓
+8. Progress stepper on rfq.html updates to "Quotes Received" ✅
+```
+
+---
+
+## 7. MILESTONE PLAN
+
+| Week | Work | Risk |
+|------|------|------|
+| Week 1 | Write `004_add_site_address_and_rfq_workflow.sql` migration. Add `RFQWorkflow` ORM model to `models.py`. | Low — one small migration |
+| Week 2 | Build `context_resolver` agent. Build `intake_hook.py`. Add prompts to `config/prompts.py`. | Medium — LLM prompt tuning needed |
+| Week 3 | Add `run_market_research` + `trigger_vendor_drafting` background tasks to `tasks.py`. | Medium — async wiring |
+| Week 4 | Build `vendor_matcher` agent. Wire to existing `rfq_agent`. Build `api/routes/contacts.py` + `rfq_workflow.py`. | Low — connecting existing pieces |
+| Week 5 | Frontend: `triage.html`, `rfq_stepper.js`, contacts section in `admin.html`. | Low — UI work only |
+
+---
+
+## 8. KEY RULES FOR DEVELOPERS
+
+1. **Use `Contact` and `Topic` models** — never create new `clients` or `projects` tables
+2. **`contact_emails` is a PostgreSQL ARRAY** — use `= ANY(contact_emails)` in queries
+3. **Never delete a table or column** — only ALTER TABLE to add
+4. **Never delete a route file** — only add new files or new endpoints
+5. **Never modify existing agent logic** — create new agent files alongside
+6. **All RFQ emails must stay as DRAFT** until a human approves (Phase 2.8 rule)
+7. **Triage threshold = 85% confidence** — anything below goes to human review queue
+8. **Background tasks must be async** — never block the email webhook response
+9. **All DB changes go in migration `004_...sql`** — never edit migrations 001–003
+
+---
+
+## 9. NEW FILES SUMMARY
+
+| File | Purpose |
+|------|---------|
+| `database/migrations/004_add_site_address_and_rfq_workflow.sql` | `ALTER TABLE topics` + new `rfq_workflows` table |
+| `agents/context_resolver/resolver.py` | Topic matching agent using existing `Contact` + `Topic` models |
+| `agents/vendor_matcher/matcher.py` | Vendor-to-category routing using existing `suppliers` table |
+| `api/routes/contacts.py` | Contact management endpoints (uses existing `Contact` model) |
+| `api/routes/rfq_workflow.py` | RFQ KPI state endpoints |
+| `integrations/email_listeners/intake_hook.py` | Email → context resolver → background task glue |
+| `ui/triage.html` | Human review queue for low-confidence RFQ assignments |
+| `ui/js/rfq_stepper.js` | Progress stepper component for rfq.html |
+
+---
+
+## 10. SCHEMA TERMINOLOGY CHEAT SHEET
+
+Use this table whenever reading old docs or the architect's notes:
+
+| Old PRD v1.0 Term | Correct Term (matches `models.py`) | DB Table |
+|-------------------|-----------------------------------|----------|
+| `clients` | `Contact` | `contacts` |
+| `client_contacts` | `Contact.contact_emails` (ARRAY) | `contacts` |
+| `projects` | `Topic` | `topics` |
+| `project_id` | `topic_id` | `topics.id` |
+| `client_id` on projects | `contact_id` on topics | Already exists |
+| `email_threads` | `Thread` | `threads` |
+| `email_thread_id` | `thread_id` | `threads.id` |
+| `product_results` | `ProductResult` (new) | `product_results` (created in migration 004) |
+
+---
+
+*End of PRD — Version 2.0 (Schema-Corrected)*
