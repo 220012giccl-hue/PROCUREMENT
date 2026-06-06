@@ -46,6 +46,8 @@ class ExecutiveAssistant:
                 self.db.commit()
             return greeting_reply
 
+        conversation_context = self._get_conversation_context(conversation_id)
+
         # 5. Logic Branching
         if mode == 'general':
             system_prompt = """
@@ -67,7 +69,7 @@ class ExecutiveAssistant:
             if external_context:
                 context_note = f"\n\n[UPLOADED DOCUMENT CONTENT]:\n{external_context[:10000]}\n\n(Focus your analysis on the document above if relevant to the question.)"
             
-            user_prompt = f"USER QUESTION: {query}\n{context_note}\n\nProvide a concise and professional response."
+            user_prompt = f"USER QUESTION: {query}\n{context_note}\n\n[CURRENT CHAT CONTEXT]:\n{conversation_context}\n\nProvide a concise and professional response."
             temperature = 0.7
         elif mode == 'procurement':
             # --- NEW PROCUREMENT EXECUTIVE MODE ---
@@ -110,6 +112,9 @@ class ExecutiveAssistant:
             user_prompt = f"""
             USER QUESTION: {query}
 
+            [CURRENT CHAT CONTEXT]:
+            {conversation_context}
+
             [INTELLIGENCE CONTEXT]:
             {context_data}
             
@@ -148,6 +153,9 @@ class ExecutiveAssistant:
             user_prompt = f"""
             USER QUESTION: {query}
 
+            [CURRENT CHAT CONTEXT]:
+            {conversation_context}
+
             [INTELLIGENCE CONTEXT]:
             {context_data}
             
@@ -174,6 +182,23 @@ class ExecutiveAssistant:
             self.db.commit()
             
         return reply
+
+    def _get_conversation_context(self, conversation_id: Optional[int]) -> str:
+        if not conversation_id:
+            return "No previous messages in this chat."
+
+        messages = (
+            self.db.query(AssistantChat)
+            .filter(AssistantChat.conversation_id == conversation_id)
+            .order_by(AssistantChat.timestamp.desc())
+            .limit(10)
+            .all()
+        )
+        if not messages:
+            return "No previous messages in this chat."
+
+        ordered = list(reversed(messages))
+        return "\n".join([f"{m.role.upper()}: {(m.content or '')[:700]}" for m in ordered])
 
     def _retrieve_context(self, query: str) -> str:
         """Deep Context Search: Emails, Sent Follow-ups, Financials, Documents, and Calendar"""

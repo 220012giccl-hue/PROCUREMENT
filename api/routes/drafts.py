@@ -55,7 +55,29 @@ async def get_drafts(thread_id: Optional[str] = None, db: Session = Depends(get_
     if thread_id:
         query = query.filter(DraftReply.thread_id == thread_id)
     drafts = query.order_by(DraftReply.created_at.desc()).all()
-    return {"success": True, "data": drafts}
+    return {
+        "success": True,
+        "count": len(drafts),
+        "data": [
+            {
+                "id": d.id,
+                "thread_id": d.thread_id,
+                "draft_type": d.draft_type,
+                "recipient": d.recipient,
+                "subject": d.subject,
+                "body": d.body,
+                "email_provider": d.email_provider,
+                "provider_draft_id": d.provider_draft_id,
+                "status": d.status,
+                "created_by": d.created_by,
+                "created_at": d.created_at.isoformat() if d.created_at else None,
+                "updated_at": d.updated_at.isoformat() if d.updated_at else None,
+                "sent_at": d.sent_at.isoformat() if d.sent_at else None,
+                "meta_data": d.meta_data or {}
+            }
+            for d in drafts
+        ]
+    }
 
 @router.get("/api/drafts/{draft_id}")
 async def get_draft_detail(draft_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):

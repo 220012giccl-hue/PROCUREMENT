@@ -107,7 +107,7 @@
             icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>`
         },
         {
-            href: "assistant.html",
+            href: "assistant.html?mode=procurement&new=1",
             label: "AI Assistant",
             icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>`
         },
@@ -128,7 +128,8 @@
 
         let html = '<ul class="sidebar-menu">';
         sidebarMenu.forEach(item => {
-            const isActive = (page === item.href) ? 'active' : '';
+            const itemPage = item.href.split('?')[0];
+            const isActive = (page === itemPage) ? 'active' : '';
             html += `
                 <li class="sidebar-item">
                     <a href="${item.href}" class="sidebar-link ${isActive}">

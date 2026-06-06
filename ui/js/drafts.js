@@ -18,7 +18,17 @@ async function initDrafts() {
 
 
 async function loadDrafts() {
+    const container = document.getElementById('draftsList');
     try {
+        if (container) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div style="font-size: var(--text-lg); color: var(--text-primary); margin-bottom: 0.5rem;">Loading draft emails...</div>
+                    <div style="font-size: var(--text-sm); color: var(--text-muted);">Fetching saved drafts from the server</div>
+                </div>
+            `;
+        }
+
         if (!window.RFQAgentAPI || !window.RFQAgentAPI.getDrafts) {
             console.warn('[Drafts] API instance missing. Retrying in 100ms...');
             setTimeout(loadDrafts, 100);
@@ -29,11 +39,41 @@ async function loadDrafts() {
             displayDrafts(response.data);
         } else {
             console.log('No drafts found');
+            displayEmptyDrafts();
         }
     } catch (error) {
         console.error('Error loading drafts:', error);
+        displayDraftError();
         showToast('Failed to load drafts.', 'error');
     }
+}
+
+function displayEmptyDrafts() {
+    const container = document.getElementById('draftsList');
+    if (!container) return;
+
+    container.innerHTML = `
+        <div class="empty-state">
+            <svg width="64" height="64" fill="none" stroke="currentColor" stroke-width="2"
+                style="margin: 0 auto 1rem; color: var(--text-muted);">
+                <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            <div style="font-size: var(--text-lg); color: var(--text-primary); margin-bottom: 0.5rem;">No drafts available</div>
+            <div style="font-size: var(--text-sm); color: var(--text-muted);">Smart replies will appear here when emails are analyzed</div>
+        </div>
+    `;
+}
+
+function displayDraftError() {
+    const container = document.getElementById('draftsList');
+    if (!container) return;
+
+    container.innerHTML = `
+        <div class="empty-state">
+            <div style="font-size: var(--text-lg); color: #991B1B; margin-bottom: 0.5rem;">Drafts could not be loaded</div>
+            <div style="font-size: var(--text-sm); color: var(--text-muted);">Please refresh the page or check that the backend is running.</div>
+        </div>
+    `;
 }
 
 function displayDrafts(drafts) {

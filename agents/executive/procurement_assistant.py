@@ -52,6 +52,8 @@ class ProcurementAssistant:
                 self.db.commit()
             return greeting_reply
 
+        conversation_context = self._get_conversation_context(conversation_id)
+
         # 5. Retrieve Context (Emails, Docs, etc.)
         context_data = self._retrieve_context(query)
         
@@ -140,6 +142,9 @@ class ProcurementAssistant:
         user_prompt = f"""
         USER QUESTION: {query}
 
+        [CURRENT CHAT CONTEXT]:
+        {conversation_context}
+
         [INTELLIGENCE CONTEXT]:
         {context_data}
         
@@ -165,6 +170,23 @@ class ProcurementAssistant:
             self.db.commit()
             
         return reply
+
+    def _get_conversation_context(self, conversation_id: Optional[int]) -> str:
+        if not conversation_id:
+            return "No previous messages in this chat."
+
+        messages = (
+            self.db.query(AssistantChat)
+            .filter(AssistantChat.conversation_id == conversation_id)
+            .order_by(AssistantChat.timestamp.desc())
+            .limit(10)
+            .all()
+        )
+        if not messages:
+            return "No previous messages in this chat."
+
+        ordered = list(reversed(messages))
+        return "\n".join([f"{m.role.upper()}: {(m.content or '')[:700]}" for m in ordered])
 
     def _retrieve_context(self, query: str) -> str:
         """Retrieve relevant context for procurement queries (copied and adapted from ExecutiveAssistant)"""

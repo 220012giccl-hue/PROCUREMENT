@@ -13,8 +13,22 @@ const voiceBtn = document.getElementById('voiceBtn');
 const convList = document.getElementById('convList');
 
 let currentContext = null;
-let currentMode = localStorage.getItem('assistant_mode') || 'procurement'; // Default to Procurement Assistant
+const initialParams = new URLSearchParams(window.location.search);
+const initialMode = initialParams.get('mode');
+const initialConversationId = initialParams.get('conversation_id');
+const validModes = ['procurement', 'general', 'market'];
+let currentMode = validModes.includes(initialMode) ? initialMode : (localStorage.getItem('assistant_mode') || 'procurement'); // Default to Procurement Assistant
 let currentConversationId = null;
+
+function updateAssistantUrl(conversationId = null) {
+    const params = new URLSearchParams();
+    params.set('mode', currentMode);
+    if (conversationId) {
+        params.set('conversation_id', conversationId);
+    }
+    const nextUrl = `${window.location.pathname}?${params.toString()}`;
+    window.history.replaceState({}, '', nextUrl);
+}
 
 function setMode(mode, loadDefault = true) {
     currentMode = mode;
@@ -159,26 +173,22 @@ async function initAssistant() {
     
     // Load conversations for the current mode
     await loadConversations(currentMode);
-    
-    // Retrieve last active conversation for this mode
-    const savedConvId = localStorage.getItem('assistant_conv_id_' + currentMode);
-    let found = false;
-    
-    if (savedConvId && convList) {
+
+    if (initialConversationId && convList) {
         const items = convList.querySelectorAll('.conv-item');
         for (const item of items) {
-            if (String(item.dataset.id) === String(savedConvId)) {
-                await selectConversation(savedConvId);
-                found = true;
-                break;
+            if (String(item.dataset.id) === String(initialConversationId)) {
+                await selectConversation(initialConversationId);
+                return;
             }
         }
+        startNewChat();
+        return;
     }
-    
-    // If not found or no saved conversation, load latest one by default (or start new if none exists)
-    if (!found && convList && convList.querySelector('.conv-item')) {
-        const latest = convList.querySelector('.conv-item');
-        selectConversation(latest.dataset.id);
+
+    if (initialParams.get('new') === '1' || !initialConversationId) {
+        startNewChat();
+        return;
     }
 }
 
@@ -222,8 +232,10 @@ async function selectConversation(id) {
     currentConversationId = id;
     if (id) {
         localStorage.setItem('assistant_conv_id_' + currentMode, id);
+        updateAssistantUrl(id);
     } else {
         localStorage.removeItem('assistant_conv_id_' + currentMode);
+        updateAssistantUrl();
     }
     // Update UI
     document.querySelectorAll('.conv-item').forEach(el => {
@@ -235,6 +247,7 @@ async function selectConversation(id) {
 async function startNewChat() {
     currentConversationId = null;
     localStorage.removeItem('assistant_conv_id_' + currentMode);
+    updateAssistantUrl();
     if (chatMessages) {
         chatMessages.innerHTML = `
             <div class="empty-state">
@@ -317,6 +330,8 @@ async function sendMessage() {
             // Update current thread if it's new
             if (!currentConversationId) {
                 currentConversationId = response.conversation_id;
+                localStorage.setItem('assistant_conv_id_' + currentMode, currentConversationId);
+                updateAssistantUrl(currentConversationId);
                 await loadConversations();
             }
         } else {
@@ -349,7 +364,7 @@ function appendMessage(role, text, shouldScroll = true) {
             div.innerText = text;
         }
     } else {
-        // Simple text or structured text for Procurement/General
+        // Simple text for Procurement database answers, General answers, and user messages
         div.innerText = text;
     }
 

@@ -13,6 +13,7 @@ router = APIRouter(tags=["assistant"])
 
 class CreateConversationRequest(BaseModel):
     title: Optional[str] = "New Conversation"
+    mode: Optional[str] = "procurement"
 
 @router.get("/api/assistant/conversations")
 async def get_conversations(mode: Optional[str] = "enterprise", current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -38,7 +39,7 @@ async def get_conversations(mode: Optional[str] = "enterprise", current_user: Us
 async def create_conversation(request: CreateConversationRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     try:
         from database.models import AssistantConversation
-        new_conv = AssistantConversation(title=request.title)
+        new_conv = AssistantConversation(title=request.title, mode=request.mode or "procurement")
         db.add(new_conv)
         db.commit()
         db.refresh(new_conv)
@@ -87,9 +88,15 @@ async def assistant_chat(request: dict, current_user: User = Depends(get_current
         if not query and not context:
             raise HTTPException(status_code=400, detail="Missing query or context")
         
+        from database.models import AssistantConversation
+
+        if conversation_id:
+            existing_conv = db.query(AssistantConversation).filter(AssistantConversation.id == conversation_id).first()
+            if not existing_conv or existing_conv.mode != mode:
+                conversation_id = None
+
         # Create new conversation if missing
         if not conversation_id:
-            from database.models import AssistantConversation
             title = query[:30] + "..." if query else "Document Analysis"
             new_conv = AssistantConversation(title=title, mode=mode)
             db.add(new_conv)
@@ -100,8 +107,6 @@ async def assistant_chat(request: dict, current_user: User = Depends(get_current
         if mode == 'market':
             assistant = ProcurementAssistant(db)
         else:
-            # Both 'procurement' and 'general' use ExecutiveAssistant 
-            # But the 'procurement' mode will have a specialized prompt handled within answer_query
             assistant = ExecutiveAssistant(db)
             
         response = assistant.answer_query(query, conversation_id=conversation_id, mode=mode, external_context=context)

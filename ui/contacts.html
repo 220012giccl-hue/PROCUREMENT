@@ -70,6 +70,31 @@
             gap: var(--space-2);
         }
 
+        .contact-form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: var(--space-4);
+        }
+
+        .contact-form-grid .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-error {
+            display: none;
+            margin-bottom: var(--space-4);
+            padding: var(--space-3) var(--space-4);
+            border: 1px solid #FCA5A5;
+            border-radius: var(--radius-md);
+            background: #FEF2F2;
+            color: #991B1B;
+            font-size: var(--text-sm);
+        }
+
+        .form-error.active {
+            display: block;
+        }
+
         .btn-icon {
             padding: var(--space-2);
             background: var(--bg-light);
@@ -91,6 +116,18 @@
 
             .main-content {
                 margin-left: 0;
+            }
+
+            .page-header {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: var(--space-4);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .contact-form-grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -125,7 +162,7 @@
     </nav>
 
     <div class="layout">
-                <aside class="sidebar">
+        <aside class="sidebar">
             <!-- Sidebar content is unified via js/sidebar.js -->
             <ul class="sidebar-menu">
                 <li class="sidebar-item"><a href="index.html" class="sidebar-link">Loading...</a></li>
@@ -212,6 +249,57 @@
         </main>
     </div>
 
+    <!-- Add Contact Modal -->
+    <div id="addContactModal" class="modal">
+        <div class="modal-content">
+            <form id="addContactForm">
+                <div class="modal-header">
+                    <h2>Add Contact</h2>
+                    <span class="modal-close" onclick="closeAddContactModal()">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div id="addContactError" class="form-error"></div>
+                    <div class="contact-form-grid">
+                        <div class="form-group">
+                            <label class="form-label" for="addContactName">Contact Name</label>
+                            <input type="text" class="form-input" id="addContactName" autocomplete="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="addContactEmail">Email</label>
+                            <input type="text" class="form-input" id="addContactEmail" autocomplete="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="addContactPhone">Phone</label>
+                            <input type="tel" class="form-input" id="addContactPhone" autocomplete="tel">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="addContactStatus">Status</label>
+                            <select class="form-select" id="addContactStatus">
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
+                        </div>
+                        <div class="form-group full-width">
+                            <label class="form-label" for="addContactNotes">Notes</label>
+                            <textarea class="form-textarea" id="addContactNotes" rows="4"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddContactModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="addContactSubmitBtn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Add Contact
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Contact Modal -->
     <div id="contactModal" class="modal">
         <div class="modal-content">
@@ -232,12 +320,27 @@
                 </div>
                 <div id="contactEditForm" style="display: none; margin-top: var(--space-4);">
                     <div class="form-group">
-                        <label class="form-label">Contact Name</label>
+                        <label class="form-label" for="editContactName">Contact Name</label>
                         <input type="text" class="form-input" id="editContactName">
                     </div>
                     <div class="form-group" style="margin-top: var(--space-4);">
-                        <label class="form-label">Email Domain</label>
+                        <label class="form-label" for="editContactDomain">Email Domain</label>
                         <input type="text" class="form-input" id="editContactDomain">
+                    </div>
+                    <div class="form-group" style="margin-top: var(--space-4);">
+                        <label class="form-label" for="editContactPhone">Phone</label>
+                        <input type="tel" class="form-input" id="editContactPhone">
+                    </div>
+                    <div class="form-group" style="margin-top: var(--space-4);">
+                        <label class="form-label" for="editContactStatus">Status</label>
+                        <select class="form-select" id="editContactStatus">
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-top: var(--space-4);">
+                        <label class="form-label" for="editContactNotes">Notes</label>
+                        <textarea class="form-textarea" id="editContactNotes" rows="4"></textarea>
                     </div>
                 </div>
             </div>
@@ -253,7 +356,7 @@
     <script src="js/sidebar.js"></script>
     <script src="js/auth.js?v=2.4"></script>
     <script>
-        document.addEventListener("DOMContentLoaded", async function() {
+        document.addEventListener("DOMContentLoaded", async function () {
             var u = await Auth.checkSession();
             if (!u) { window.location.href = "/"; }
         });
@@ -291,6 +394,7 @@
         }
 
         let allContacts = [];
+        let editingContactId = null;
 
         document.addEventListener('DOMContentLoaded', async () => {
             console.log('Contacts page loaded, fetching data...');
@@ -298,12 +402,17 @@
 
             // Setup listeners
             document.getElementById('searchInput').addEventListener('keyup', applyFilters);
+            document.getElementById('addContactForm').addEventListener('submit', submitAddContactForm);
 
             // Close modal when clicking outside
             window.onclick = function (event) {
                 const modal = document.getElementById('contactModal');
+                const addModal = document.getElementById('addContactModal');
                 if (event.target == modal) {
                     closeModal();
+                }
+                if (event.target == addModal) {
+                    closeAddContactModal();
                 }
             }
         });
@@ -377,6 +486,7 @@
                     document.getElementById('modalThreads').textContent = contact.threads;
                     document.getElementById('modalId').textContent = contact.id;
 
+                    editingContactId = null;
                     document.getElementById('contactEditForm').style.display = 'none';
                     document.getElementById('saveContactBtn').style.display = 'none';
                     document.getElementById('contactModal').classList.add('active');
@@ -392,9 +502,13 @@
                 const result = await window.RFQAgentAPI.getContact(id);
                 if (result.success) {
                     const contact = result.data;
+                    editingContactId = contact.id;
                     document.getElementById('modalContactName').textContent = `Edit: ${contact.name}`;
                     document.getElementById('editContactName').value = contact.name;
                     document.getElementById('editContactDomain').value = contact.email || '';
+                    document.getElementById('editContactPhone').value = contact.phone || '';
+                    document.getElementById('editContactStatus').value = contact.status || 'active';
+                    document.getElementById('editContactNotes').value = contact.notes || '';
 
                     document.getElementById('contactEditForm').style.display = 'block';
                     document.getElementById('saveContactBtn').style.display = 'block';
@@ -407,18 +521,54 @@
 
         function closeModal() {
             document.getElementById('contactModal').classList.remove('active');
+            editingContactId = null;
         }
 
         async function saveContact() {
-            const name = document.getElementById('modalContactName').innerText;
-            const email = document.getElementById('modalContactEmail').innerText;
-            // For now, this is just a demonstration
-            showToast(`Saving changes for ${name}...`, 'info');
-            setTimeout(() => {
+            if (!editingContactId) return;
+
+            const saveBtn = document.getElementById('saveContactBtn');
+            const name = document.getElementById('editContactName').value.trim();
+            const email = document.getElementById('editContactDomain').value.trim();
+            const phone = document.getElementById('editContactPhone').value.trim();
+            const status = document.getElementById('editContactStatus').value;
+            const notes = document.getElementById('editContactNotes').value.trim();
+
+            if (!name) {
+                showToast('Contact name is required.', 'error');
+                document.getElementById('editContactName').focus();
+                return;
+            }
+
+            if (!email) {
+                showToast('Email or domain is required.', 'error');
+                document.getElementById('editContactDomain').focus();
+                return;
+            }
+
+            try {
+                saveBtn.disabled = true;
+                saveBtn.textContent = 'Saving...';
+                const response = await window.RFQAgentAPI.request(`/api/contacts/${editingContactId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ name, email, phone, status, notes })
+                });
+
+                if (!response.success) {
+                    showToast('Failed to update contact: ' + (response.error || 'Unknown error'), 'error');
+                    return;
+                }
+
                 showToast('Contact updated successfully', 'success');
                 closeModal();
-                loadContacts();
-            }, 1000);
+                await loadContacts();
+            } catch (error) {
+                console.error('Error saving contact:', error);
+                showToast('Error updating contact. Ensure backend is running.', 'error');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save Changes';
+            }
         }
 
         function applyFilters() {
@@ -434,25 +584,83 @@
         }
 
         async function addContact() {
-            const name = prompt("Enter contact name:");
-            if (!name) return;
-            const email = prompt("Enter contact email:");
-            if (!email) return;
+            openAddContactModal();
+        }
+
+        function openAddContactModal() {
+            const form = document.getElementById('addContactForm');
+            form.reset();
+            document.getElementById('addContactStatus').value = 'active';
+            setAddContactError('');
+            document.getElementById('addContactModal').classList.add('active');
+            setTimeout(() => document.getElementById('addContactName').focus(), 0);
+        }
+
+        function closeAddContactModal() {
+            document.getElementById('addContactModal').classList.remove('active');
+            setAddContactError('');
+        }
+
+        function setAddContactError(message) {
+            const errorBox = document.getElementById('addContactError');
+            errorBox.textContent = message || '';
+            errorBox.classList.toggle('active', Boolean(message));
+        }
+
+        async function submitAddContactForm(event) {
+            event.preventDefault();
+
+            const submitBtn = document.getElementById('addContactSubmitBtn');
+            const name = document.getElementById('addContactName').value.trim();
+            const email = document.getElementById('addContactEmail').value.trim();
+            const phone = document.getElementById('addContactPhone').value.trim();
+            const status = document.getElementById('addContactStatus').value;
+            const notes = document.getElementById('addContactNotes').value.trim();
+
+            if (!name) {
+                setAddContactError('Contact name is required.');
+                document.getElementById('addContactName').focus();
+                return;
+            }
+
+            if (!email) {
+                setAddContactError('Email or domain is required.');
+                document.getElementById('addContactEmail').focus();
+                return;
+            }
 
             try {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Adding...';
+                setAddContactError('');
+
                 const response = await window.RFQAgentAPI.request('/api/contacts', {
                     method: 'POST',
-                    body: JSON.stringify({ name, email })
+                    body: JSON.stringify({ name, email, phone, status, notes })
                 });
                 if (response.success) {
                     showToast('Contact added successfully!', 'success');
+                    closeAddContactModal();
                     await loadContacts();
                 } else {
-                    showToast('Failed to add contact: ' + (response.error || 'Unknown error'), 'error');
+                    const message = response.error || 'Unknown error';
+                    setAddContactError(message);
+                    showToast('Failed to add contact: ' + message, 'error');
                 }
             } catch (error) {
                 console.error('Error adding contact:', error);
+                setAddContactError('Connection error. Ensure backend is running.');
                 showToast('Error adding contact. Ensure backend is running.', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Add Contact
+                `;
             }
         }
     </script>
