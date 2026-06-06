@@ -35,7 +35,6 @@ function setMode(mode, loadDefault = true) {
     localStorage.setItem('assistant_mode', mode);
 
     // Update UI
-    const btnRFI = document.getElementById('btnRFIMode');
     const btnProc = document.getElementById('btnProcurementMode');
     const btnGen = document.getElementById('btnGeneralMode');
     const btnMarket = document.getElementById('btnMarketMode');
@@ -63,11 +62,11 @@ function setMode(mode, loadDefault = true) {
             emptyState.querySelector('h2').textContent = "General AI Assistant";
             emptyState.querySelector('p').textContent = "Ask me anything - I work like ChatGPT, Gemini, or Claude.";
         } else if (mode === 'market') {
-            emptyState.querySelector('h2').textContent = "Market Intelligence Assistant";
-            emptyState.querySelector('p').textContent = "Search supplier catalogues, compare products, and generate RFQs instantly.";
+            emptyState.querySelector('h2').textContent = "Market Assistant";
+            emptyState.querySelector('p').textContent = "Research products, compare supplier options, and prepare RFQ-ready market summaries.";
         } else {
-            emptyState.querySelector('h2').textContent = "Procurement Executive Assistant";
-            emptyState.querySelector('p').textContent = "I have full knowledge of your emails, documents, and database to answer structured procurement queries.";
+            emptyState.querySelector('h2').textContent = "Procurement Assistant";
+            emptyState.querySelector('p').textContent = "Ask about your database, previous projects, emails, RFQs, prices, suppliers, and knowledge base.";
         }
     }
 
@@ -174,6 +173,7 @@ async function initAssistant() {
     // Load conversations for the current mode
     await loadConversations(currentMode);
 
+    const isNewChat = initialParams.get('new') === '1';
     if (initialConversationId && convList) {
         const items = convList.querySelectorAll('.conv-item');
         for (const item of items) {
@@ -186,10 +186,23 @@ async function initAssistant() {
         return;
     }
 
-    if (initialParams.get('new') === '1' || !initialConversationId) {
+    if (isNewChat) {
         startNewChat();
         return;
     }
+
+    const savedConversationId = localStorage.getItem('assistant_conv_id_' + currentMode);
+    if (savedConversationId && convList) {
+        const items = convList.querySelectorAll('.conv-item');
+        for (const item of items) {
+            if (String(item.dataset.id) === String(savedConversationId)) {
+                await selectConversation(savedConversationId);
+                return;
+            }
+        }
+    }
+
+    startNewChat();
 }
 
 

@@ -7,7 +7,7 @@ from typing import List, Dict, Optional
 from api.utils.security import ResponseGuard
 
 class ProcurementAssistant:
-    """Answers context-aware questions about procurement, products, and suppliers"""
+    """Market Assistant for product research, supplier discovery, and market comparisons"""
     
     def __init__(self, db: Session):
         self.db = db
@@ -45,7 +45,7 @@ class ProcurementAssistant:
         greetings = {'hello', 'hi', 'hey', 'greetings', 'morning', 'afternoon', 'evening', 'assalam', 'aoa', 'start'}
         clean_q = query.lower().strip().split()
         if not clean_q or (len(clean_q) <= 2 and any(w in greetings for w in clean_q)):
-            greeting_reply = "Good day, Sir. I am your Procurement Intelligence Assistant. I am ready to help you with product research, supplier comparisons, and RFQ management. How can I assist your procurement workflow today?"
+            greeting_reply = "Good day, Sir. I am your Market Assistant. I can help research products, supplier options, market comparisons, source links, missing data, and RFQ-ready market summaries."
             if conversation_id:
                 assistant_msg = AssistantChat(conversation_id=conversation_id, role='assistant', content=greeting_reply)
                 self.db.add(assistant_msg)
@@ -63,9 +63,13 @@ class ProcurementAssistant:
 
         current_date_str = datetime.now().strftime("%Y-%m-%d")
 
-        # 6. Procurement System Prompt (Phase 1 Requirements)
+        # 6. Market Assistant System Prompt (Phase 1 Requirements)
         system_prompt = f"""
-        You are the Procurement Intelligence Assistant—an elite procurement officer specializing in construction, engineering, and infrastructure.
+        You are the Market Assistant for construction procurement research.
+
+        ROLE BOUNDARY:
+        You research product options, supplier options, market comparisons, source links, missing market data, and RFQ-ready market summaries.
+        You are NOT the Procurement Assistant for internal database history. If the user asks about previous projects, last week updates, historical database prices, internal RFQs, or records stored in the system, tell them to use Procurement Assistant.
         
         STRICT OUTPUT STRUCTURE (You MUST follow this for every response):
         
@@ -149,8 +153,8 @@ class ProcurementAssistant:
         {context_data}
         
         [TASK]:
-        Provide a professional Procurement Analysis following the 6-section structure.
-        If the user is asking about their emails or documents, use the provided context to answer accurately.
+        Provide a professional Market Assistant response following the 7-section structure.
+        If the user asks about internal emails, documents, previous projects, historical database prices, or saved RFQs, redirect them to Procurement Assistant unless that internal context was explicitly attached to this chat.
         """
 
         # 7. Call LLM

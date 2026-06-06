@@ -158,7 +158,7 @@
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                         Export CSV
                     </button>
-                    <button class="btn btn-primary" onclick="window.location.href='assistant.html'">
+                    <button class="btn btn-primary" onclick="window.location.href='assistant.html?mode=procurement&new=1'">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                         New Search
                     </button>
@@ -183,7 +183,7 @@
                 <div id="emptyState" class="empty-state" style="display:none;">
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:16px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                     <p>No items in your procurement list yet.</p>
-                    <button class="btn btn-secondary btn-sm" style="margin-top:16px;" onclick="window.location.href='assistant.html'">Start Research</button>
+                    <button class="btn btn-secondary btn-sm" style="margin-top:16px;" onclick="window.location.href='assistant.html?mode=procurement&new=1'">Start Research</button>
                 </div>
             </div>
         </main>
@@ -346,19 +346,19 @@
                     // Redirect to assistant.html
                     window.location.href = 'assistant.html';
                 } else {
-                    alert("No matching AI Assistant conversation found for this item name. Redirecting to assistant tab instead.");
-                    window.location.href = 'assistant.html';
+                    alert("No matching Procurement Assistant conversation found for this item name. Redirecting to assistant tab instead.");
+                    window.location.href = 'assistant.html?mode=procurement&new=1';
                 }
             } catch (err) {
                 console.error("Error locating research thread:", err);
-                window.location.href = 'assistant.html';
+                window.location.href = 'assistant.html?mode=procurement&new=1';
             }
         }
 
         function handleGenerateRFQ() {
             if (!activeChoiceItem) return;
             // Redirect to assistant page with rfq action parameter, which will auto pre-fill and trigger modal
-            window.location.href = `assistant.html?action=rfq&id=${activeChoiceItem.id}`;
+            window.location.href = `assistant.html?mode=procurement&action=rfq&id=${activeChoiceItem.id}`;
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -402,7 +402,7 @@
                     </div>
                     <div style="flex-grow: 1;">
                         <strong style="display: block; font-size: 0.92rem; color: var(--text-primary); margin-bottom: 3px;">View Saved Research</strong>
-                        <span style="font-size: 0.76rem; color: var(--text-muted); font-weight: normal; line-height: 1.3; display: block;">Open the exact AI Assistant chat where this item was found.</span>
+                        <span style="font-size: 0.76rem; color: var(--text-muted); font-weight: normal; line-height: 1.3; display: block;">Open the exact Procurement Assistant chat where this item was found.</span>
                     </div>
                 </button>
 

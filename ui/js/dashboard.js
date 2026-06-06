@@ -1193,7 +1193,7 @@ async function loadRecentComparisons() {
             const comparisons = response.data.slice(0, 3);
             
             if (comparisons.length === 0) {
-                list.innerHTML = `<div style="text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.85rem;">No comparisons saved yet. Generate one in the AI Assistant.</div>`;
+                list.innerHTML = `<div style="text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.85rem;">No comparisons saved yet. Generate one in the Procurement Assistant.</div>`;
                 return;
             }
 

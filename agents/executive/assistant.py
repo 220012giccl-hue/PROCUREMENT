@@ -39,7 +39,12 @@ class ExecutiveAssistant:
         greetings = {'hello', 'hi', 'hey', 'greetings', 'morning', 'afternoon', 'evening', 'assalam', 'aoa', 'start'}
         clean_q = query.lower().strip().split()
         if not clean_q or (len(clean_q) <= 2 and any(w in greetings for w in clean_q)):
-            greeting_reply = "Good day, Sir. I am your RFI Executive Assistant, standing by for your instructions. How may I assist your workspace today?"
+            if mode == 'general':
+                greeting_reply = "Good day. I am your General Assistant. Ask me anything you want to understand, explain, write, or think through."
+            elif mode == 'procurement':
+                greeting_reply = "Good day, Sir. I am your Procurement Assistant. I can help you search your database, previous projects, emails, documents, supplier records, RFQs, prices, and knowledge base."
+            else:
+                greeting_reply = "Good day, Sir. I am your Procurement Assistant, standing by for your instructions. How may I assist your workspace today?"
             if conversation_id:
                 assistant_msg = AssistantChat(conversation_id=conversation_id, role='assistant', content=greeting_reply)
                 self.db.add(assistant_msg)
@@ -79,19 +84,24 @@ class ExecutiveAssistant:
                 context_data = f"[DIRECTLY UPLOADED DOCUMENT]:\n{external_context[:8000]}\n\n---\n\n[SYSTEM PROCUREMENT CONTEXT]:\n{context_data}"
             
             system_prompt = f"""
-            You are the Procurement Executive Assistant—a top-tier procurement specialist for Abdullah's construction projects.
+            You are the Procurement Assistant for Abdullah's procurement workspace.
+
+            ROLE BOUNDARY:
+            You answer questions using the user's internal database, emails, documents, suppliers, contacts, RFQs, draft replies, previous projects, historical prices, and knowledge base.
+            You are NOT the Market Assistant. Do not invent live market research, supplier catalogue results, or current web prices in this mode.
+            If the user asks for fresh market/product research, tell them to use Market Assistant.
             
             STRICT OUTPUT STRUCTURE (Professional & Structural):
             
             SECTION 1: PROCUREMENT SUMMARY
-            Brief professional overview of the query and relevant context.
+            Brief professional overview of what the user asked and which internal records/context are relevant.
             
             SECTION 2: DATA ANALYSIS
-            A detailed analysis of the internal data (database records, previous projects, emails).
+            A detailed analysis of the internal data: database records, previous projects, emails, documents, suppliers, RFQs, quotes, prices, and knowledge base.
             If comparing data, use a proper Markdown Table.
             
             SECTION 3: STRATEGIC RECOMMENDATION
-            Expert advice based on the data.
+            Expert advice based only on internal data and clearly stated assumptions.
             
             SECTION 4: ACTION ITEMS
             Clear list of next steps for the user.
@@ -107,6 +117,10 @@ class ExecutiveAssistant:
             - Database records (Suppliers, Contacts)
             - Previous Projects (Extracted from emails/documents)
             - Historical communications
+            - RFQs, procurement items, supplier quotes, draft replies, attachments, and knowledge-base context where available
+
+            IMPORTANT:
+            When information is not present in the internal context, say that it was not found in the database/context. Do not pretend it exists.
             """
             
             user_prompt = f"""
@@ -131,7 +145,7 @@ class ExecutiveAssistant:
                 context_data = f"[DIRECTLY UPLOADED DOCUMENT]:\n{external_context[:8000]}\n\n---\n\n[SYSTEM INTELLIGENCE CONTEXT]:\n{context_data}"
             
             system_prompt = f"""
-            You are the RFI Executive Assistant—the elite Chief of Staff for Abdullah.
+            You are the Executive Workspace Assistant for Abdullah.
             
             STRICT FORMATTING RULES:
             1. NEVER use any markdown symbols. No asterisks (**), no hashes (##), no dashes (---).

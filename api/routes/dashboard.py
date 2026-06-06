@@ -459,7 +459,7 @@ async def create_calendar_event(data: dict, current_user: User = Depends(get_cur
                 email_body = f"""
 Dear Participant,
 
-You have been invited to a professional business meeting via RFI Enterprise Intelligence.
+You have been invited to a professional business meeting via Procurement Enterprise Intelligence.
 
 MEETING DETAILS:
 TITLE: {title}
@@ -472,7 +472,7 @@ JOIN MEETING:
 This meeting has been synchronized with your business calendar. We look forward to your presence.
 
 Regards,
-RFI Executive Assistant
+Procurement Assistant
 """
                 print(f"DEBUG: Outlook Event Created. Link: {meeting_link}")
                 
@@ -495,7 +495,7 @@ JOIN MEETING:
 This meeting has been synchronized with your business calendar. We look forward to your presence.
 
 Regards,
-RFI Executive Assistant
+Procurement Assistant
 """
                 print(f"DEBUG: Sending Professional Email with UNIQUE subject to {len(attendees)} guests (Outlook)")
                 for guest in attendees:
@@ -527,7 +527,7 @@ RFI Executive Assistant
                 email_body = f"""
 Dear Participant,
 
-You have been invited to a professional business meeting via RFI Enterprise Intelligence.
+You have been invited to a professional business meeting via Procurement Enterprise Intelligence.
 
 MEETING DETAILS:
 TITLE: {title}
@@ -540,7 +540,7 @@ JOIN MEETING:
 This meeting has been synchronized with your business calendar. We look forward to your presence.
 
 Regards,
-RFI Executive Assistant
+Procurement Assistant
 """
                 print(f"DEBUG: Sending Professional Email with UNIQUE subject to {len(attendees)} guests")
                 for guest in attendees:
