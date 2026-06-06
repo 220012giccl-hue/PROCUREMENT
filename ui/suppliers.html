@@ -36,6 +36,12 @@
             align-items: center;
         }
 
+        .page-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
         /* Professional Category Card */
         .category-card {
             background: white;
@@ -132,7 +138,7 @@
             text-align: right;
         }
 
-        .btn-edit {
+        .btn-icon {
             color: var(--text-muted);
             cursor: pointer;
             padding: 8px;
@@ -141,12 +147,18 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            border: none;
+            background: transparent;
         }
 
-        .btn-edit:hover {
+        .btn-icon:hover {
             background: white;
             color: var(--primary-orange);
             box-shadow: var(--shadow-sm);
+        }
+
+        .btn-icon-danger:hover {
+            color: #dc2626;
         }
 
         .contact-info {
@@ -182,6 +194,18 @@
             box-shadow: 0 6px 16px rgba(255, 92, 53, 0.3);
         }
 
+        .btn-secondary {
+            background: white;
+            color: #334155;
+            border: 1px solid #e2e8f0;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-secondary:hover {
+            color: var(--primary-orange);
+            border-color: #fed7cc;
+        }
+
         .modal {
             display: none;
             position: fixed;
@@ -199,16 +223,44 @@
         .modal-content {
             background: white;
             width: 500px;
+            max-height: calc(100vh - 48px);
             border-radius: 20px;
             padding: 32px;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .category-modal-content {
+            width: 560px;
+            overflow: hidden;
         }
 
         .form-group { margin-bottom: 16px; }
         .form-label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.9rem; color: #334155; }
-        .form-input { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; font-family: inherit; }
+        .form-input { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; font-family: inherit; background: white; }
         .form-input:focus { border-color: var(--primary-orange); outline: none; box-shadow: 0 0 0 3px rgba(255, 92, 53, 0.1); }
         .btn-submit { background: var(--primary-orange); color: white; border: none; padding: 14px; border-radius: 10px; font-weight: 700; cursor: pointer; width: 100%; margin-top: 10px; }
+        .form-help { color: #64748b; font-size: 0.8rem; margin-top: 6px; }
+        .category-manager-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f5f9;
+            font-weight: 600;
+            color: #334155;
+        }
+        .category-manager-row:last-child { border-bottom: none; }
+        .category-add-row { display: flex; gap: 10px; margin-bottom: 16px; }
+        .category-add-row .form-input { flex: 1; }
+        .category-add-row .btn-submit { width: auto; margin-top: 0; padding: 12px 16px; }
+        .category-manager-list {
+            overflow-y: auto;
+            max-height: min(58vh, 520px);
+            padding-right: 8px;
+            overscroll-behavior: contain;
+        }
     </style>
 </head>
 
@@ -248,10 +300,16 @@
                     <h1 class="page-title" style="font-size: 1.75rem; font-weight: 800; color: #0f172a;">Supplier Directory</h1>
                     <p class="page-subtitle" style="color: #64748b;">Manage vendors and category classifications.</p>
                 </div>
-                <button class="btn-add-supplier" onclick="openSupplierModal()">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    New Vendor
-                </button>
+                <div class="page-actions">
+                    <button class="btn-add-supplier btn-secondary" onclick="openCategoryModal()">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16"></path><path d="M4 12h10"></path><path d="M4 17h7"></path><path d="M18 14v6"></path><path d="M15 17h6"></path></svg>
+                        Categories
+                    </button>
+                    <button class="btn-add-supplier" onclick="openSupplierModal()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        New Vendor
+                    </button>
+                </div>
             </div>
 
             <div id="categoryList">
@@ -274,8 +332,12 @@
                     <input type="text" id="supplierName" class="form-input" required placeholder="Enter company name">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Categories (e.g. Plumbing, Tools, HVAC)</label>
-                    <input type="text" id="supplierCategories" class="form-input" required placeholder="Comma separated values">
+                    <label class="form-label">Category</label>
+                    <select id="supplierCategorySelect" class="form-input" onchange="toggleNewCategory()" required>
+                        <option value="">-- Select Category --</option>
+                        <option value="_NEW_">+ Add New Category</option>
+                    </select>
+                    <input type="text" id="supplierCategories" class="form-input" style="display: none; margin-top: 8px;" placeholder="Enter new category (e.g. Plumbing)">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Email Address</label>
@@ -290,6 +352,20 @@
         </div>
     </div>
 
+    <div id="categoryModal" class="modal">
+        <div class="modal-content category-modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <h2 style="margin: 0; font-weight: 800; color: #0f172a;">Manage Categories</h2>
+                <span onclick="closeCategoryModal()" style="cursor: pointer; color: #94a3b8; font-size: 24px;">&times;</span>
+            </div>
+            <div class="category-add-row">
+                <input type="text" id="categoryNameInput" class="form-input" placeholder="Plumber, Electrician, Builder">
+                <button type="button" class="btn-submit" onclick="addCategoryFromManager()">Add</button>
+            </div>
+            <div id="categoryManagerList" class="category-manager-list"></div>
+        </div>
+    </div>
+
     <script src="js/sidebar.js"></script>
     <script src="js/auth.js"></script>
     <script>
@@ -300,44 +376,73 @@
     </script>
     <script src="js/api.js"></script>
     <script>
+        let globalCategories = new Set();
+        let suppliers = [];
+        let customCategories = JSON.parse(localStorage.getItem('supplierCategories') || '[]');
+        let deletedCategories = JSON.parse(localStorage.getItem('deletedSupplierCategories') || '[]');
+        const DEFAULT_CATEGORIES = ['Plumber', 'Electrician', 'Builder', 'Building Materials', 'Hardware', 'Tools', 'Safety', 'Welding', 'Other'];
+        const FALLBACK_CATEGORY = 'Other';
+
         document.addEventListener('DOMContentLoaded', async () => {
             await loadSuppliers();
             document.getElementById('supplierForm').addEventListener('submit', handleSupplierSubmit);
         });
 
+        function escapeHtml(value) {
+            return String(value || '').replace(/[&<>"']/g, char => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            }[char]));
+        }
+
+        function titleCase(value) {
+            return String(value || '').trim().replace(/\w\S*/g, word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase());
+        }
+
+        function getSupplierCategories(supplier) {
+            const raw = supplier && supplier.categories ? supplier.categories : 'Other';
+            return raw.split(',').map(s => s.trim()).filter(Boolean);
+        }
+
         async function loadSuppliers() {
             try {
-                const response = await window.api.getSuppliers();
+                suppliers = await window.api.getSuppliers();
                 const mainContainer = document.getElementById('categoryList');
                 mainContainer.innerHTML = '';
 
-                if (!response || response.length === 0) {
+                if (!suppliers || suppliers.length === 0) {
                     mainContainer.innerHTML = '<div style="text-align: center; padding: 60px; color: #94a3b8;">No vendors found. Click "New Vendor" to get started.</div>';
+                    globalCategories.clear();
+                    updateCategoryDropdown();
                     return;
                 }
 
-                // Group by category
+                globalCategories.clear();
                 const groups = {};
-                response.forEach(s => {
-                    const cats = s.categories ? s.categories.split(',').map(c => c.trim().toLowerCase()) : ['other'];
+                suppliers.forEach(s => {
+                    const cats = getSupplierCategories(s);
                     cats.forEach(cat => {
-                        if (!groups[cat]) groups[cat] = [];
-                        groups[cat].push(s);
+                        const label = titleCase(cat);
+                        if (!groups[label]) groups[label] = [];
+                        groups[label].push(s);
+                        globalCategories.add(label);
                     });
                 });
+                
+                updateCategoryDropdown();
 
-                // Render groups
-                Object.keys(groups).sort().forEach(catName => {
+                Object.keys(groups).sort((a, b) => a.localeCompare(b)).forEach(catName => {
                     const vendors = groups[catName];
                     const card = document.createElement('div');
                     card.className = 'category-card';
                     card.innerHTML = `
                         <div class="category-header">
                             <div class="category-title">
-                                <div class="category-icon">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
-                                </div>
-                                ${catName}
+                                <div class="category-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg></div>
+                                ${escapeHtml(catName)}
                                 <span class="vendor-count">${vendors.length}</span>
                             </div>
                         </div>
@@ -345,18 +450,21 @@
                             <tbody>
                                 ${vendors.map(v => `
                                     <tr class="vendor-row">
-                                        <td class="vendor-cell vendor-name-cell">${v.name}</td>
+                                        <td class="vendor-cell vendor-name-cell">${escapeHtml(v.name)}</td>
                                         <td class="vendor-cell vendor-contact-cell">
                                             <div class="contact-info">
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path></svg>
-                                                ${v.email || 'N/A'}
+                                                ${escapeHtml(v.email || 'N/A')}
                                             </div>
                                         </td>
-                                        <td class="vendor-cell vendor-location-cell">${v.location || 'N/A'}</td>
-                                        <td class="vendor-cell vendor-action-cell">
-                                            <div class="btn-edit" onclick="editSupplier(${JSON.stringify(v).replace(/"/g, '&quot;')})">
+                                        <td class="vendor-cell vendor-location-cell">${escapeHtml(v.location || 'N/A')}</td>
+                                        <td class="vendor-cell vendor-action-cell" style="white-space: nowrap;">
+                                            <button type="button" class="btn-icon" title="Edit" onclick="editSupplier(${JSON.stringify(v).replace(/"/g, '&quot;')})">
                                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                                            </div>
+                                            </button>
+                                            <button type="button" class="btn-icon btn-icon-danger" title="Delete" onclick="deleteSupplier(${v.id})">
+                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
+                                            </button>
                                         </td>
                                     </tr>
                                 `).join('')}
@@ -371,10 +479,36 @@
             }
         }
 
+        function updateCategoryDropdown() {
+            const select = document.getElementById('supplierCategorySelect');
+            const currentVal = select.value;
+            select.innerHTML = '<option value="">-- Select Category --</option>';
+            const allCats = new Set([...DEFAULT_CATEGORIES, ...customCategories, ...Array.from(globalCategories)]);
+            Array.from(allCats).sort().forEach(c => {
+                select.innerHTML += `<option value="${c}">${c}</option>`;
+            });
+            select.innerHTML += '<option value="_NEW_">+ Add New Category</option>';
+            if (currentVal) select.value = currentVal;
+        }
+
+        function toggleNewCategory() {
+            const select = document.getElementById('supplierCategorySelect');
+            const input = document.getElementById('supplierCategories');
+            if (select.value === '_NEW_') {
+                input.style.display = 'block';
+                input.required = true;
+            } else {
+                input.style.display = 'none';
+                input.required = false;
+            }
+        }
+
         function openSupplierModal() {
             document.getElementById('modalTitle').innerText = 'Add Vendor';
             document.getElementById('supplierId').value = '';
             document.getElementById('supplierForm').reset();
+            updateCategoryDropdown();
+            toggleNewCategory();
             document.getElementById('supplierModal').style.display = 'flex';
         }
 
@@ -386,18 +520,46 @@
             document.getElementById('modalTitle').innerText = 'Edit Vendor';
             document.getElementById('supplierId').value = s.id;
             document.getElementById('supplierName').value = s.name;
-            document.getElementById('supplierCategories').value = s.categories || '';
+            
+            let cat = getSupplierCategories(s)[0] || 'Other';
+            updateCategoryDropdown();
+            
+            const select = document.getElementById('supplierCategorySelect');
+            if ([...select.options].some(o => o.value === cat)) {
+                select.value = cat;
+            } else {
+                select.value = '_NEW_';
+                document.getElementById('supplierCategories').value = cat;
+            }
+            toggleNewCategory();
+            
             document.getElementById('supplierEmail').value = s.email || '';
             document.getElementById('supplierLocation').value = s.location || '';
             document.getElementById('supplierModal').style.display = 'flex';
         }
 
+        async function deleteSupplier(id) {
+            if (!confirm('Are you sure you want to delete this vendor?')) return;
+            try {
+                await window.api.deleteSupplier(id);
+                await loadSuppliers();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
         async function handleSupplierSubmit(e) {
             e.preventDefault();
             const id = document.getElementById('supplierId').value;
+            
+            let catVal = document.getElementById('supplierCategorySelect').value;
+            if (catVal === '_NEW_') {
+                catVal = document.getElementById('supplierCategories').value;
+            }
+
             const data = {
                 name: document.getElementById('supplierName').value,
-                categories: document.getElementById('supplierCategories').value,
+                categories: catVal,
                 email: document.getElementById('supplierEmail').value,
                 location: document.getElementById('supplierLocation').value
             };
@@ -410,6 +572,102 @@
             } catch (err) {
                 alert('Error: ' + err.message);
             }
+        }
+
+        function saveCustomCategories() {
+            localStorage.setItem('supplierCategories', JSON.stringify(customCategories));
+        }
+
+        function saveDeletedCategories() {
+            deletedCategories = [...new Set(deletedCategories.map(titleCase).filter(Boolean))];
+            localStorage.setItem('deletedSupplierCategories', JSON.stringify(deletedCategories));
+        }
+
+        function getAllCategories() {
+            const allCats = new Set([...DEFAULT_CATEGORIES, ...customCategories, ...Array.from(globalCategories)]);
+            return Array.from(allCats).sort();
+        }
+
+        function openCategoryModal() {
+            renderCategoryManager();
+            document.getElementById('categoryModal').style.display = 'flex';
+        }
+
+        function closeCategoryModal() {
+            document.getElementById('categoryModal').style.display = 'none';
+        }
+
+        function renderCategoryManager() {
+            const list = document.getElementById('categoryManagerList');
+            const usedCategories = new Set();
+            suppliers.forEach(s => getSupplierCategories(s).forEach(category => usedCategories.add(titleCase(category).toLowerCase())));
+            list.innerHTML = getAllCategories().map(category => {
+                const isUsed = usedCategories.has(category.toLowerCase());
+                const statusLabel = isUsed ? 'In use' : 'Available';
+                return `
+                    <div class="category-manager-row">
+                        <span>${escapeHtml(category)}</span>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="form-help">${statusLabel}</span>
+                            <button type="button" class="btn-icon btn-icon-danger" title="Delete category" onclick="deleteCategory('${encodeURIComponent(category)}')">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function addCategoryFromManager() {
+            const input = document.getElementById('categoryNameInput');
+            const category = titleCase(input.value);
+            if (!category) return;
+            if (!getAllCategories().some(item => item.toLowerCase() === category.toLowerCase())) {
+                customCategories.push(category);
+                deletedCategories = deletedCategories.filter(item => item.toLowerCase() !== category.toLowerCase());
+                saveDeletedCategories();
+                saveCustomCategories();
+            }
+            input.value = '';
+            renderCategoryManager();
+        }
+
+        async function deleteCategory(category) {
+            category = decodeURIComponent(category);
+            const replacementCategory = category.toLowerCase() === FALLBACK_CATEGORY.toLowerCase()
+                ? 'Uncategorized'
+                : FALLBACK_CATEGORY;
+
+            const affectedSuppliers = suppliers.filter(s => {
+                return getSupplierCategories(s).some(item => item.toLowerCase() === category.toLowerCase());
+            });
+            const message = affectedSuppliers.length
+                ? `Delete "${category}"? ${affectedSuppliers.length} vendor(s) will be moved to "${replacementCategory}".`
+                : `Delete "${category}"?`;
+            if (!confirm(message)) return;
+
+            try {
+                for (const supplier of affectedSuppliers) {
+                    let updatedCategories = getSupplierCategories(supplier).filter(item => item.toLowerCase() !== category.toLowerCase());
+                    if (updatedCategories.length === 0) updatedCategories = [replacementCategory];
+                    await window.api.updateSupplier(supplier.id, {
+                        categories: updatedCategories.join(', ')
+                    });
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+                return;
+            }
+
+            customCategories = customCategories.filter(item => item.toLowerCase() !== category.toLowerCase());
+            if (!deletedCategories.some(item => item.toLowerCase() === category.toLowerCase())) {
+                deletedCategories.push(category);
+            }
+            deletedCategories = deletedCategories.filter(item => item.toLowerCase() !== replacementCategory.toLowerCase());
+            saveDeletedCategories();
+            localStorage.setItem('supplierCategories', JSON.stringify(customCategories));
+            await loadSuppliers();
+            renderCategoryManager();
         }
     </script>
 </body>

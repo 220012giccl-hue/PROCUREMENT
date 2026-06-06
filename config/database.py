@@ -23,6 +23,11 @@ def init_db():
     """Initialize database tables"""
     from database.models import (
         Contact, Topic, Tag, Thread, Email, Attachment, DraftReply, 
-        AuditLog, AssistantConversation, AssistantChat, User, FollowupTask
+        AuditLog, AssistantConversation, AssistantChat, User, FollowupTask,
+        Supplier, ProcurementItem, RFQ, SupplierQuote, ProductComparison,
+        PrioritySearchSource,
+        # PRD v2.1 — new models (migration 004)
+        RFQWorkflow, ProductResult
     )
     Base.metadata.create_all(bind=engine)
+

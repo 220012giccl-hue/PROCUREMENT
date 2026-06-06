@@ -98,9 +98,30 @@ if (typeof API_BASE_URL === 'undefined') {
         }
 
         // --- EMAILS & THREADS ---
-        async getEmails(threadId = null) {
-            const q = threadId ? `?thread_id=${threadId}` : '';
+        async getEmails(filters = {}) {
+            // filters can be: { thread_id, status, include_all }
+            const params = new URLSearchParams();
+            if (filters && typeof filters === 'object') {
+                if (filters.thread_id) params.set('thread_id', filters.thread_id);
+                if (filters.status) params.set('status', filters.status);
+                if (filters.include_all) params.set('include_all', 'true');
+            } else if (filters && typeof filters === 'string') {
+                params.set('thread_id', filters);
+            }
+            const q = params.toString() ? `?${params.toString()}` : '';
             return await this.request(`/api/emails${q}`);
+        }
+
+        async getEmail(id) {
+            return await this.request(`/api/emails/${id}`);
+        }
+
+        async addTagToEmail(emailId, tagId) {
+            return await this.request(`/api/emails/${emailId}/tags/${tagId}`, { method: 'POST' });
+        }
+
+        async archiveEmail(id) {
+            return await this.request(`/api/emails/${id}/archive`, { method: 'POST' });
         }
 
         async getThreads() {
@@ -109,6 +130,38 @@ if (typeof API_BASE_URL === 'undefined') {
 
         async getThread(threadId) {
             return await this.request(`/api/threads/${threadId}`);
+        }
+
+        // --- TAGS ---
+        async getTags() {
+            return await this.request('/api/tags');
+        }
+
+        async createTag(name, color) {
+            return await this.request('/api/tags', {
+                method: 'POST',
+                body: JSON.stringify({ name, color })
+            });
+        }
+
+        // --- CONTACTS ---
+        async getContacts() {
+            return await this.request('/api/contacts');
+        }
+
+        async getContact(contactId) {
+            return await this.request(`/api/contacts/${contactId}`);
+        }
+
+        async getContactIntelligence(contactId) {
+            return await this.request(`/api/contacts/${contactId}/intelligence`);
+        }
+
+        async addContact(data) {
+            return await this.request('/api/contacts', {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
         }
 
         // --- DRAFTS ---
@@ -241,6 +294,19 @@ if (typeof API_BASE_URL === 'undefined') {
             return await this.request('/api/procurement/suppliers', {
                 method: 'POST',
                 body: JSON.stringify(data)
+            });
+        }
+
+        async updateSupplier(id, data) {
+            return await this.request(`/api/procurement/suppliers/${id}`, {
+                method: 'PUT',
+                body: JSON.stringify(data)
+            });
+        }
+
+        async deleteSupplier(id) {
+            return await this.request(`/api/procurement/suppliers/${id}`, {
+                method: 'DELETE'
             });
         }
 

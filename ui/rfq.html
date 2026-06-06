@@ -439,66 +439,11 @@
                 </div>
             </div>
 
-            <!-- Filters -->
-            <div class="filters-bar">
-                <div class="filter-group">
-                    <span class="filter-label">Search</span>
-                    <input type="text" id="searchInput" class="form-input" placeholder="RFQ number or supplier..."
-                        style="padding:7px 12px;font-size:0.85rem;width:220px;" oninput="applyFilters()">
-                </div>
-                <div class="filter-group">
-                    <span class="filter-label">Status</span>
-                    <select id="statusFilter" class="form-select" style="padding:7px 12px;font-size:0.85rem;"
-                        onchange="applyFilters()">
-                        <option value="">All Statuses</option>
-                        <option value="DRAFT">Draft</option>
-                        <option value="SENT">Sent</option>
-                        <option value="RECEIVED">Quote Received</option>
-                        <option value="APPROVED">Approved</option>
-                        <option value="REJECTED">Rejected</option>
-                        <option value="CLOSED">Closed</option>
-                    </select>
-                </div>
-                <button class="btn btn-secondary btn-sm" onclick="loadRFQs()" style="margin-top:18px;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        style="margin-right:4px;">
-                        <polyline points="23 4 23 10 17 10"></polyline>
-                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-                    </svg>
-                    Refresh
-                </button>
-            </div>
-
-            <!-- Table -->
-            <div class="rfq-table-card">
-                <table class="rfq-table">
-                    <thead>
-                        <tr>
-                            <th>RFQ Number</th>
-                            <th>Supplier</th>
-                            <th>Specs / Item</th>
-                            <th>Qty</th>
-                            <th>Required By</th>
-                            <th>Status</th>
-                            <th>Created</th>
-                            <th style="text-align:right;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="rfqTableBody">
-                        <tr>
-                            <td colspan="8" style="text-align:center;padding:60px;color:#94a3b8;">Loading RFQs...</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <div id="emptyState" class="empty-state" style="display:none;">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="1.5">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                        <polyline points="14 2 14 8 20 8"></polyline>
-                    </svg>
-                    <p style="margin:8px 0 0;font-size:0.95rem;">No RFQs found.</p>
-                    <button class="btn btn-secondary btn-sm" style="margin-top:16px;"
-                        onclick="window.location.href='assistant.html'">Create First RFQ via AI</button>
+            <!-- Project View Container -->
+            <div id="folderViewContainer">
+                <div id="folderGrid" style="display:block;margin-top:8px;"></div>
+                <div id="folderEmpty" style="display:none;text-align:center;padding:40px;color:#64748b;">
+                    No projects found. Projects appear here automatically when RFQs are linked to them.
                 </div>
             </div>
         </main>
@@ -518,8 +463,9 @@
                 </button>
             </div>
             <div class="modal-body">
-                <!-- Approval Flow -->
-                <div class="approval-flow" id="approvalFlow"></div>
+                <!-- Approval Flow (Old vs New Stepper) -->
+                <div class="approval-flow" id="approvalFlow" style="display:none;"></div>
+                <div id="rfq-stepper-container" style="margin-bottom: 20px;"></div>
 
                 <div class="detail-grid" id="detailGrid"></div>
 
@@ -529,14 +475,25 @@
                     <select id="modalStatusSelect" class="form-select"
                         style="flex:1;padding:8px 12px;font-size:0.85rem;">
                         <option value="DRAFT">Draft</option>
+                        <option value="READY">Ready to Send</option>
                         <option value="SENT">Sent to Supplier</option>
+                        <option value="SUPPLIER_ACKNOWLEDGED">Supplier Acknowledged</option>
                         <option value="RECEIVED">Quote Received</option>
+                        <option value="CLARIFICATION_REQUIRED">Clarification Required</option>
+                        <option value="UNDER_COMPARISON">Under Comparison</option>
                         <option value="UNDER_REVIEW">Under Review</option>
                         <option value="APPROVED">Approved</option>
                         <option value="REJECTED">Rejected</option>
                         <option value="CLOSED">Closed</option>
+                        <option value="EXPIRED">Expired</option>
+                        <option value="OVERDUE">Overdue</option>
                     </select>
                     <button class="btn btn-primary btn-sm" onclick="saveStatusUpdate()">Save</button>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button class="btn btn-secondary btn-sm" onclick="generateApprovalSummary()" style="flex:1;">Generate Approval Summary</button>
+                    <button class="btn btn-secondary btn-sm" onclick="exportRFQPDF()" style="flex:1;">Export PDF</button>
                 </div>
 
                 <div class="disclaimer">
@@ -650,6 +607,7 @@
     <script src="js/api.js"></script>
     <script src="js/sidebar.js"></script>
     <script src="js/procurement.js"></script>
+    <script src="js/rfq_stepper.js"></script>
     <script>
         let allRFQs = [];
         let currentRFQId = null;
@@ -657,7 +615,7 @@
         document.addEventListener('DOMContentLoaded', async () => {
             const user = await Auth.checkSession();
             if (!user) { window.location.href = '/'; return; }
-            await loadRFQs();
+            // loadRFQs() is now handled by rfq_folder_view.js loadProjects()
         });
 
         async function loadRFQs() {
@@ -754,6 +712,12 @@
                     return `<div class="flow-step ${cls}">${i < flowIndex ? '✓ ' : ''}${s}</div>`;
                 }).join('');
 
+                if (r.project_id) {
+                    renderRFQStepperByTopic(r.project_id, 'rfq-stepper-container');
+                } else {
+                    document.getElementById('rfq-stepper-container').innerHTML = '';
+                }
+
                 // Detail grid
                 const reqDate = r.required_delivery_date
                     ? new Date(r.required_delivery_date).toLocaleDateString('en-AU', { day: '2-digit', month: 'long', year: 'numeric' })
@@ -831,27 +795,33 @@
             }
         }
 
-        function exportRFQsCSV() {
-            if (!allRFQs.length) { alert('No RFQs to export.'); return; }
-            const headers = ['RFQ Number', 'Supplier', 'Quantity', 'Delivery Location', 'Required Date', 'Status', 'Created'];
-            const rows = allRFQs.map(r => [
-                `"${r.rfq_number || ''}"`,
-                `"${r.supplier || ''}"`,
-                `"${r.quantity || ''}"`,
-                `"${r.delivery_location || ''}"`,
-                `"${r.required_delivery_date ? new Date(r.required_delivery_date).toLocaleDateString() : ''}"`,
-                `"${r.status || ''}"`,
-                `"${r.created_at ? new Date(r.created_at).toLocaleDateString() : ''}"`
-            ]);
-            const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `rfq_register_${new Date().toISOString().split('T')[0]}.csv`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+        async function exportRFQsCSV() {
+            try {
+                const res = await window.api.getRFQs();
+                const rfqsToExport = res.data || [];
+                if (!rfqsToExport.length) { alert('No RFQs to export.'); return; }
+                const headers = ['RFQ Number', 'Supplier', 'Quantity', 'Delivery Location', 'Required Date', 'Status', 'Created'];
+                const rows = rfqsToExport.map(r => [
+                    `"${r.rfq_number || ''}"`,
+                    `"${r.supplier || ''}"`,
+                    `"${r.quantity || ''}"`,
+                    `"${r.delivery_location || ''}"`,
+                    `"${r.required_delivery_date ? new Date(r.required_delivery_date).toLocaleDateString() : ''}"`,
+                    `"${r.status || ''}"`,
+                    `"${r.created_at ? new Date(r.created_at).toLocaleDateString() : ''}"`
+                ]);
+                const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `rfq_register_${new Date().toISOString().split('T')[0]}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            } catch (err) {
+                alert('Error fetching RFQs for export: ' + err.message);
+            }
         }
 
         // ── New RFQ via AI: clear form and open modal directly on this page ──
@@ -861,6 +831,100 @@
                 if (el) el.value = '';
             });
             openRFQModal();
+        }
+
+        async function generateApprovalSummary() {
+            if (!currentRFQId) return;
+            // Get button by ID or class to prevent event target issues with SVG clicks
+            const btn = document.querySelector('button[onclick="generateApprovalSummary()"]');
+            const oldText = btn ? btn.innerText : 'Generate Approval Summary';
+            if (btn) {
+                btn.innerText = "Generating...";
+                btn.disabled = true;
+            }
+            try {
+                const resp = await fetch('/api/approvals/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+                    body: JSON.stringify({ rfq_id: currentRFQId })
+                });
+                const data = await resp.json();
+                if(data.success) {
+                    alert("Approval Summary Generated:\n\n" + data.summary);
+                } else {
+                    alert("Failed to generate summary: " + (data.detail || "Unknown error"));
+                }
+            } catch (err) {
+                alert("Error: " + err.message);
+            } finally {
+                if (btn) {
+                    btn.innerText = oldText;
+                    btn.disabled = false;
+                }
+            }
+        }
+
+        function exportRFQPDF() {
+            if (!currentRFQId) return;
+            const printWindow = window.open('', '_blank');
+            const rfq = allRFQs.find(r => r.id === currentRFQId);
+            if (!rfq) return;
+
+            const html = `
+                <html>
+                <head>
+                    <title>RFQ Export - ${rfq.rfq_number}</title>
+                    <style>
+                        body { font-family: 'Inter', sans-serif; color: #0f172a; padding: 40px; }
+                        h1 { color: #f97316; font-size: 24px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+                        .section { margin-bottom: 20px; }
+                        .label { font-weight: bold; color: #64748b; font-size: 12px; text-transform: uppercase; }
+                        .value { margin-top: 4px; font-size: 14px; }
+                        .specs { background: #f8fafc; padding: 15px; border-radius: 8px; font-family: monospace; white-space: pre-wrap; margin-top: 10px; }
+                        .footer { margin-top: 40px; font-size: 10px; color: #94a3b8; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 10px; }
+                    </style>
+                </head>
+                <body>
+                    <h1>Request for Quote (RFQ)</h1>
+                    <div class="section">
+                        <div class="label">RFQ Number</div>
+                        <div class="value">${rfq.rfq_number}</div>
+                    </div>
+                    <div class="section">
+                        <div class="label">Supplier</div>
+                        <div class="value">${rfq.supplier || 'N/A'}</div>
+                    </div>
+                    <div class="section">
+                        <div class="label">Status</div>
+                        <div class="value">${rfq.status}</div>
+                    </div>
+                    <div class="section">
+                        <div class="label">Quantity</div>
+                        <div class="value">${rfq.quantity || 'N/A'}</div>
+                    </div>
+                    <div class="section">
+                        <div class="label">Delivery Location</div>
+                        <div class="value">${rfq.delivery_location || 'N/A'}</div>
+                    </div>
+                    <div class="section">
+                        <div class="label">Required Delivery Date</div>
+                        <div class="value">${rfq.required_delivery_date ? new Date(rfq.required_delivery_date).toLocaleDateString() : 'N/A'}</div>
+                    </div>
+                    <div class="section">
+                        <div class="label">Technical Requirements</div>
+                        <div class="specs">${rfq.technical_requirements || 'None specified.'}</div>
+                    </div>
+                    <div class="footer">
+                        Generated by Executive Procurement Assistant • AI Recommendation Only • Human review required.
+                    </div>
+                    <script>
+                        window.onload = function() { window.print(); }
+                    <\/script>
+                </body>
+                </html>
+            `;
+            printWindow.document.write(html);
+            printWindow.document.close();
         }
 
         // Close detail modal on backdrop click
@@ -873,6 +937,10 @@
             if (e.target === this) closeRFQModal();
         });
     </script>
+    <!-- NEW v2.1: Project Folder View -->
+    <script src="/js/rfq_folder_view.js?v=2.1"></script>
+    <!-- NEW v2.2: Unified AI + Vendor Comparison Table -->
+    <script src="/js/unified_comparison.js?v=2.2"></script>
 </body>
 
 </html>

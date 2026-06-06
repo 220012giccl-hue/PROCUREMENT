@@ -6,7 +6,7 @@ import os
 import msal
 from pathlib import Path
 from config.database import get_db
-from database.models import User, Email
+from database.models import User, Email, Attachment
 from auth.dependencies import get_current_user
 from api.tasks import sync_user_writing_style
 from config.oauth_config import CLIENT_ID, CLIENT_SECRET, TENANT_ID, SCOPES, TOKEN_FILE, REDIRECT_URI
@@ -27,6 +27,51 @@ def get_msal_app():
     return msal.ConfidentialClientApplication(
         CLIENT_ID, authority=authority, client_credential=CLIENT_SECRET
     )
+
+def _email_status(email: Email) -> str:
+    if getattr(email, "is_junk", False):
+        return "junk"
+    if getattr(email, "processed", False):
+        return "processed"
+    if getattr(email, "is_actionable", True):
+        return "actionable"
+    return "unprocessed"
+
+def _serialize_tag(tag):
+    return {
+        "id": tag.id,
+        "name": tag.name,
+        "color": tag.color
+    }
+
+def _serialize_email(email: Email, attachments_count: int = 0) -> dict:
+    status = _email_status(email)
+    return {
+        "id": email.id,
+        "email_id": email.email_id,
+        "thread_id": email.thread_id,
+        "message_id": email.message_id,
+        "in_reply_to": email.in_reply_to,
+        "sender": email.sender,
+        "from": email.sender,
+        "recipients": email.recipients or [],
+        "subject": email.subject,
+        "body": email.body,
+        "status": status,
+        "is_actionable": email.is_actionable,
+        "is_junk": email.is_junk,
+        "is_sent": email.is_sent,
+        "processed": email.processed,
+        "detection_confidence": email.detection_confidence,
+        "received_at": email.received_at.isoformat() if email.received_at else None,
+        "date": email.received_at.isoformat() if email.received_at else None,
+        "created_at": email.created_at.isoformat() if email.created_at else None,
+        "tags": [_serialize_tag(tag) for tag in getattr(email, "tags", [])],
+        "tags_suggested": email.tags_suggested or [],
+        "has_draft": False,
+        "attachments": attachments_count,
+        "meta_data": email.meta_data or {}
+    }
 
 @router.get("/api/oauth/login")
 @router.get("/api/outlook/oauth/login")
@@ -166,23 +211,75 @@ async def gmail_oauth_callback(request: Request, background_tasks: BackgroundTas
     """)
 
 @router.get("/api/emails")
-async def get_emails(thread_id: str = None, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def get_emails(
+    thread_id: str = None,
+    status: str = None,
+    include_all: bool = False,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
     query = db.query(Email)
-    # Hide training/historical emails by default unless specifically requested
     if thread_id:
         query = query.filter(Email.thread_id == thread_id)
-    else:
+    elif not include_all:
         query = query.filter(Email.thread_id != "SYNC_HISTORICAL")
-        
+    if status and status != 'all':
+        normalized_status = status.lower()
+        if normalized_status == "junk":
+            query = query.filter(Email.is_junk.is_(True))
+        elif normalized_status == "processed":
+            query = query.filter(Email.processed.is_(True), Email.is_junk.is_(False))
+        elif normalized_status == "unprocessed":
+            query = query.filter(Email.processed.is_(False), Email.is_junk.is_(False))
+        elif normalized_status == "actionable":
+            query = query.filter(Email.is_actionable.is_(True), Email.is_junk.is_(False))
     emails = query.order_by(Email.received_at.desc()).all()
-    return {"success": True, "data": emails}
+    attachment_counts = {}
+    thread_ids = [e.thread_id for e in emails if e.thread_id]
+    if thread_ids:
+        from sqlalchemy import func
+        rows = db.query(Attachment.thread_id, func.count(Attachment.id)).filter(
+            Attachment.thread_id.in_(thread_ids)
+        ).group_by(Attachment.thread_id).all()
+        attachment_counts = {row[0]: row[1] for row in rows}
+    result = []
+    for e in emails:
+        result.append(_serialize_email(e, attachment_counts.get(e.thread_id, 0)))
+    return {"success": True, "data": result}
+
+@router.post("/api/emails/{email_id}/tags/{tag_id}")
+async def add_tag_to_email(email_id: int, tag_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from database.models import Tag
+    email = db.query(Email).filter(Email.id == email_id).first()
+    tag = db.query(Tag).filter(Tag.id == tag_id).first()
+    if not email or not tag:
+        raise HTTPException(status_code=404, detail="Email or Tag not found")
+    return {"success": True, "message": f"Tag '{tag.name}' added"}
+
+@router.post("/api/emails/{email_id}/confirm_tags")
+async def confirm_email_tags(email_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    email = db.query(Email).filter(Email.id == email_id).first()
+    if not email:
+        raise HTTPException(status_code=404, detail="Email not found")
+    return {"success": True, "message": "Tags confirmed"}
+
+@router.post("/api/emails/{email_id}/archive")
+async def archive_email(email_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    email = db.query(Email).filter(Email.id == email_id).first()
+    if not email:
+        raise HTTPException(status_code=404, detail="Email not found")
+    email.processed = True
+    email.is_actionable = False
+    db.commit()
+    return {"success": True, "message": "Email marked as seen"}
 
 @router.get("/api/emails/{id}")
 async def get_single_email(id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     email = db.query(Email).filter(Email.id == id).first()
     if not email:
         raise HTTPException(status_code=404, detail="Email not found")
-    return {"success": True, "data": email}
+    attachments_count = db.query(Attachment).filter(Attachment.thread_id == email.thread_id).count() if email.thread_id else 0
+    return {"success": True, "data": _serialize_email(email, attachments_count)}
 
 @router.get("/api/oauth/status")
 @router.get("/api/gmail/oauth/status")

@@ -1,0 +1,79 @@
+=============================================================
+             EXECUTIVE RFQ ASSISTANT - TESTING GUIDE
+=============================================================
+Yeh document aapko complete Procurement Pipeline aur naye 
+"View Report" feature ki testing mein guide karega.
+
+-------------------------------------------------------------
+METHOD 1: INSTANT UI TESTING (DUMMY DATA)
+-------------------------------------------------------------
+Agar aap sirf frontend aur UI check karna chahte hain:
+
+1. Apne terminal (VS Code) mein ye command run karein:
+   python test_comparison_data.py
+
+2. Apna browser open karein: http://localhost:8069/rfq.html
+
+3. Aapko projects ki list nazar aayegi. Kisi bhi project ke aagay 
+   "View Report" par click karein.
+
+4. Aapko direct side-drawer mein Category-wise Comparison 
+   Table (AI vs Vendor) nazar aa jayegi.
+
+
+-------------------------------------------------------------
+METHOD 2: FULL PIPELINE TESTING (VIA REAL EMAIL)
+-------------------------------------------------------------
+Agar aap asal AI pipeline test karna chahte hain (Mail aana -> 
+AI se products nikalna -> Live market search hona -> Quote banna):
+
+STEP 1: Ek email compose karein
+Apne kisi dusre email address se us email account par mail bhejain 
+jo is app ke sath synced hai. 
+
+Email ka content neechay diya gaya hai. Aap isay copy paste kar lein:
+
+SUBJECT:
+Quotation Response - Greenfield Warehouse Build (PRJ-2026-002)
+
+EMAIL BODY:
+Dear Procurement Team,
+
+Thank you for the opportunity to provide a quotation for the Greenfield Warehouse Build project. Please find our formal pricing for the requested items below:
+
+1. Safety Helmet EN397 (Industrial Grade)
+   Quantity: 20 units
+   Unit Price: $22.50
+   Lead Time: In Stock
+
+2. Cordless Hammer Drill 18V (Brushless)
+   Quantity: 5 units
+   Unit Price: $185.00
+   Lead Time: 2 Business Days
+
+3. High-Vis Safety Vest (Class 2)
+   Quantity: 30 units
+   Unit Price: $12.00
+   Lead Time: In Stock
+
+All prices are exclusive of tax and include standard delivery to your site. Please let us know if you require compliance documentation for the PPE items.
+
+Best regards,
+
+Michael Carter
+Senior Sales Executive
+BuildPro Supplies Ltd.
+
+
+STEP 2: Background Process Ka Wait Karein
+1. Jaise hi mail inbox mein aayegi, app usko sync karegi.
+2. AI background mein chalega:
+   - Items aur quantities extract karega.
+   - Live web search kar ke in tools aur PPE ki market price nikalay ga.
+   - Ek naya Vendor Quote banayega.
+
+STEP 3: Dashboard Par Check Karein
+1. Dobara http://localhost:8069/rfq.html par jayein.
+2. "Greenfield Warehouse Build" ke aagay "View Report" par click karein.
+3. Wahan aapko Michael Carter ki di hui prices aur AI ki nikali hui 
+   market prices side-by-side compare hoti hui nazar aayengi!

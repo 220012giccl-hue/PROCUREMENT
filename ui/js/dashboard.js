@@ -216,21 +216,7 @@ async function checkAgentStatus() {
     }
 }
 
-async function loadPulseStats() {
-    try {
-        const stats = await window.RFQAgentAPI.getDashboardStats();
-        if (stats.success) {
-            const setVal = (id, val) => {
-                const el = document.getElementById(id);
-                if (el) el.textContent = val !== undefined ? val : '0';
-            };
-            setVal('statActiveTenders', stats.activeTenders);
-            setVal('statUnprocessed', stats.unprocessedCount);
-            setVal('statIncomplete', stats.incompleteTenders);
-            setVal('statUrgent', stats.urgentCount);
-        }
-    } catch (e) { console.error('Stats load error:', e); }
-}
+// Duplicate loadPulseStats removed - defined later in file
 
 // ── SESSION SUMMARY LOGIC ──────────────────────────────────────────────────
 
@@ -618,17 +604,17 @@ async function loadPulseStats() {
             console.log('[Dashboard] Pulse Stats updated:', response.data);
             
             // Update the new top stats grid
-            if (document.getElementById('statActiveTenders')) {
-                document.getElementById('statActiveTenders').textContent = response.data.activeTenders || 0;
+            if (document.getElementById('statActiveRFQs')) {
+                document.getElementById('statActiveRFQs').textContent = response.data.activeRFQs || 0;
             }
-            if (document.getElementById('statUnprocessed')) {
-                document.getElementById('statUnprocessed').textContent = response.data.unprocessedEmails || 0;
+            if (document.getElementById('statPendingApprovals')) {
+                document.getElementById('statPendingApprovals').textContent = response.data.pendingApprovals || 0;
             }
-            if (document.getElementById('statIncomplete')) {
-                document.getElementById('statIncomplete').textContent = response.data.incompleteTenders || 0;
+            if (document.getElementById('statUrgentItems')) {
+                document.getElementById('statUrgentItems').textContent = response.data.urgentItems || 0;
             }
-            if (document.getElementById('statUrgent')) {
-                document.getElementById('statUrgent').textContent = response.data.urgentTasks || 0;
+            if (document.getElementById('statSavings')) {
+                document.getElementById('statSavings').textContent = "$" + (response.data.savings || 0).toLocaleString();
             }
 
             // Update footer pulse numbers if they exist

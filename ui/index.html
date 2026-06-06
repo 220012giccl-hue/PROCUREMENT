@@ -370,22 +370,22 @@
             </div>
 
             <!-- Dashboard Stats Grid -->
-            <div class="stats-grid">
+            <div class="stats-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;">
                 <div class="stat-card" style="background: white; border: 1px solid var(--border-light); border-radius: var(--radius-lg); padding: var(--space-6); text-align: center;">
-                    <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 8px;">Active Tenders</div>
-                    <div id="statActiveTenders" style="font-size: 2rem; font-weight: 800; color: var(--text-primary);">0</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 8px;">Active RFQs</div>
+                    <div id="statActiveRFQs" style="font-size: 2rem; font-weight: 800; color: var(--text-primary);">0</div>
                 </div>
                 <div class="stat-card" style="background: white; border: 1px solid var(--border-light); border-radius: var(--radius-lg); padding: var(--space-6); text-align: center;">
-                    <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 8px;">Unprocessed</div>
-                    <div id="statUnprocessed" style="font-size: 2rem; font-weight: 800; color: var(--primary-orange);">0</div>
-                </div>
-                <div class="stat-card" style="background: white; border: 1px solid var(--border-light); border-radius: var(--radius-lg); padding: var(--space-6); text-align: center; border-bottom: 3px solid #ff9800;">
-                    <div style="font-size: 0.75rem; color: #ff9800; text-transform: uppercase; font-weight: 600; margin-bottom: 8px;">Incomplete (Missing Docs)</div>
-                    <div id="statIncomplete" style="font-size: 2rem; font-weight: 800; color: #ff9800;">0</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 8px;">Pending Approvals</div>
+                    <div id="statPendingApprovals" style="font-size: 2rem; font-weight: 800; color: var(--primary-orange);">0</div>
                 </div>
                 <div class="stat-card" style="background: white; border: 1px solid var(--border-light); border-radius: var(--radius-lg); padding: var(--space-6); text-align: center; border-bottom: 3px solid #f44336;">
-                    <div style="font-size: 0.75rem; color: #f44336; text-transform: uppercase; font-weight: 600; margin-bottom: 8px;">High Priority</div>
-                    <div id="statUrgent" style="font-size: 2rem; font-weight: 800; color: #f44336;">0</div>
+                    <div style="font-size: 0.75rem; color: #f44336; text-transform: uppercase; font-weight: 600; margin-bottom: 8px;">High Priority Items</div>
+                    <div id="statUrgentItems" style="font-size: 2rem; font-weight: 800; color: #f44336;">0</div>
+                </div>
+                <div class="stat-card" style="background: white; border: 1px solid var(--border-light); border-radius: var(--radius-lg); padding: var(--space-6); text-align: center; border-bottom: 3px solid #4CAF50;">
+                    <div style="font-size: 0.75rem; color: #4CAF50; text-transform: uppercase; font-weight: 600; margin-bottom: 8px;">Recommended Savings</div>
+                    <div id="statSavings" style="font-size: 2rem; font-weight: 800; color: #4CAF50;">$0</div>
                 </div>
             </div>
 

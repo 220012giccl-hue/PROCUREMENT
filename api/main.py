@@ -34,7 +34,7 @@ from config.database import init_db, SessionLocal
 from database.models import User
 from auth.security import get_password_hash
 from auth.dependencies import get_current_user
-from api.routes import auth, user, emails, drafts, threads, attachments, contacts, dashboard, assistant, admin, procurement, comparison, search_sources
+from api.routes import auth, user, emails, drafts, threads, attachments, contacts, dashboard, assistant, admin, procurement, comparison, search_sources, rfq_workflow
 
 def run_migrations():
     """Ensure database schema is up to date with Self-Healing logic"""
@@ -191,6 +191,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from api.routes import auth, user, emails, drafts, threads, attachments, contacts, dashboard, assistant, admin, procurement, comparison, search_sources, rfq_workflow, approval
+from api.routes import project_rfq          # NEW: Project Folder view + KPI API (v2.1)
+from api.routes import unified_comparison   # NEW: Unified AI + Vendor Comparison (v2.2)
+
 # --- Router Inclusion ---
 app.include_router(auth.router)
 app.include_router(user.router)
@@ -205,6 +209,11 @@ app.include_router(admin.router)
 app.include_router(procurement.router)
 app.include_router(comparison.router)
 app.include_router(search_sources.router)
+app.include_router(rfq_workflow.router)
+app.include_router(approval.router)
+app.include_router(project_rfq.router)        # NEW v2.1: Project KPI + Folder View
+app.include_router(unified_comparison.router) # NEW v2.2: Unified AI + Vendor Comparison
+
 
 # --- Static Files ---
 app.mount("/css", StaticFiles(directory="ui/css"), name="css")
@@ -214,6 +223,11 @@ app.mount("/storage", StaticFiles(directory="storage"), name="storage")
 # --- UI Serving ---
 @app.get("/")
 def root(): return FileResponse("ui/login.html")
+
+@app.get("/favicon.ico")
+def favicon():
+    svg = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#FF5C35"/><text y=".9em" font-size="80" x="50%" text-anchor="middle" fill="white" font-family="serif" font-weight="bold">R</text></svg>"""
+    return Response(content=svg, media_type="image/svg+xml")
 
 @app.get("/user_portal")
 @app.get("/dashboard")

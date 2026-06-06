@@ -7,6 +7,20 @@ from datetime import datetime
 
 router = APIRouter(prefix="/api/procurement", tags=["procurement"])
 
+def _clean_email(email: Optional[str]) -> str:
+    return (email or "").strip().lower()
+
+def _clean_categories(categories: Optional[str]) -> str:
+    seen = set()
+    cleaned = []
+    for category in (categories or "").split(","):
+        value = category.strip()
+        key = value.lower()
+        if value and key not in seen:
+            seen.add(key)
+            cleaned.append(value)
+    return ", ".join(cleaned)
+
 @router.post("/save")
 async def save_to_procurement_list(
     item_data: Dict = Body(...),
@@ -290,15 +304,54 @@ async def add_supplier(
     data: Dict = Body(...),
     db: Session = Depends(get_db)
 ):
-    """Adds a new supplier"""
+    """Adds a new supplier — prevents duplicate names and duplicate emails"""
     try:
+        supplier_name = (data.get('name') or '').strip()
+        supplier_email = _clean_email(data.get('email'))
+        if not supplier_name:
+            raise HTTPException(status_code=400, detail="Supplier name is required")
+
+        # ── Duplicate check ───────────────────────────────────────────────────
+        existing = db.query(Supplier).filter(
+            Supplier.name.ilike(supplier_name)
+        ).first()
+
+        email_owner = None
+        if supplier_email:
+            email_owner = db.query(Supplier).filter(Supplier.email.ilike(supplier_email)).first()
+
+        if email_owner and (not existing or email_owner.id != existing.id):
+            raise HTTPException(
+                status_code=409,
+                detail=f"This email already exists for supplier: {email_owner.name}"
+            )
+
+        if existing:
+            # Merge new categories into existing ones (no duplicates)
+            new_cats = set(c.strip() for c in _clean_categories(data.get('categories')).split(',') if c.strip())
+            old_cats = set(c.strip() for c in _clean_categories(existing.categories).split(',') if c.strip())
+            merged = ', '.join(sorted(old_cats | new_cats, key=str.lower))
+            existing.categories = merged
+            # Update optional fields only if provided
+            if data.get('email') and not existing.email:
+                existing.email = supplier_email
+            if data.get('location') and not existing.location:
+                existing.location = data.get('location')
+            if data.get('phone') and not existing.phone:
+                existing.phone = data.get('phone')
+            if data.get('website') and not existing.website:
+                existing.website = data.get('website')
+            db.commit()
+            return {"success": True, "id": existing.id, "merged": True}
+
+        # ── Create new ────────────────────────────────────────────────────────
         new_supplier = Supplier(
-            name=data.get('name'),
+            name=supplier_name,
             contact_person=data.get('contact_person'),
-            email=data.get('email'),
+            email=supplier_email or None,
             phone=data.get('phone'),
             website=data.get('website'),
-            categories=data.get('categories'),
+            categories=_clean_categories(data.get('categories')),
             location=data.get('location'),
             preferred_supplier=data.get('preferred_supplier', False),
             notes=data.get('notes')
@@ -306,7 +359,9 @@ async def add_supplier(
         db.add(new_supplier)
         db.commit()
         db.refresh(new_supplier)
-        return {"success": True, "id": new_supplier.id}
+        return {"success": True, "id": new_supplier.id, "merged": False}
+    except HTTPException:
+        raise
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
@@ -322,14 +377,32 @@ async def update_supplier(
         supplier = db.query(Supplier).filter(Supplier.id == id).first()
         if not supplier:
             raise HTTPException(status_code=404, detail="Supplier not found")
+
+        incoming_email = _clean_email(data.get('email')) if 'email' in data else None
+        if incoming_email:
+            email_owner = db.query(Supplier).filter(
+                Supplier.email.ilike(incoming_email),
+                Supplier.id != id
+            ).first()
+            if email_owner:
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"This email already exists for supplier: {email_owner.name}"
+                )
         
         # Update fields
         for key, value in data.items():
             if hasattr(supplier, key):
+                if key == "email":
+                    value = _clean_email(value) or None
+                if key == "categories":
+                    value = _clean_categories(value)
                 setattr(supplier, key, value)
         
         db.commit()
         return {"success": True}
+    except HTTPException:
+        raise
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))

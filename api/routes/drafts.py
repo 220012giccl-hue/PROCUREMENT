@@ -32,7 +32,8 @@ async def create_new_draft(draft_data: CreateDraft, db: Session = Depends(get_db
     try:
         new_draft = DraftReply(
             thread_id=draft_data.thread_id or f"manual-{datetime.now().strftime('%Y%m%d%H%M%S')}",
-            email_id=None, # Not a reply to a specific email
+            in_reply_to_email_id=None, # Not a reply to a specific email
+            recipient=draft_data.to,
             subject=draft_data.subject,
             body=draft_data.body,
             status='DRAFT',

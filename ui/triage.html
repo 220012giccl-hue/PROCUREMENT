@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Triage Queue - Procurement AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --border: #e2e8f0;
+            --text: #0f172a;
+            --muted: #64748b;
+            --accent: #FF5C35;
+        }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 40px; margin: 0; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        .triage-item { display: flex; justify-content: space-between; align-items: flex-start; }
+        .item-details h3 { margin: 0 0 8px 0; font-size: 1.1rem; }
+        .item-details p { margin: 0 0 4px 0; font-size: 0.9rem; color: var(--muted); }
+        .assign-section { text-align: right; }
+        select, button { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border); font-size: 0.9rem; }
+        button { background: var(--accent); color: white; border: none; font-weight: 600; cursor: pointer; margin-left: 8px; }
+        button:hover { opacity: 0.9; }
+        .confidence { font-size: 0.8rem; font-weight: 600; color: #f59e0b; margin-top: 8px; display: inline-block; padding: 4px 8px; background: #fffbeb; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div>
+            <h1 style="margin:0;">Triage Queue</h1>
+            <p style="color:var(--muted);margin:4px 0 0;">Review emails AI couldn't confidently assign.</p>
+        </div>
+        <button onclick="window.location.href='/dashboard'">Back to Dashboard</button>
+    </div>
+
+    <div id="triage-container">
+        <p style="color:var(--muted);">Loading triage queue...</p>
+    </div>
+
+    <script>
+        async function loadTriage() {
+            try {
+                const res = await fetch('/api/rfq-workflows/triage');
+                const json = await res.json();
+                const items = json.data;
+                const container = document.getElementById('triage-container');
+                
+                if (!items || items.length === 0) {
+                    container.innerHTML = '<p style="color:var(--muted);">Queue is empty. AI is handling everything perfectly.</p>';
+                    return;
+                }
+
+                let html = '';
+                for (const item of items) {
+                    html += `
+                    <div class="card triage-item" id="triage-${item.id}">
+                        <div class="item-details">
+                            <h3>${item.email_subject}</h3>
+                            <p><strong>From:</strong> ${item.sender}</p>
+                            <p><strong>Received:</strong> ${new Date(item.received_at).toLocaleString()}</p>
+                            <span class="confidence">AI Confidence: ${(item.confidence * 100).toFixed(0)}% (Requires >85%)</span>
+                        </div>
+                        <div class="assign-section">
+                            <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:4px;">Assign to Project</label>
+                            <select id="select-${item.id}" class="topic-select" style="min-width: 200px;">
+                                <option value="">Loading projects...</option>
+                            </select>
+                            <button onclick="assignTriage(${item.id})">Confirm</button>
+                        </div>
+                    </div>`;
+                }
+                container.innerHTML = html;
+                loadTopics();
+            } catch(e) {
+                document.getElementById('triage-container').innerHTML = '<p style="color:red;">Error loading queue.</p>';
+            }
+        }
+
+        async function loadTopics() {
+            // Fetch all topics (projects) to populate dropdowns
+            try {
+                // In a real app we would have a global /api/topics endpoint. 
+                // For this demo, let's just make a dummy or assume there's one.
+                const res = await fetch('/api/assistant/topics'); // Attempt existing endpoint if available
+                const topics = await res.json();
+                const options = topics.data.map(t => `<option value="${t.id}">${t.topic_name}</option>`).join('');
+                document.querySelectorAll('.topic-select').forEach(select => {
+                    select.innerHTML = '<option value="">Select a Project...</option>' + options;
+                });
+            } catch(e) {
+                console.log("Could not load topics");
+            }
+        }
+
+        async function assignTriage(id) {
+            const topicId = document.getElementById(`select-${id}`).value;
+            if (!topicId) return alert('Please select a project first.');
+
+            try {
+                const res = await fetch(`/api/rfq-workflows/${id}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'researching', topic_id: parseInt(topicId), assigned_by: 'human' })
+                });
+                if (res.ok) {
+                    document.getElementById(`triage-${id}`).remove();
+                    // If empty, show empty message
+                    if (document.querySelectorAll('.triage-item').length === 0) {
+                        document.getElementById('triage-container').innerHTML = '<p style="color:var(--muted);">Queue is empty.</p>';
+                    }
+                }
+            } catch(e) {
+                alert('Error assigning');
+            }
+        }
+
+        loadTriage();
+    </script>
+</body>
+</html>

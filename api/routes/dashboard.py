@@ -11,6 +11,7 @@ from pathlib import Path
 import time
 import asyncio
 from datetime import datetime
+import re
 
 router = APIRouter(tags=["dashboard"])
 
@@ -31,13 +32,23 @@ async def get_dashboard_stats(current_user: User = Depends(get_current_user), db
         return {"success": True, "data": STATS_CACHE["data"]}
 
     try:
+        from database.models import RFQ, ApprovalSummary, SupplierQuote
+        from sqlalchemy import func
+        
+        active_rfqs = db.query(RFQ).filter(RFQ.status != 'CLOSED').count()
+        pending_approvals = db.query(ApprovalSummary).filter(ApprovalSummary.status == 'PENDING').count()
+        urgent_items = db.query(RFQ).filter(RFQ.status.in_(['OVERDUE', 'URGENT'])).count()
+        
+        # Calculate savings from supplier quotes (dummy logic)
+        quotes_sum = db.query(func.sum(SupplierQuote.quoted_price)).scalar() or 0
+        savings = int(quotes_sum * 0.12)
+        
+        # Legacy stats for other parts of dashboard
         active_threads = db.query(Thread).count()
         total_emails = db.query(Email).count()
         total_contacts = db.query(Contact).count()
         pending_replies = db.query(DraftReply).count()
         unprocessed_emails = db.query(Email).filter(Email.processed == False).count()
-        
-        # New Construction Intelligence Metrics
         incomplete_tenders = db.query(Thread).filter(Thread.status == 'AWAITING_DOCS').count()
         urgent_tasks = db.query(Thread).filter(Thread.status == 'URGENT').count()
         
@@ -54,11 +65,15 @@ async def get_dashboard_stats(current_user: User = Depends(get_current_user), db
                 if m not in existing_cats_set:
                     missing_stats[m] = missing_stats.get(m, 0) + 1
         
-        import re
         top_missing = sorted(missing_stats.items(), key=lambda x: x[1], reverse=True)[:5]
         top_missing_data = [{"category": re.sub(r'^\d+_', '', k).replace('_', ' '), "count": v} for k, v in top_missing]
 
         stats_data = {
+            "activeRFQs": active_rfqs,
+            "pendingApprovals": pending_approvals,
+            "urgentItems": urgent_items,
+            "savings": savings,
+            
             "activeTenders": active_threads,
             "unreadEmails": total_emails,
             "unprocessedEmails": unprocessed_emails,
@@ -241,6 +256,17 @@ async def run_sync_intelligence(user_id: int):
             try:
                 # Process the email (Multi-agent workflow)
                 process_incoming_email(email_data)
+                
+                # NEW v2.1: Trigger Smart Procurement Pipeline
+                from api.tasks import run_smart_procurement_pipeline
+                await run_smart_procurement_pipeline(
+                    email_subject=email_data.get('subject', ''),
+                    email_body=email_data.get('body', ''),
+                    sender_name=email_data.get('sender', ''),
+                    sender_email=email_data.get('sender', ''),
+                    thread_id=email_data.get('thread_id', f"local-{time.time()}"),
+                    provider=email_data.get('provider', 'gmail')
+                )
                 
                 # Mark as read/processed in provider
                 if email_data['provider'] == 'gmail':

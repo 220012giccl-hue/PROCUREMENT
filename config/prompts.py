@@ -320,3 +320,36 @@ Return JSON:
     "summary": "Brief summary of the attachment contents."
 }}
 """
+
+# Context Resolver Agent
+CONTEXT_RESOLVER_PROMPT = """
+You are a procurement project classifier.
+Given the email below and the list of active projects for this client,
+determine which project this email most likely belongs to.
+
+Email:
+{email_body}
+
+Active Projects:
+{topic_list}
+
+Respond ONLY in valid JSON — no explanation, no markdown:
+{"topic_id": 12, "confidence": 0.92, "reason": "..."}
+"""
+
+# Vendor Matcher
+VENDOR_MATCH_PROMPT = """
+Given these procurement items and their categories, list the most suitable
+suppliers from the database to contact for quotes. Return JSON only.
+Items: {items}
+"""
+
+# Triage Summary (shown on triage.html to explain why email wasn't auto-assigned)
+TRIAGE_SUMMARY_PROMPT = """
+Explain in 1-2 sentences why this email could not be automatically assigned
+to a project. Be specific about what was ambiguous.
+Email: {email_body}
+Candidates: {topic_list}
+AI Score: {confidence}
+"""
+
