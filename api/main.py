@@ -164,11 +164,11 @@ async def executive_guardian_middleware(request: Request, call_next):
         # Strict Content Security Policy (CSP)
         csp_parts = [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://accounts.google.com https://cdnjs.cloudflare.com",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://accounts.google.com https://cdnjs.cloudflare.com https://static.cloudflareinsights.com",
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
             "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com data:",
             "img-src 'self' data: https: blob:",
-            "connect-src 'self' https://accounts.google.com",
+            "connect-src 'self' https://accounts.google.com https://cdn.jsdelivr.net https://cloudflareinsights.com https://static.cloudflareinsights.com",
             "frame-ancestors 'none'"
         ]
         response.headers["Content-Security-Policy"] = "; ".join(csp_parts)

@@ -1076,7 +1076,7 @@
                     </div>
                     <div class="form-group">
                         <label>Secure Password</label>
-                        <input type="password" id="new-user-pass" class="form-control" required placeholder="••••••••">
+                        <input type="password" id="new-user-pass" class="form-control" required autocomplete="new-password" placeholder="••••••••">
                     </div>
 
                     <div style="display: flex; gap: 12px; margin-top: 32px;">
@@ -1155,9 +1155,12 @@
         const mainCanvas = document.getElementById('draggable-canvas');
         let statsData = null;
         let dragData = null; // ELITE DND STATE
+        let currentAdminRole = null;
         
-        // Initialize API
-        window.RFQAgentAPI = new RFQAgentAPI();
+        // api.js initializes the singleton. Keep a compatibility fallback for older bundles.
+        if (!window.RFQAgentAPI && window.RFQAgentAPIClass) {
+            window.RFQAgentAPI = new window.RFQAgentAPIClass();
+        }
 
         function escapeHTML(str) {
             if (!str) return "";
@@ -1168,8 +1171,8 @@
 
 
         // ── RFQ INTELLIGENCE SYNC ENGINE ──
-        let syncStatusInterval = null;
-        let forceDisplayUntil = 0;
+        var syncStatusInterval = null;
+        var forceDisplayUntil = 0;
 
         async function triggerSync() {
             try {
@@ -1316,9 +1319,20 @@
 
         async function loadUsers() {
             try {
-                const response = await fetch(`${API_BASE}/users`);
-                const users = await response.json();
                 const body = document.getElementById('users-table-body');
+                if (currentAdminRole !== SECURITY_LEVELS.SUPERADMIN) {
+                    body.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--muted);">SuperAdmin access required to view managed users.</td></tr>';
+                    return;
+                }
+
+                const response = await fetch(`${API_BASE}/users`);
+                if (response.status === 403) {
+                    body.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--muted);">SuperAdmin access required to view managed users.</td></tr>';
+                    return;
+                }
+                if (!response.ok) throw new Error(`Users request failed: ${response.status}`);
+                const users = await response.json();
+                if (!Array.isArray(users)) throw new Error('Users response was not a list');
                 body.innerHTML = users.map(u => `
                 <tr>
                     <td><strong>${u.email}</strong></td>
@@ -1329,7 +1343,7 @@
                     <td>
                         <div style="display: flex; gap: 8px;">
                             <button class="btn btn-primary" style="padding: 4px 12px; font-size: 0.7rem;" onclick="showUserDetails('${u.email}')">View</button>
-                            <button class="btn" style="padding: 4px 8px; font-size: 0.7rem;">Edit</button>
+                            <button class="btn" style="padding: 4px 8px; font-size: 0.7rem;" onclick="openEditUser('${u.email}')">Edit</button>
                         </div>
                     </td>
                 </tr>
@@ -1363,9 +1377,20 @@
 
         async function loadLogs() {
             try {
-                const response = await fetch(`${API_BASE}/audit`);
-                const logs = await response.json();
                 const container = document.getElementById('audit-stream');
+                if (currentAdminRole !== SECURITY_LEVELS.SUPERADMIN) {
+                    container.innerHTML = '<div class="event-item" style="justify-content:center;color:var(--muted);padding:40px;">SuperAdmin access required to view audit logs.</div>';
+                    return;
+                }
+
+                const response = await fetch(`${API_BASE}/audit`);
+                if (response.status === 403) {
+                    container.innerHTML = '<div class="event-item" style="justify-content:center;color:var(--muted);padding:40px;">SuperAdmin access required to view audit logs.</div>';
+                    return;
+                }
+                if (!response.ok) throw new Error(`Audit request failed: ${response.status}`);
+                const logs = await response.json();
+                if (!Array.isArray(logs)) throw new Error('Audit response was not a list');
 
                 container.innerHTML = logs.map(l => {
                     const date = new Date(l.timestamp);
@@ -1398,8 +1423,18 @@
 
         async function showUserDetails(email) {
             try {
+                if (currentAdminRole !== SECURITY_LEVELS.SUPERADMIN) {
+                    toast('SuperAdmin access required to view user details.');
+                    return;
+                }
+
                 const response = await fetch(`${API_BASE}/users`);
+                if (!response.ok) {
+                    toast(response.status === 403 ? 'SuperAdmin access required to view user details.' : 'Unable to load user details.');
+                    return;
+                }
                 const users = await response.json();
+                if (!Array.isArray(users)) throw new Error('Users response was not a list');
                 const user = users.find(u => u.email === email);
                 if (!user) return;
 
@@ -1411,9 +1446,48 @@
                 document.getElementById('detail-joined').innerText = user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A';
                 document.getElementById('detail-last').innerText = user.last_login ? new Date(user.last_login).toLocaleString() : 'Never';
 
+                // Wire up the Restrict/Unrestrict button
+                try {
+                    const disableBtn = document.getElementById('disable-user-btn');
+                    if (disableBtn) {
+                        disableBtn.innerText = user.is_active ? 'Restrict Access' : 'Unrestrict';
+                        disableBtn.onclick = async () => {
+                            if (!confirm(user.is_active ? 'Restrict this user? This will disable their access.' : 'Re-enable this user?')) return;
+                            disableBtn.disabled = true;
+                            try {
+                                const res = await fetch(`${API_BASE}/users/${user.id}`, {
+                                    method: 'PATCH',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ is_active: !user.is_active })
+                                });
+                                if (!res.ok) {
+                                    let d = {};
+                                    try { d = await res.json(); } catch (e) { }
+                                    toast(d.detail || 'Unable to update user status.');
+                                    return;
+                                }
+                                toast('User status updated.');
+                                // Refresh the users list and re-open details for current user
+                                await loadUsers();
+                                await showUserDetails(user.email);
+                            } catch (err) {
+                                console.error('Failed to update user status', err);
+                                toast('Server communication error.');
+                            } finally {
+                                disableBtn.disabled = false;
+                            }
+                        };
+                    }
+                } catch (e) { console.warn('Could not wire disable button', e); }
+
                 // Pull related logs for history
                 const logRes = await fetch(`${API_BASE}/audit`);
+                if (!logRes.ok) {
+                    document.getElementById('detail-history').innerHTML = '<div style="color:var(--muted);padding:20px;">Audit history requires SuperAdmin access.</div>';
+                    return;
+                }
                 const allLogs = await logRes.json();
+                if (!Array.isArray(allLogs)) throw new Error('Audit response was not a list');
                 const userLogs = allLogs.filter(l => l.user_email === email).slice(0, 10);
 
                 const historyBody = document.getElementById('detail-history');
@@ -1478,6 +1552,76 @@
             } finally {
                 btn.innerText = originalText;
                 btn.disabled = false;
+            }
+        }
+
+        // Edit user flow: reuse create modal but patch instead of create
+        let editingUserId = null;
+
+        async function openEditUser(email) {
+            try {
+                const response = await fetch(`${API_BASE}/users`);
+                if (!response.ok) { toast('Unable to fetch users for editing.'); return; }
+                const users = await response.json();
+                const user = users.find(u => u.email === email);
+                if (!user) { toast('User not found'); return; }
+
+                editingUserId = user.id;
+                document.getElementById('new-user-email').value = user.email;
+                document.getElementById('new-user-name').value = user.full_name || '';
+                document.getElementById('new-user-role').value = user.role || 'admin';
+                document.getElementById('new-user-pass').value = '';
+
+                const form = document.getElementById('create-user-form');
+                form.onsubmit = handleEditUser;
+                document.getElementById('user-modal').style.display = 'flex';
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if (submitBtn) submitBtn.innerText = 'Save Changes';
+            } catch (err) {
+                console.error('openEditUser failed', err);
+                toast('Failed to open edit modal.');
+            }
+        }
+
+        async function handleEditUser(e) {
+            e.preventDefault();
+            if (!editingUserId) return toast('No user selected for editing.');
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalText = btn ? btn.innerText : 'Saving...';
+
+            const payload = {
+                full_name: document.getElementById('new-user-name').value,
+                role: document.getElementById('new-user-role').value
+            };
+            const newPass = document.getElementById('new-user-pass').value;
+            if (newPass) payload.password = newPass;
+
+            try {
+                if (btn) { btn.innerText = 'Saving...'; btn.disabled = true; }
+                const res = await fetch(`${API_BASE}/users/${editingUserId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!res.ok) {
+                    let d = {};
+                    try { d = await res.json(); } catch (e) {}
+                    toast(d.detail || 'Update failed');
+                    return;
+                }
+                toast('User updated');
+                document.getElementById('user-modal').style.display = 'none';
+                e.target.reset();
+                editingUserId = null;
+                // restore create handler
+                e.target.onsubmit = handleCreateUser;
+                if (btn) btn.innerText = 'Create Identity';
+                await loadUsers();
+            } catch (err) {
+                console.error('User update failed', err);
+                toast('Server Communication Error');
+            } finally {
+                if (btn) { btn.innerText = originalText; btn.disabled = false; }
             }
         }
 
@@ -1718,6 +1862,7 @@
             // Update UI with User Identity (Safe Handling)
             const roleBadge = document.getElementById('sidebar-role-badge');
             const userRole = (user.role || 'user').toUpperCase();
+            currentAdminRole = user.role || 'user';
 
             if (roleBadge) {
                 roleBadge.innerText = userRole;
@@ -1758,10 +1903,6 @@
             } else {
                 badge.innerText = 'PORTAL ADMIN';
                 pageTitle.innerText = 'Admin Command Center';
-
-                // Hard Structural Removal for Security
-                document.querySelectorAll('.nav-item[data-target="users-view"]').forEach(el => el.remove());
-                document.querySelectorAll('.nav-item[data-target="audit-view"]').forEach(el => el.remove());
             }
 
             // FORCE SHOW WIDGET STORE FOR ALL ADMINS

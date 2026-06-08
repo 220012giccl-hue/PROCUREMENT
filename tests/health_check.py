@@ -1,7 +1,7 @@
 
 import requests
 
-BASE_URL = "http://localhost:8069"
+BASE_URL = "http://localhost:8081"
 
 endpoints = [
     ("/api/dashboard/stats", "GET"),

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, text
 from database.models import Thread, Email, Contact, DraftReply, User, AuditLog, Attachment
@@ -8,6 +8,7 @@ from agents.rfq_agent.outlook_graph import OutlookGraphFetcher
 from agents.rfq_agent.gmail_api_client import GmailAPIFetcher
 from models.pixtral_client import PixtralClient
 from pathlib import Path
+import json
 import time
 import asyncio
 from datetime import datetime
@@ -21,6 +22,37 @@ sync_progress = {"status": "Idle", "current": 0, "total": 0, "active": False}
 # Performance Caching
 STATS_CACHE = {"data": None, "last_updated": 0, "expiry": 60} # 60s cache
 MORNING_BRIEF_CACHE = {"data": None, "last_updated": 0, "expiry": 300} # 5min cache
+
+LAYOUT_FILE = Path("storage/dashboard_layouts.json")
+
+def _read_dashboard_layouts():
+    if not LAYOUT_FILE.exists():
+        return {}
+    try:
+        return json.loads(LAYOUT_FILE.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return {}
+
+def _write_dashboard_layouts(layouts):
+    LAYOUT_FILE.parent.mkdir(parents=True, exist_ok=True)
+    LAYOUT_FILE.write_text(json.dumps(layouts, indent=2), encoding="utf-8")
+
+@router.get("/api/dashboard/layout")
+async def get_dashboard_layout(current_user: User = Depends(get_current_user)):
+    layouts = _read_dashboard_layouts()
+    return layouts.get(str(current_user.id), [])
+
+@router.post("/api/dashboard/layout")
+async def save_dashboard_layout(request: Request, current_user: User = Depends(get_current_user)):
+    payload = await request.json()
+    widgets = payload.get("widgets", []) if isinstance(payload, dict) else []
+    if not isinstance(widgets, list):
+        raise HTTPException(status_code=400, detail="widgets must be a list")
+
+    layouts = _read_dashboard_layouts()
+    layouts[str(current_user.id)] = widgets
+    _write_dashboard_layouts(layouts)
+    return {"success": True, "widgets": widgets}
 
 @router.get("/api/dashboard/stats")
 async def get_dashboard_stats(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):

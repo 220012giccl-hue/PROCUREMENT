@@ -9,7 +9,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Load Admin Info
     try {
         const response = await fetch('/api/auth/me', {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'Authorization': `Bearer ${token}` },
+            credentials: 'include'
         });
         if (response.ok) {
             const user = await response.json();
@@ -80,7 +81,8 @@ async function loadDashboardStats(isSilent = false) {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch('/api/admin/stats', {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'Authorization': `Bearer ${token}` },
+            credentials: 'include'
         });
         if (response.ok) {
             const data = await response.json();
@@ -104,7 +106,8 @@ async function fetchUsers(isSilent = false) {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch('/api/admin/users', {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'Authorization': `Bearer ${token}` },
+            credentials: 'include'
         });
         if (response.ok) {
             const users = await response.json();
@@ -142,7 +145,8 @@ async function fetchAuditLogs(isSilent = false) {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch('/api/admin/audit', {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'Authorization': `Bearer ${token}` },
+            credentials: 'include'
         });
         if (response.ok) {
             const logs = await response.json();
@@ -178,7 +182,8 @@ async function viewUserDetail(userId) {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch(`/api/admin/users/${userId}/detail`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'Authorization': `Bearer ${token}` },
+            credentials: 'include'
         });
 
         if (response.ok) {
@@ -256,6 +261,7 @@ async function toggleUserStatus(userId, currentStatus) {
         const response = await fetch(`/api/admin/users/${userId}`, {
             method: 'PATCH',
             headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify({ is_active: !currentStatus })
         });
         if (response.ok) { fetchUsers(true); viewUserDetail(userId); }
