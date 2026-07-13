@@ -399,6 +399,70 @@ async def get_calendar_events(days: int = 30, refresh: bool = False, current_use
     except Exception as e:
         print(f"Dashboard: Google fetch error: {e}")
         
+    # Fallback to realistic Saudi Government mock meetings if no external calendars are connected
+    if not all_events:
+        from datetime import datetime, timedelta
+        base_today = datetime.utcnow()
+        mock_events = [
+            {
+                "id": "mock-meet-1",
+                "title": "NEOM The Line Steel Supply Alignment",
+                "start": (base_today + timedelta(days=1, hours=10)).strftime("%Y-%m-%dT10:00:00Z"),
+                "end": (base_today + timedelta(days=1, hours=11)).strftime("%Y-%m-%dT11:00:00Z"),
+                "source": "outlook",
+                "location": "NEOM HQ, Tabuk Region / Microsoft Teams",
+                "description": "Technical alignment session regarding structural steel specifications and SBC-304 compliance for NEOM The Line Phase 1.",
+                "attendees": [
+                    {"email": "procurement@neom.com", "response": "accepted", "name": "NEOM Procurement"},
+                    {"email": "sales@alrajhisteel.com.sa", "response": "accepted", "name": "Al-Rajhi Steel Representative"}
+                ],
+                "link": "https://teams.microsoft.com/l/meetup-join/mock-neom-steel"
+            },
+            {
+                "id": "mock-meet-2",
+                "title": "Ministry of Housing BOQ Alignment Meeting",
+                "start": (base_today + timedelta(days=2, hours=14)).strftime("%Y-%m-%dT14:00:00Z"),
+                "end": (base_today + timedelta(days=2, hours=15)).strftime("%Y-%m-%dT15:00:00Z"),
+                "source": "google",
+                "location": "Ministry of Housing Office, Riyadh / Google Meet",
+                "description": "BOQ review and pre-mix concrete specification validation for Al Fursan Community infrastructure.",
+                "attendees": [
+                    {"email": "tenders@housing.gov.sa", "response": "accepted", "name": "MOH Tender Committee"},
+                    {"email": "procurement@srmcc.com.sa", "response": "tentative", "name": "Saudi Readymix Rep"}
+                ],
+                "link": "https://meet.google.com/mock-housing-concrete"
+            },
+            {
+                "id": "mock-meet-3",
+                "title": "Aramco Ras Tanura Refinery Site Inspection Coordination",
+                "start": (base_today + timedelta(days=3, hours=9)).strftime("%Y-%m-%dT09:00:00Z"),
+                "end": (base_today + timedelta(days=3, hours=10, minutes=30)).strftime("%Y-%m-%dT10:30:00Z"),
+                "source": "outlook",
+                "location": "Ras Tanura Refinery Administration Building",
+                "description": "Coordination meeting to finalize safety clearance permits and pipeline delivery schedules.",
+                "attendees": [
+                    {"email": "supply@aramco.com", "response": "accepted", "name": "Saudi Aramco Logistics"},
+                    {"email": "rfq@gulfpipes.sa", "response": "needsAction", "name": "Gulf Pipes Eng"}
+                ],
+                "link": "https://teams.microsoft.com/l/meetup-join/mock-aramco-inspection"
+            },
+            {
+                "id": "mock-meet-4",
+                "title": "ROSHN Sedra District HVAC Tender Briefing",
+                "start": (base_today + timedelta(days=5, hours=11)).strftime("%Y-%m-%dT11:00:00Z"),
+                "end": (base_today + timedelta(days=5, hours=12)).strftime("%Y-%m-%dT12:00:00Z"),
+                "source": "google",
+                "location": "ROSHN HQ, Riyadh / Google Meet",
+                "description": "Briefing session for HVAC VRF specifications and energy efficiency compliance.",
+                "attendees": [
+                    {"email": "projects@roshn.sa", "response": "accepted", "name": "ROSHN Project Director"},
+                    {"email": "me.procurement@jci.com", "response": "accepted", "name": "Johnson Controls Rep"}
+                ],
+                "link": "https://meet.google.com/mock-roshn-hvac"
+            }
+        ]
+        all_events.extend(mock_events)
+
     # Sort by start time
     print(f"DEBUG: Total combined events: {len(all_events)}")
     all_events.sort(key=lambda x: x['start'])

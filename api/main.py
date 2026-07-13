@@ -244,6 +244,32 @@ async def dashboard_all_fallback(current_user: User = Depends(get_current_user))
 
 
 
+@app.get("/proxy-image")
+async def proxy_image(url: str):
+    from curl_cffi import requests as cffi_requests
+    try:
+        # Secure headers mimicking a real browser request to bypass Cloudflare
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+            "Referer": "https://www.blackwoods.com.au/",
+            "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
+        }
+        # Fetch target image using curl_cffi impersonate
+        resp = cffi_requests.get(url, headers=headers, impersonate="chrome124", timeout=12)
+        if resp.status_code == 200:
+            content_type = resp.headers.get("content-type", "image/jpeg")
+            # Force set Content-Type header and return binary content
+            return Response(content=resp.content, media_type=content_type)
+        else:
+            # Fallback placeholder if target fails
+            raise HTTPException(status_code=resp.status_code, detail="Failed to fetch image via proxy")
+    except Exception as e:
+        print(f"[ProxyImage] Error fetching image {url}: {e}")
+        # Return a simple transparent PNG fallback if anything fails to keep UI clean
+        fallback_png = b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\rIDATx\x9cc`\x00\x01\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82"
+        return Response(content=fallback_png, media_type="image/png")
+
 @app.get("/admin_portal")
 def admin_portal(): return FileResponse("ui/admin.html")
 

@@ -5,6 +5,7 @@ from database.models import Email, Thread, Attachment, AssistantChat, User, Cont
 from models.pixtral_client import PixtralClient
 from typing import List, Dict, Optional
 from api.utils.security import ResponseGuard
+from agents.executive.market_scraper import search_all_sources
 
 class ProcurementAssistant:
     """Market Assistant for product research, supplier discovery, and market comparisons"""
@@ -63,25 +64,96 @@ class ProcurementAssistant:
 
         current_date_str = datetime.now().strftime("%Y-%m-%d")
 
-        # 6. Market Assistant System Prompt (Phase 1 Requirements)
+        # 5b. Extract core search term from query for better scraping
+        extraction_prompt = f"Extract the core product or material name to search for from this user query. If the query is just a single generic word (like 'road', 'pipe', 'cable', 'door', 'wood', 'steel'), return 'TOO_GENERIC'. Otherwise return ONLY the product name, nothing else. No punctuation. Query: '{query}'"
+        try:
+            extracted_query_resp = self.llm.generate(
+                system_prompt="You are a search query extractor. Output only the exact noun phrase to search for, or 'TOO_GENERIC' if it's a single broad category word.",
+                user_prompt=extraction_prompt,
+                temperature=0.1
+            )
+            search_term = extracted_query_resp.get('response', query).strip()
+            search_term = search_term.strip("'\"")
+            if not search_term or len(search_term.split()) > 5:
+                search_term = query
+        except Exception as e:
+            print(f"[ProcurementAssistant] Search extraction failed: {e}")
+            search_term = query
+
+        print(f"[ProcurementAssistant] Original Query: '{query}', Extracted Search Term: '{search_term}'")
+
+        # 5c. LIVE MARKET SCRAPING — fetch real products from Blackwoods & Sydney Tools
+        live_product_context = ""
+        if search_term == "TOO_GENERIC":
+            # Don't search at all — just ask user to clarify
+            live_product_context = "\n[NOTE: User query was too generic. Do not show products or tables. Instead, politely ask the user to clarify exactly what type of product they need. Example: if 'road', ask: 'By road do you mean road construction materials, road marking paint, road safety barriers, or road building machinery?']\n"
+        else:
+            try:
+                scrape_result = search_all_sources(search_term, max_per_source=3)
+                products_found = scrape_result.get("products", [])
+                # Only use results that have meaningful data (not generic fallback entries)
+                real_products = [p for p in products_found if p.get("sku") or p.get("price", "") != "Contact for Price" or len(p.get("specs", "")) > 40]
+                use_products = real_products if real_products else products_found
+
+                if use_products:
+                    src_type = scrape_result.get("source_type", "database")
+                    live_product_context = "\n=== PRODUCT DATA (FROM CURATED DATABASE — USE THIS DATA EXACTLY) ===\n"
+                    live_product_context += f"Search Query: {scrape_result['query']}\n"
+                    live_product_context += f"Sources: {', '.join(scrape_result.get('sources', []))}\n"
+                    live_product_context += f"Total Products Found: {len(use_products)}\n\n"
+
+                    for i, p in enumerate(use_products, 1):
+                        live_product_context += f"--- PRODUCT {i} ---\n"
+                        live_product_context += f"Name: {p.get('name', 'N/A')}\n"
+                        live_product_context += f"Supplier: {p.get('supplier', 'N/A')}\n"
+                        live_product_context += f"Brand: {p.get('brand', 'N/A')}\n"
+                        live_product_context += f"Price: {p.get('price', 'Contact for Price')}\n"
+                        live_product_context += f"Specs: {p.get('specs', 'See website')}\n"
+                        live_product_context += f"Source URL: {p.get('source', '#')}\n"
+                        live_product_context += f"Image URL: {p.get('image', '')}\n"
+                        live_product_context += f"SKU: {p.get('sku', '')}\n\n"
+
+                    live_product_context += "=== END PRODUCT DATA ===\n"
+                    print(f"[ProcurementAssistant] Fetched {len(use_products)} products [{src_type}] for: {query}")
+                else:
+                    live_product_context = "\n[NOTE: No products found in database for this query. Inform the user this product is not in our current database and suggest they contact Blackwoods directly at blackwoods.com.au]\n"
+            except Exception as scrape_err:
+                print(f"[ProcurementAssistant] Market search failed (non-fatal): {scrape_err}")
+                live_product_context = "\n[NOTE: Product search encountered an error. Advise the user to search directly on blackwoods.com.au]\n"
+
+
+        # 6. Market Assistant System Prompt
         system_prompt = f"""
         You are the Market Assistant for construction procurement research.
 
         ROLE BOUNDARY:
         You research product options, supplier options, market comparisons, source links, missing market data, and RFQ-ready market summaries.
         You are NOT the Procurement Assistant for internal database history. If the user asks about previous projects, last week updates, historical database prices, internal RFQs, or records stored in the system, tell them to use Procurement Assistant.
+
+        CRITICAL INSTRUCTION — PRODUCT DATA:
+        You have been provided with PRODUCT DATA from a curated database of Blackwoods (blackwoods.com.au).
+        You MUST use this data in your response. Do NOT invent or hallucinate product names, prices, or URLs.
+        Use the exact product names, prices, brands, specs, and source URLs provided in the PRODUCT DATA section.
+        If the data has an actual price like 'AUD $XX.XX', show it prominently.
+        If the data has an actual image URL, use THAT in the product card.
+        Only use Unsplash fallback images if the Image URL field is empty or blank.
         
-        STRICT OUTPUT STRUCTURE (You MUST follow this for every response):
+        CRITICAL RULES FOR RESPONDING (STRICTLY ENFORCED):
+        1. QUERY VALIDATION: If the NOTE says the user query was too generic (like "road", "pipe", "motor"), DO NOT output the standard product format. Instead, politely ask the user to clarify what exact product they need (e.g., "By 'road', do you mean road construction materials, marking paint, or safety equipment?").
+        2. SOURCE FILTERING: Only show results from Blackwoods. Ignore any other websites.
+        3. IMAGE HANDLING: If images are missing from the data, explicitly say "Images not available in search results".
+        
+        STRICT OUTPUT STRUCTURE (You MUST follow this format if providing products. Do not use this if asking for clarification):
         
         SECTION 1: REQUIREMENT SUMMARY
         A short paragraph describing what the user is asking for in professional procurement terms.
         
         SECTION 2: MATCHED PRODUCTS OR SUPPLIERS
-        Display matched products or suppliers. (Note: For the demo, use provided context or simulate high-quality results from Blackwoods, Bunnings, or Sydney Tools if relevant).
-        Format each item clearly with Name, Supplier, and Key Specs.
+        Display matched products from the PRODUCT DATA.
+        Use the PRODUCT_START/PRODUCT_END format below for EACH product.
         
         SECTION 3: SUPPLIER COMPARISON TABLE
-        A structured markdown table comparing multiple products side by side.
+        A structured markdown table comparing the products side by side.
         Columns: Product, Supplier, Brand, Price, Best For.
         
         SECTION 4: BEST RECOMMENDATION
@@ -96,52 +168,45 @@ class ProcurementAssistant:
  
         SECTION 7: INTELLIGENCE BADGES
         Provide metadata for the UI badges in this exact format:
-        CONFIDENCE: [High/Medium/Low]
-        SOURCE: [Supplier Name or URL]
-        MISSING: [Comma separated list of missing fields]
+        CONFIDENCE: [High/Medium/Low — High if real prices found, Medium if contact-for-price, Low if no data]
+        SOURCE: [Comma-separated list of sources that returned data]
         CHECKED: {current_date_str}
         
         STRICT FORMATTING RULES:
         1. FOR TABLES (SECTION 3 ONLY): Use standard markdown table format with | and ---.
         2. FOR OTHER SECTIONS: NEVER use markdown symbols like **, ##, or ---.
-        3. HEADINGS: Use PLAIN TEXT in ALL UPPERCASE (e.g., SECTION 1: REQUIREMENT SUMMARY).
-        4. SPACING: Use double newlines between sections.
+        You MUST provide two main sections in your response:
+
+        1. REQUIREMENT SUMMARY
+        Briefly explain what the user is looking for and what you searched.
+
+        2. MATCHED PRODUCTS OR SUPPLIERS
+        CRITICAL: For every product from the live data, you MUST output this exact format line-by-line. 
+        DO NOT use markdown tables for the products. DO NOT merge lines. You MUST include the exact tags "PRODUCT_START" and "PRODUCT_END".
+
+        PRODUCT_START
+        Name: [Exact product name from live data]
+        Supplier: [Exact supplier name from live data]
+        Brand: [Brand from live data]
+        Price: [Exact price from live data]
+        Specs: [Specs from live data]
+        Source: [Exact source URL from live data]
+        Image: [Exact image URL from live data]
+        PRODUCT_END
+
+        3. SUPPLIER COMPARISON TABLE
+        (Optional) A markdown table summarizing the differences.
+
+        4. BEST RECOMMENDATION
+        Explain which product is best and why. SOURCE URLS: Use the exact Source URL from the PRODUCT DATA.
+           If a source URL is missing, generate a search query URL:
+           - Blackwoods: https://www.blackwoods.com.au/search?q=[url_encoded_product_name]
+ 
+        2. PRODUCT IMAGES: Use the exact Image URL from the PRODUCT DATA.
         
         EXECUTIVE CONTEXT:
         {user_prefs}
-        {sources_context}
- 
-        PRODUCT CARD FORMAT (FOR SECTION 2):
-        For every product, use this exact format:
-        PRODUCT_START
-        Name: [Product Name]
-        Supplier: [Supplier Name]
-        Brand: [Brand Name]
-        Price: [Price or "Contact for Price"]
-        Specs: [Key Technical Specifications]
-        Source: [Functional Search Query URL]
-        Image: [Beautiful public Unsplash image URL matching the product category]
-        PRODUCT_END
-        
-        STRICT LINK AND IMAGE INSTRUCTIONS:
-        1. SOURCE URLS: Never generate fake product IDs or detail links (e.g. ending in _p0021234 or product-detail) as they will 404 and redirect. Instead, ALWAYS generate a functional search query URL for that supplier using their real search page.
-           Examples:
-           - Bunnings: https://www.bunnings.com.au/search/products?q=[url_encoded_product_name]
-           - Sydney Tools: https://sydneytools.com.au/search?q=[url_encoded_product_name]
-           - Blackwoods: https://www.blackwoods.com.au/search?q=[url_encoded_product_name]
-           - Jaycar: https://www.jaycar.com.au/search?text=[url_encoded_product_name]
-           This guarantees the user will land on a live, working page on the supplier's website showing the real product!
-
-        2. PRODUCT IMAGES: Never output "placeholder" or generic broken links. ALWAYS output a high-quality, professional, direct image URL from Unsplash using appropriate query tags.
-           Examples of beautiful, functional Unsplash images to use based on product types:
-           - Wheelbarrows: https://images.unsplash.com/photo-1599839620526-c5d17a6a6200?auto=format&fit=crop&w=300&q=80
-           - Construction/Untreated Timber/Pine FJ: https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&w=300&q=80
-           - Power tools / Drills: https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=300&q=80
-           - Safety wear / Boots: https://images.unsplash.com/photo-1582967788606-a171c1080cb0?auto=format&fit=crop&w=300&q=80
-           - Hardware / Bolts: https://images.unsplash.com/photo-1530124560072-aae8d56b0efe?auto=format&fit=crop&w=300&q=80
-           - General Tools/Construction site: https://images.unsplash.com/photo-1581094288338-2314dddb7ecc?auto=format&fit=crop&w=300&q=80
-           If the category is different, select a professional Unsplash image that matches.
-        """""
+        """
 
         user_prompt = f"""
         USER QUESTION: {query}
@@ -149,12 +214,16 @@ class ProcurementAssistant:
         [CURRENT CHAT CONTEXT]:
         {conversation_context}
 
-        [INTELLIGENCE CONTEXT]:
+        [LIVE PRODUCT DATA FROM SUPPLIER WEBSITES]:
+        {live_product_context}
+
+        [ADDITIONAL INTELLIGENCE CONTEXT]:
         {context_data}
         
         [TASK]:
         Provide a professional Market Assistant response following the 7-section structure.
-        If the user asks about internal emails, documents, previous projects, historical database prices, or saved RFQs, redirect them to Procurement Assistant unless that internal context was explicitly attached to this chat.
+        You MUST use the LIVE PRODUCT DATA above — do not invent products. Show real names, real prices, real URLs, and real images from the scraped data.
+        If the user asks about internal emails, documents, previous projects, historical database prices, or saved RFQs, redirect them to Procurement Assistant.
         """
 
         # 7. Call LLM

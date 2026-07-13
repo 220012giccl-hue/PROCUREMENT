@@ -147,21 +147,41 @@ function getRobustSourceLink(source, name, supplier) {
 }
 
 function getRobustProductImage(image, name) {
-    const cleanImg = (image || '').trim();
+    let cleanImg = (image || '').trim();
+
+    // Local storage path - serve directly with backend base URL if running on a different port
+    if (cleanImg.startsWith('/storage/')) {
+        const base = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : (window.location.origin.includes('file://') ? 'http://127.0.0.1:8069' : window.location.origin);
+        return base + cleanImg;
+    }
+
     if (!cleanImg || cleanImg.toLowerCase() === 'placeholder' || cleanImg === '') {
         const lowerName = name.toLowerCase();
-        if (lowerName.includes('wheelbarrow')) {
-            return 'https://images.unsplash.com/photo-1599839620526-c5d17a6a6200?auto=format&fit=crop&w=300&q=80';
-        } else if (lowerName.includes('timber') || lowerName.includes('pine') || lowerName.includes('batten') || lowerName.includes('wood')) {
-            return 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&w=300&q=80';
-        } else if (lowerName.includes('drill') || lowerName.includes('driver') || lowerName.includes('tool') || lowerName.includes('saw') || lowerName.includes('makita') || lowerName.includes('dewalt')) {
-            return 'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=300&q=80';
-        } else if (lowerName.includes('boot') || lowerName.includes('safety') || lowerName.includes('glove') || lowerName.includes('vest') || lowerName.includes('helmet')) {
-            return 'https://images.unsplash.com/photo-1582967788606-a171c1080cb0?auto=format&fit=crop&w=300&q=80';
-        } else if (lowerName.includes('bolt') || lowerName.includes('screw') || lowerName.includes('nail') || lowerName.includes('nut') || lowerName.includes('fastener')) {
-            return 'https://images.unsplash.com/photo-1530124560072-aae8d56b0efe?auto=format&fit=crop&w=300&q=80';
+        if (lowerName.includes('timber') || lowerName.includes('pine') || lowerName.includes('wood')) {
+            cleanImg = '/storage/product_images/timber_pine.jpg';
+        } else if (lowerName.includes('drill') || lowerName.includes('dewalt') || lowerName.includes('makita')) {
+            cleanImg = '/storage/product_images/dewalt_drill.jpg';
+        } else if (lowerName.includes('grinder') || lowerName.includes('bosch')) {
+            cleanImg = '/storage/product_images/bosch_grinder.jpg';
+        } else if (lowerName.includes('boot') || lowerName.includes('safety')) {
+            cleanImg = '/storage/product_images/safety_boots.jpg';
+        } else if (lowerName.includes('helmet') || lowerName.includes('hard hat')) {
+            cleanImg = '/storage/product_images/hard_hat.jpg';
+        } else if (lowerName.includes('vest') || lowerName.includes('hi-vis')) {
+            cleanImg = '/storage/product_images/hivis_vest.jpg';
+        } else if (lowerName.includes('glove')) {
+            cleanImg = '/storage/product_images/gloves.jpg';
+        } else if (lowerName.includes('steel') || lowerName.includes('metal')) {
+            cleanImg = '/storage/product_images/steel_plate.jpg';
+        } else {
+            cleanImg = '/storage/product_images/concrete_mix.jpg';
         }
-        return 'https://images.unsplash.com/photo-1581094288338-2314dddb7ecc?auto=format&fit=crop&w=300&q=80';
+        return cleanImg;
+    }
+
+    // External http URL - proxy through backend to bypass CORS/blocks
+    if (cleanImg.startsWith('http')) {
+        return `/proxy-image?url=${encodeURIComponent(cleanImg)}`;
     }
     return cleanImg;
 }
