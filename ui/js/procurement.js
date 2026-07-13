@@ -150,7 +150,7 @@ function getRobustProductImage(image, name) {
     let cleanImg = (image || '').trim();
 
     // Local storage path - serve directly with backend base URL if running on a different port
-    if (cleanImg.startsWith('/storage/')) {
+    if (cleanImg.startsWith('/api/storage/')) {
         const base = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : (window.location.origin.includes('file://') ? 'http://127.0.0.1:8069' : window.location.origin);
         return base + cleanImg;
     }
@@ -158,23 +158,23 @@ function getRobustProductImage(image, name) {
     if (!cleanImg || cleanImg.toLowerCase() === 'placeholder' || cleanImg === '') {
         const lowerName = name.toLowerCase();
         if (lowerName.includes('timber') || lowerName.includes('pine') || lowerName.includes('wood')) {
-            cleanImg = '/storage/product_images/timber_pine.jpg';
+            cleanImg = '/api/storage/product_images/timber_pine.jpg';
         } else if (lowerName.includes('drill') || lowerName.includes('dewalt') || lowerName.includes('makita')) {
-            cleanImg = '/storage/product_images/dewalt_drill.jpg';
+            cleanImg = '/api/storage/product_images/dewalt_drill.jpg';
         } else if (lowerName.includes('grinder') || lowerName.includes('bosch')) {
-            cleanImg = '/storage/product_images/bosch_grinder.jpg';
+            cleanImg = '/api/storage/product_images/bosch_grinder.jpg';
         } else if (lowerName.includes('boot') || lowerName.includes('safety')) {
-            cleanImg = '/storage/product_images/safety_boots.jpg';
+            cleanImg = '/api/storage/product_images/safety_boots.jpg';
         } else if (lowerName.includes('helmet') || lowerName.includes('hard hat')) {
-            cleanImg = '/storage/product_images/hard_hat.jpg';
+            cleanImg = '/api/storage/product_images/hard_hat.jpg';
         } else if (lowerName.includes('vest') || lowerName.includes('hi-vis')) {
-            cleanImg = '/storage/product_images/hivis_vest.jpg';
+            cleanImg = '/api/storage/product_images/hivis_vest.jpg';
         } else if (lowerName.includes('glove')) {
-            cleanImg = '/storage/product_images/gloves.jpg';
+            cleanImg = '/api/storage/product_images/gloves.jpg';
         } else if (lowerName.includes('steel') || lowerName.includes('metal')) {
-            cleanImg = '/storage/product_images/steel_plate.jpg';
+            cleanImg = '/api/storage/product_images/steel_plate.jpg';
         } else {
-            cleanImg = '/storage/product_images/concrete_mix.jpg';
+            cleanImg = '/api/storage/product_images/concrete_mix.jpg';
         }
         return cleanImg;
     }

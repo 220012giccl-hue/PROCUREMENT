@@ -517,6 +517,8 @@ def search_local_database(query: str, supplier_filter: str = None, max_results: 
 
 BLACKWOODS_SEARCH_URLS = {
     "Blackwoods": "https://www.blackwoods.com.au/search?q={q}",
+    "Bunnings": "https://www.bunnings.com.au/search/products?q={q}",
+    "Sydney Tools": "https://sydneytools.com.au/search?q={q}"
 }
 
 def search_all_sources(query: str, max_per_source: int = 3) -> Dict:
