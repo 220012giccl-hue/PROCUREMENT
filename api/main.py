@@ -218,7 +218,7 @@ app.include_router(unified_comparison.router) # NEW v2.2: Unified AI + Vendor Co
 # --- Static Files ---
 app.mount("/css", StaticFiles(directory="ui/css"), name="css")
 app.mount("/js", StaticFiles(directory="ui/js"), name="js")
-app.mount("/storage", StaticFiles(directory="storage"), name="storage")
+app.mount("/api/storage", StaticFiles(directory="storage"), name="api_storage")
 
 # --- UI Serving ---
 @app.get("/")
