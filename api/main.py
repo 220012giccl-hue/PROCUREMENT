@@ -293,5 +293,5 @@ if __name__ == "__main__":
         port=env_port, 
         reload=should_reload,
         reload_dirs=["api", "agents", "models", "auth", "config", "database", "ui"] if should_reload else None,
-        reload_excludes=["venv", ".git", "storage", "temp", "*RFQ agent*", "**/venv/**"] if should_reload else None
+        reload_excludes=["venv", ".git", "storage", "temp"] if should_reload else None
     )

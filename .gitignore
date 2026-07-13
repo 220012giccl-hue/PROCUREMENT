@@ -21,6 +21,7 @@ credentials.json
 
 # Storage & Temporary
 storage/
+!storage/product_images/
 temp/
 tmp/
 *.log
