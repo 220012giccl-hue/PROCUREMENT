@@ -244,7 +244,7 @@ async def dashboard_all_fallback(current_user: User = Depends(get_current_user))
 
 
 
-@app.get("/proxy-image")
+@app.get("/api/proxy-image")
 async def proxy_image(url: str):
     from curl_cffi import requests as cffi_requests
     try:

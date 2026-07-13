@@ -537,8 +537,9 @@ def search_all_sources(query: str, max_per_source: int = 3) -> Dict:
         import json
         
         script_path = os.path.join(os.path.dirname(__file__), "blackwoods_playwright_scraper.py")
+        import sys
         result = subprocess.run(
-            ["python", "-X", "utf8", script_path, "--api", query],
+            [sys.executable, "-X", "utf8", script_path, "--api", query],
             capture_output=True,
             text=True,
             timeout=30
