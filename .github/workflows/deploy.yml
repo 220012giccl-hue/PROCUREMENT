@@ -19,6 +19,6 @@ jobs:
             git pull origin main
             source venv/bin/activate
             pip install -r requirements.txt --quiet
-            systemctl restart PR_update
+            pm2 restart PR-Update-App
             sleep 3
-            systemctl is-active PR_update && echo "✅ Deployed OK" || echo "❌ Failed"
+            pm2 status PR-Update-App | grep online && echo "✅ Deployed OK" || echo "❌ Failed"
