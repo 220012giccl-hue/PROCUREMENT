@@ -354,14 +354,14 @@
 
     <!-- JavaScript -->
     <script src="js/sidebar.js"></script>
-    <script src="js/auth.js?v=2.4"></script>
+    <script src="js/auth.js?v=2.6"></script>
     <script>
         document.addEventListener("DOMContentLoaded", async function () {
             var u = await Auth.checkSession();
             if (!u) { window.location.href = "/"; }
         });
     </script>
-    <script src="js/api.js?v=2.4"></script>
+    <script src="js/api.js?v=2.6"></script>
     <script>
         function showToast(message, type = 'info') {
             let container = document.querySelector('.toast-container');
