@@ -181,7 +181,7 @@ function getRobustProductImage(image, name) {
 
     // External http URL - proxy through backend to bypass CORS/blocks
     if (cleanImg.startsWith('http')) {
-        return `/proxy-image?url=${encodeURIComponent(cleanImg)}`;
+        return `/api/proxy-image?url=${encodeURIComponent(cleanImg)}`;
     }
     return cleanImg;
 }
