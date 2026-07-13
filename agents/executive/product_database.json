@@ -21,7 +21,13 @@
       "price": "Contact for Price",
       "specs": "5mm thick mild steel plate 1200x2400mm. Grade 250. Ideal for fabrication, repairs, general engineering.",
       "source": "https://www.blackwoods.com.au/search?q=steel+plate+5mm+mild",
+
+<<<<<<< HEAD
+      "image": "https://images.unsplash.com/photo-1565776684044-9cf5fccdb1e4?w=400&q=80&auto=format&fit=crop",
+=======
       "image": "/api/storage/product_images/steel_plate.jpg",
+
+>>>>>>> a604d5851c31e0da6e3e83e36cbf35f7bac91e15
       "in_stock": true
     },
     {
@@ -41,7 +47,13 @@
       "price": "Contact for Price",
       "specs": "50x25x2mm RHS 6m length. Grade C350L0. Suitable for structural framing, furniture, trailers.",
       "source": "https://www.blackwoods.com.au/search?q=rhs+rectangular+hollow+section",
+
+<<<<<<< HEAD
+      "image": "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=400&q=80&auto=format&fit=crop",
+=======
       "image": "/api/storage/product_images/steel_rhs.jpg",
+
+>>>>>>> a604d5851c31e0da6e3e83e36cbf35f7bac91e15
       "in_stock": true
     },
     {
@@ -60,7 +72,13 @@
       "price": "Contact for Price",
       "specs": "50x50x5mm Equal Angle 6m. Grade 300PLUS. Used for framing, shelving brackets, stiffeners.",
       "source": "https://www.blackwoods.com.au/search?q=steel+angle+50x50",
+
+<<<<<<< HEAD
+      "image": "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=400&q=80&auto=format&fit=crop",
+=======
       "image": "/api/storage/product_images/steel_angle.jpg",
+
+>>>>>>> a604d5851c31e0da6e3e83e36cbf35f7bac91e15
       "in_stock": true
     },
     {
@@ -78,7 +96,13 @@
       "price": "Contact for Price",
       "specs": "25x3mm hot dip galvanized steel flat bar. 6 meters length. Weather and rust resistant finish.",
       "source": "https://www.blackwoods.com.au/search?q=galvanized+flat+bar+25x3",
+
+<<<<<<< HEAD
+      "image": "https://images.unsplash.com/photo-1565776684044-9cf5fccdb1e4?w=400&q=80&auto=format&fit=crop",
+=======
       "image": "/api/storage/product_images/steel_flatbar.jpg",
+
+>>>>>>> a604d5851c31e0da6e3e83e36cbf35f7bac91e15
       "in_stock": true
     },
     {
@@ -96,7 +120,13 @@
       "price": "AUD $189.00",
       "specs": "18V XR Li-Ion compact drill driver. 13mm single sleeve chuck. 2 speed settings. High quality motor.",
       "source": "https://www.blackwoods.com.au/search?q=dewalt+drill+driver+18v",
+
+<<<<<<< HEAD
+      "image": "https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&q=80&auto=format&fit=crop",
+=======
       "image": "/api/storage/product_images/dewalt_drill.jpg",
+
+>>>>>>> a604d5851c31e0da6e3e83e36cbf35f7bac91e15
       "in_stock": true
     },
     {
@@ -114,7 +144,13 @@
       "price": "AUD $219.00",
       "specs": "All metal gear construction. Ergonomic rubberized soft grip. 18V G-Series battery included.",
       "source": "https://www.blackwoods.com.au/search?q=makita+hammer+drill+18v",
+
+<<<<<<< HEAD
+      "image": "https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=400&q=80&auto=format&fit=crop",
+=======
       "image": "/api/storage/product_images/makita_drill.jpg",
+
+>>>>>>> a604d5851c31e0da6e3e83e36cbf35f7bac91e15
       "in_stock": true
     },
     {
@@ -132,7 +168,13 @@
       "price": "AUD $129.00",
       "specs": "750W motor power. 115mm disc diameter. Restart protection and anti-rotation protective guard.",
       "source": "https://www.blackwoods.com.au/search?q=bosch+angle+grinder+750",
+
+<<<<<<< HEAD
+      "image": "https://images.unsplash.com/photo-1590959651373-a3db0f38a961?w=400&q=80&auto=format&fit=crop",
+=======
       "image": "/api/storage/product_images/bosch_grinder.jpg",
+
+>>>>>>> a604d5851c31e0da6e3e83e36cbf35f7bac91e15
       "in_stock": true
     },
     {
@@ -150,7 +192,13 @@
       "price": "AUD $249.00",
       "specs": "Tool-free depth adjustment. Selectable trigger system. Rear exhaust to clear work surface.",
       "source": "https://www.blackwoods.com.au/search?q=bostitch+brad+nailer+18+gauge",
+
+<<<<<<< HEAD
+      "image": "https://images.unsplash.com/photo-1530124560072-aae8d56b0efe?w=400&q=80&auto=format&fit=crop",
+=======
       "image": "/api/storage/product_images/nail_gun.jpg",
+
+>>>>>>> a604d5851c31e0da6e3e83e36cbf35f7bac91e15
       "in_stock": true
     },
     {
@@ -169,7 +217,13 @@
       "price": "AUD $89.50",
       "specs": "100mm outer diameter x 6 meters length. Class 12 pressure rating. High chemical and corrosion resistance.",
       "source": "https://www.blackwoods.com.au/search?q=pvc+pressure+pipe+100mm",
+
+<<<<<<< HEAD
+      "image": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80&auto=format&fit=crop",
+=======
       "image": "/api/storage/product_images/pvc_pipe.jpg",
+
+>>>>>>> a604d5851c31e0da6e3e83e36cbf35f7bac91e15
       "in_stock": true
     },
     {
@@ -188,7 +242,13 @@
       "price": "AUD $22.50",
       "specs": "12mm diameter N12 deformed reinforcing bar. Length 6 meters. 500MPa yield strength. AS/NZS 4671.",
       "source": "https://www.blackwoods.com.au/search?q=rebar+reinforcing+bar+n12",
+
+<<<<<<< HEAD
+      "image": "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=400&q=80&auto=format&fit=crop",
+=======
       "image": "/api/storage/product_images/rebar.jpg",
+
+>>>>>>> a604d5851c31e0da6e3e83e36cbf35f7bac91e15
       "in_stock": true
     },
     {
@@ -207,7 +267,13 @@
       "price": "AUD $11.50",
       "specs": "20kg bag. Rapid setting concrete mix. Suitable for post holes, foundations, paving. Sets in 20 minutes.",
       "source": "https://www.blackwoods.com.au/search?q=concrete+mix+rapid+set+20kg",
+
+<<<<<<< HEAD
+      "image": "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400&q=80&auto=format&fit=crop",
+=======
       "image": "/api/storage/product_images/concrete_mix.jpg",
+
+>>>>>>> a604d5851c31e0da6e3e83e36cbf35f7bac91e15
       "in_stock": true
     },
     {
@@ -226,7 +292,13 @@
       "price": "AUD $18.00",
       "specs": "Premium grade neutral cure silicone sealant 300ml. UV resistant. Waterproof seal for windows and bathrooms.",
       "source": "https://www.blackwoods.com.au/search?q=bostik+silicone+sealant+neutral+cure",
+
+<<<<<<< HEAD
+      "image": "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400&q=80&auto=format&fit=crop",
+=======
       "image": "/api/storage/product_images/silicone.jpg",
+
+>>>>>>> a604d5851c31e0da6e3e83e36cbf35f7bac91e15
       "in_stock": true
     },
     {
@@ -246,7 +318,13 @@
       "price": "AUD $119.00",
       "specs": "Full grain leather upper. Steel toe cap. Slip and oil resistant outsole. AS/NZS 2210.3 compliant.",
       "source": "https://www.blackwoods.com.au/search?q=bata+safety+boots+steel+toe",
+
+<<<<<<< HEAD
+      "image": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&q=80&auto=format&fit=crop",
+=======
       "image": "/api/storage/product_images/safety_boots.jpg",
+
+>>>>>>> a604d5851c31e0da6e3e83e36cbf35f7bac91e15
       "in_stock": true
     },
     {
@@ -265,7 +343,13 @@
       "price": "AUD $149.00",
       "specs": "6mm diameter 7x19 galvanized wire rope. 100m reel. Breaking load 22.1kN. For rigging and lifting.",
       "source": "https://www.blackwoods.com.au/search?q=galvanised+wire+rope+6mm+100m",
+
+<<<<<<< HEAD
+      "image": "https://images.unsplash.com/photo-1615811648503-479c7c8ddb82?w=400&q=80&auto=format&fit=crop",
+=======
       "image": "/api/storage/product_images/wire_rope.jpg",
+
+>>>>>>> a604d5851c31e0da6e3e83e36cbf35f7bac91e15
       "in_stock": true
     },
     {
@@ -285,7 +369,13 @@
       "price": "AUD $29.90",
       "specs": "HDPE shell. Vented design. White. Ratchet suspension. Meets AS/NZS 1801. Suitable for construction sites.",
       "source": "https://www.blackwoods.com.au/search?q=3m+safety+helmet+hard+hat+white",
+
+<<<<<<< HEAD
+      "image": "https://images.unsplash.com/photo-1636390785986-ffbdd055b4ef?w=400&q=80&auto=format&fit=crop",
+=======
       "image": "/api/storage/product_images/hard_hat.jpg",
+
+>>>>>>> a604d5851c31e0da6e3e83e36cbf35f7bac91e15
       "in_stock": true
     },
     {
@@ -305,7 +395,13 @@
       "price": "AUD $18.50",
       "specs": "Orange Day/Night hi-vis vest. Reflective tape front and back. AS/NZS 4602.1 Class D/N compliant.",
       "source": "https://www.blackwoods.com.au/search?q=hi-vis+safety+vest+orange+day+night",
+
+<<<<<<< HEAD
+      "image": "https://images.unsplash.com/photo-1573495627361-d9b87960b12d?w=400&q=80&auto=format&fit=crop",
+=======
       "image": "/api/storage/product_images/hivis_vest.jpg",
+
+>>>>>>> a604d5851c31e0da6e3e83e36cbf35f7bac91e15
       "in_stock": true
     },
     {
@@ -323,7 +419,13 @@
       "price": "AUD $315.00",
       "specs": "6.0m aluminium extension ladder. 150kg load rating. Non-slip rungs. AS/NZS 1892.1 rated.",
       "source": "https://www.blackwoods.com.au/search?q=bailey+aluminium+extension+ladder+6m",
+
+<<<<<<< HEAD
+      "image": "https://images.unsplash.com/photo-1586864387789-628af9feed72?w=400&q=80&auto=format&fit=crop",
+=======
       "image": "/api/storage/product_images/ladder.jpg",
+
+>>>>>>> a604d5851c31e0da6e3e83e36cbf35f7bac91e15
       "in_stock": true
     },
     {
@@ -343,7 +445,13 @@
       "price": "AUD $38.00",
       "specs": "P2 rated. Valved design for cool wear. Box of 20. Protects against dust, mists, fumes. AS/NZS 1716.",
       "source": "https://www.blackwoods.com.au/search?q=3m+p2+dust+mask+respirator+box",
+
+<<<<<<< HEAD
+      "image": "https://images.unsplash.com/photo-1584036561566-baf8f5f1b144?w=400&q=80&auto=format&fit=crop",
+=======
       "image": "/api/storage/product_images/dust_mask.jpg",
+
+>>>>>>> a604d5851c31e0da6e3e83e36cbf35f7bac91e15
       "in_stock": true
     },
     {
@@ -363,7 +471,13 @@
       "price": "AUD $32.00",
       "specs": "90x45mm H3 treated pine 6m. For external use, above-ground applications. MGP10 structural grade.",
       "source": "https://www.blackwoods.com.au/search?q=treated+pine+90x45+h3+6m",
+
+<<<<<<< HEAD
+      "image": "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=400&q=80&auto=format&fit=crop",
+=======
       "image": "/api/storage/product_images/timber_pine.jpg",
+
+>>>>>>> a604d5851c31e0da6e3e83e36cbf35f7bac91e15
       "in_stock": true
     },
     {
@@ -383,7 +497,13 @@
       "price": "AUD $185.00",
       "specs": "High durability thermoplastic road marking paint. Quick dry formula. 25kg bag. Excellent retroreflectivity.",
       "source": "https://www.blackwoods.com.au/search?q=road+marking+paint+thermoplastic+white",
+
+<<<<<<< HEAD
+      "image": "https://images.unsplash.com/photo-1605559424843-9073c6223775?w=400&q=80&auto=format&fit=crop",
+=======
       "image": "/api/storage/product_images/road_paint.jpg",
+
+>>>>>>> a604d5851c31e0da6e3e83e36cbf35f7bac91e15
       "in_stock": true
     },
     {
@@ -403,7 +523,13 @@
       "price": "AUD $12.90",
       "specs": "12mm x 210mm SDS Plus masonry drill bit. For drilling concrete, brick, stone. Carbide tip insert.",
       "source": "https://www.blackwoods.com.au/search?q=bosch+sds+plus+masonry+drill+bit+12mm",
+
+<<<<<<< HEAD
+      "image": "https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&q=80&auto=format&fit=crop",
+=======
       "image": "/api/storage/product_images/drill_bit.jpg",
+
+>>>>>>> a604d5851c31e0da6e3e83e36cbf35f7bac91e15
       "in_stock": true
     },
     {
@@ -423,7 +549,13 @@
       "price": "AUD $78.00",
       "specs": "17mm CD grade structural plywood. 1200x2400mm sheet. F8 stress grade. Suitable for flooring, formwork.",
       "source": "https://www.blackwoods.com.au/search?q=structural+plywood+cd+17mm",
+
+<<<<<<< HEAD
+      "image": "https://images.unsplash.com/photo-1583835746434-cf1534674b41?w=400&q=80&auto=format&fit=crop",
+=======
       "image": "/api/storage/product_images/plywood.jpg",
+
+>>>>>>> a604d5851c31e0da6e3e83e36cbf35f7bac91e15
       "in_stock": true
     },
     {
@@ -443,7 +575,13 @@
       "price": "AUD $22.00",
       "specs": "Cut Level 5. Size Large. HPPE knit with polyurethane coating. Touchscreen compatible fingertips.",
       "source": "https://www.blackwoods.com.au/search?q=ansell+cut+resistant+gloves+level+5",
+
+<<<<<<< HEAD
+      "image": "https://images.unsplash.com/photo-1582735689369-4fe89db7114c?w=400&q=80&auto=format&fit=crop",
+=======
       "image": "/api/storage/product_images/gloves.jpg",
+
+>>>>>>> a604d5851c31e0da6e3e83e36cbf35f7bac91e15
       "in_stock": true
     },
     {
@@ -462,7 +600,13 @@
       "price": "AUD $69.00",
       "specs": "1200mm box section aluminium spirit level. 3 precision vials (plumb, level, 45 degree). +/- 0.5mm/m accuracy.",
       "source": "https://www.blackwoods.com.au/search?q=stabila+spirit+level+1200mm+box",
+
+<<<<<<< HEAD
+      "image": "https://images.unsplash.com/photo-1581094288338-2314dddb7ecc?w=400&q=80&auto=format&fit=crop",
+=======
       "image": "/api/storage/product_images/spirit_level.jpg",
+
+>>>>>>> a604d5851c31e0da6e3e83e36cbf35f7bac91e15
       "in_stock": true
     },
     {
@@ -480,7 +624,13 @@
       "price": "AUD $310.00",
       "specs": "1.9m height x 0.73m width aluminium scaffold frame. 200kg load capacity per frame. Hot-dip galvanized.",
       "source": "https://www.blackwoods.com.au/search?q=aluminium+scaffold+frame+1.9m",
+
+<<<<<<< HEAD
+      "image": "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400&q=80&auto=format&fit=crop",
+=======
       "image": "/api/storage/product_images/scaffold.jpg",
+
+>>>>>>> a604d5851c31e0da6e3e83e36cbf35f7bac91e15
       "in_stock": true
     },
     {
@@ -498,7 +648,13 @@
       "price": "AUD $189.00",
       "specs": "High back ergonomic office chair. Breathable black mesh backrest. Lumbar support. Pneumatic height adjustment.",
       "source": "https://www.blackwoods.com.au/search?q=office+chair+ergonomic+high+back",
+
+<<<<<<< HEAD
+      "image": "https://images.unsplash.com/photo-1580481072645-022f9a6dbf27?w=400&q=80&auto=format&fit=crop",
+=======
       "image": "/api/storage/product_images/office_chair.jpg",
+
+>>>>>>> a604d5851c31e0da6e3e83e36cbf35f7bac91e15
       "in_stock": true
     }
   ]
