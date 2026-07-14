@@ -59,6 +59,7 @@ async function loadDashboardData() {
         loadTasks();
         loadFollowups();
         loadRecentComparisons();
+        loadProjectPulse();
 
         // 2. Calendar data is shared, so we fetch it once then update dependent widgets
         window.RFQAgentAPI.getCalendarEvents(7).then(response => {

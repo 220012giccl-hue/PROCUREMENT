@@ -820,14 +820,61 @@ tr:hover {
 /* MOBILE RESPONSIVENESS (Global) */
 /* ============================================ */
 
+/* Desktop only classes */
+.mobile-menu-btn {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    cursor: pointer;
+    padding: var(--space-2);
+}
+
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1040;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar-overlay.active {
+    display: block;
+    opacity: 1;
+}
+
 @media (max-width: 1024px) {
+    .mobile-menu-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: var(--space-4);
+    }
+
+    .nav-brand {
+        margin-right: auto;
+    }
+
     .sidebar {
+        position: fixed;
+        bottom: 0;
         transform: translateX(-100%);
         transition: transform 0.3s ease;
+        z-index: 1050; /* Above overlay */
+        background: white;
+        height: 100vh;
+        top: 0;
+        padding-top: 64px; /* Space for nav if needed, but nav is fixed */
     }
 
     .sidebar.active {
         transform: translateX(0);
+        box-shadow: 4px 0 24px rgba(0,0,0,0.15);
     }
 
     .main-content {
@@ -839,15 +886,15 @@ tr:hover {
         display: none !important;
         /* Hide secondary links on mobile */
     }
-}
-
-@media (max-width: 768px) {
+    
     .nav-container {
         padding: 0 var(--space-4);
     }
+}
 
+@media (max-width: 768px) {
     .main-content {
-        padding: var(--space-4) !important;
+        padding: var(--space-3) !important;
     }
 
     .page-title {
@@ -863,21 +910,36 @@ tr:hover {
     /* Modal responsive */
     .modal-content {
         width: 95% !important;
-        margin: 10px !important;
+        margin: 10px auto !important;
         max-height: 90vh !important;
+        padding: var(--space-4) !important;
+        overflow-y: auto;
+    }
+    
+    .modal-header, .modal-footer {
+        padding-left: 0;
+        padding-right: 0;
     }
 
-    /* Table scroll hint */
+    /* Table responsive */
     .table-container {
-        border-right: 4px solid var(--primary-orange);
-        /* Hint there is more content */
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-right: none;
     }
 
     /* Responsive Grid Fixes */
     .grid-cols-2,
     .grid-cols-3,
-    .grid-cols-4 {
+    .grid-cols-4,
+    .grid-cols-5 {
         grid-template-columns: 1fr !important;
+        gap: var(--space-4);
+    }
+    
+    /* Utility fixes */
+    .flex.items-center.gap-4 {
+        gap: var(--space-2) !important;
     }
 }
 

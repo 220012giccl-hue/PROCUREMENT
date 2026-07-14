@@ -7,12 +7,12 @@ from datetime import datetime
 
 router = APIRouter(prefix="/api/procurement/comparison", tags=["comparison"])
 
-@router.get("/list", response_model=List[Dict])
+@router.get("/list")
 async def get_comparisons(db: Session = Depends(get_db)):
     """Retrieves all saved comparisons"""
     try:
         comparisons = db.query(ProductComparison).order_by(ProductComparison.created_at.desc()).all()
-        return [
+        data = [
             {
                 "id": c.id,
                 "title": c.title,
@@ -21,6 +21,7 @@ async def get_comparisons(db: Session = Depends(get_db)):
                 "confidence_level": c.confidence_level
             } for c in comparisons
         ]
+        return {"success": True, "data": data}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

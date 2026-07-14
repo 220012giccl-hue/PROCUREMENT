@@ -99,7 +99,15 @@ async def get_thread_attachments(thread_id: str, current_user: User = Depends(ge
                     email_info[e.thread_id] = {"subject": e.subject, "sender": e.sender}
 
         results = []
+        # Group by category and pick highest version
+        grouped_docs = {}
         for d in docs:
+            # use category as grouping key if available, else original_filename stripped of vX
+            key = f"{d.thread_id}_{d.category or d.original_filename or d.filename}"
+            if key not in grouped_docs or (d.version or 1) > (grouped_docs[key].version or 1):
+                grouped_docs[key] = d
+
+        for d in grouped_docs.values():
             t = db.query(Thread).filter(Thread.thread_id == d.thread_id).first()
             results.append({
                 "id": d.id,
@@ -112,6 +120,7 @@ async def get_thread_attachments(thread_id: str, current_user: User = Depends(ge
                 "summary": d.summary,
                 "size": f"{d.file_size_bytes / 1024:.1f} KB" if d.file_size_bytes else "0 KB",
                 "date": d.uploaded_at.isoformat() if d.uploaded_at else datetime.utcnow().isoformat(),
+                "version": d.version or 1,
             })
         return {"success": True, "data": results}
     except Exception as e:

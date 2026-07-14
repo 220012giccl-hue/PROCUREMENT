@@ -166,20 +166,22 @@
             </div>
 
             <div class="list-card">
-                <table class="procurement-table">
-                    <thead>
-                        <tr>
-                            <th>Item Details</th>
-                            <th>Supplier / Source</th>
-                            <th>Status</th>
-                            <th>Saved Date</th>
-                            <th style="text-align: right;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="procurementListBody">
-                        <!-- Populated via JS -->
-                    </tbody>
-                </table>
+                <div class="table-container">
+                    <table class="procurement-table">
+                        <thead>
+                            <tr>
+                                <th>Item Details</th>
+                                <th>Supplier / Source</th>
+                                <th>Status</th>
+                                <th>Saved Date</th>
+                                <th style="text-align: right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="procurementListBody">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
                 <div id="emptyState" class="empty-state" style="display:none;">
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:16px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                     <p>No items in your procurement list yet.</p>

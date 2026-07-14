@@ -180,32 +180,41 @@
             border-radius: 50%;
         }
 
-        /* Mobile responsiveness adjustments */
-        @media (max-width: 768px) {
-            .app-container {
-                padding: 10px;
+        @media (max-width: 1024px) {
+            .calendar-layout {
                 flex-direction: column;
             }
+            #upcoming-sidebar {
+                width: 100%;
+                border-bottom: 1px solid var(--border-light);
+                padding-bottom: 10px;
+            }
+        }
 
-            .sidebar {
-                width: 100% !important;
-                position: relative;
-                max-height: 300px;
-                overflow-y: auto;
+        /* Mobile responsiveness adjustments */
+        @media (max-width: 768px) {
+            .layout {
+                flex-direction: column;
             }
 
             .main-content {
                 width: 100%;
+                margin-left: 0 !important;
+                padding: var(--space-3);
             }
 
             .calendar-container {
-                padding: 10px;
+                padding: 0;
             }
 
             .calendar-header {
                 flex-direction: column;
                 gap: 10px;
                 align-items: flex-start;
+            }
+            
+            #upcoming-sidebar {
+                width: 100%;
             }
         }
 

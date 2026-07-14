@@ -14,7 +14,7 @@
     <!-- Stylesheets -->
     <link rel="stylesheet" href="css/variables.css">
     <link rel="stylesheet" href="css/components.css">
-    <link rel="stylesheet" href="css/assistant.css">
+    <link rel="stylesheet" href="css/assistant.css?v=1.1">
 </head>
 
 <body>
@@ -69,14 +69,19 @@
             <div class="chat-layout">
                 <!-- Conversation Sidebar -->
                 <div class="conv-sidebar">
-                    <div class="conv-header">
-                        <button class="btn-new-chat" onclick="startNewChat()">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
+                    <div class="conv-header" style="display: flex; gap: 8px;">
+                        <button class="btn-new-chat" onclick="startNewChat()" style="flex: 1;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <line x1="12" y1="5" x2="12" y2="19"></line>
                                 <line x1="5" y1="12" x2="19" y2="12"></line>
                             </svg>
                             New Chat
+                        </button>
+                        <button onclick="document.querySelector('.conv-sidebar').classList.remove('active')" class="btn btn-secondary mobile-only" style="padding: 8px; border-radius: 8px;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
                         </button>
                     </div>
                     <div class="conv-list" id="convList">
@@ -87,6 +92,18 @@
 
                 <!-- Chat Main Area -->
                 <div class="chat-main">
+                    
+                    <!-- Mobile Header (History Toggle) -->
+                    <div class="chat-header-mobile mobile-only" style="padding: 12px; border-bottom: 1px solid var(--border-light); background: white; align-items: center; justify-content: space-between;">
+                        <span style="font-weight: 600; font-size: 1.1rem; color: var(--text-primary);">Chat Assistant</span>
+                        <button onclick="document.querySelector('.conv-sidebar').classList.toggle('active')" class="btn btn-secondary btn-sm" style="border: 1px solid var(--border-light); background: var(--bg-light); color: var(--text-primary); border-radius: 8px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                            </svg>
+                            History
+                        </button>
+                    </div>
+
                     <!-- Mode Toggle Header -->
                     <div style="padding: 12px; border-bottom: 1px solid var(--border-light); background: white;">
                         <div class="mode-toggle-container">

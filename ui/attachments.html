@@ -755,7 +755,24 @@
             let html = '';
             sortedGroupKeys.forEach(groupKey => {
                 const group = groups[groupKey];
-                const groupDocs = group.docs;
+                
+                // Filter to only keep the latest version of each document category/name
+                const latestDocsMap = new Map();
+                group.docs.forEach(doc => {
+                    // Use original_filename or category as grouping key
+                    const docKey = doc.original_filename || doc.category || doc.filename;
+                    if (!latestDocsMap.has(docKey)) {
+                        latestDocsMap.set(docKey, doc);
+                    } else {
+                        const existingDoc = latestDocsMap.get(docKey);
+                        const currentVersion = doc.version || 1;
+                        const existingVersion = existingDoc.version || 1;
+                        if (currentVersion > existingVersion) {
+                            latestDocsMap.set(docKey, doc);
+                        }
+                    }
+                });
+                const groupDocs = Array.from(latestDocsMap.values());
                 
                 // Calculate missing documents for this SPECIFIC email/thread context
                 const presentCategories = new Set(groupDocs.filter(d => d.is_correct !== false).map(d => (d.category || '').toLowerCase()));

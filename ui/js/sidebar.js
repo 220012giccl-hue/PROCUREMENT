@@ -142,6 +142,40 @@
 
         sidebarContainer.innerHTML = html;
         console.log(`[Sidebar] Unified sidebar initialized for ${page}`);
+        
+        // --- Mobile Responsiveness Logic ---
+        
+        // 1. Inject Hamburger Button into Navigation
+        const navBrand = document.querySelector('.nav-brand');
+        if (navBrand && !document.getElementById('mobileMenuBtn')) {
+            const menuBtn = document.createElement('button');
+            menuBtn.id = 'mobileMenuBtn';
+            menuBtn.className = 'mobile-menu-btn';
+            menuBtn.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>`;
+            // Insert before the brand logo
+            navBrand.parentNode.insertBefore(menuBtn, navBrand);
+            
+            // 2. Inject Overlay
+            let overlay = document.getElementById('sidebarOverlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'sidebarOverlay';
+                overlay.className = 'sidebar-overlay';
+                document.body.appendChild(overlay);
+            }
+            
+            // 3. Add Event Listeners
+            menuBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                sidebarContainer.classList.toggle('active');
+                overlay.classList.toggle('active');
+            });
+            
+            overlay.addEventListener('click', function() {
+                sidebarContainer.classList.remove('active');
+                overlay.classList.remove('active');
+            });
+        }
     }
 
     // Run on DOM load

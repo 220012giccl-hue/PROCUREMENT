@@ -446,30 +446,32 @@
                                 <span class="vendor-count">${vendors.length}</span>
                             </div>
                         </div>
-                        <table class="vendor-table">
-                            <tbody>
-                                ${vendors.map(v => `
-                                    <tr class="vendor-row">
-                                        <td class="vendor-cell vendor-name-cell">${escapeHtml(v.name)}</td>
-                                        <td class="vendor-cell vendor-contact-cell">
-                                            <div class="contact-info">
-                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path></svg>
-                                                ${escapeHtml(v.email || 'N/A')}
-                                            </div>
-                                        </td>
-                                        <td class="vendor-cell vendor-location-cell">${escapeHtml(v.location || 'N/A')}</td>
-                                        <td class="vendor-cell vendor-action-cell" style="white-space: nowrap;">
-                                            <button type="button" class="btn-icon" title="Edit" onclick="editSupplier(${JSON.stringify(v).replace(/"/g, '&quot;')})">
-                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                                            </button>
-                                            <button type="button" class="btn-icon btn-icon-danger" title="Delete" onclick="deleteSupplier(${v.id})">
-                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
+                        <div class="table-container">
+                            <table class="vendor-table">
+                                <tbody>
+                                    ${vendors.map(v => `
+                                        <tr class="vendor-row">
+                                            <td class="vendor-cell vendor-name-cell">${escapeHtml(v.name)}</td>
+                                            <td class="vendor-cell vendor-contact-cell">
+                                                <div class="contact-info">
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path></svg>
+                                                    ${escapeHtml(v.email || 'N/A')}
+                                                </div>
+                                            </td>
+                                            <td class="vendor-cell vendor-location-cell">${escapeHtml(v.location || 'N/A')}</td>
+                                            <td class="vendor-cell vendor-action-cell" style="white-space: nowrap;">
+                                                <button type="button" class="btn-icon" title="Edit" onclick="editSupplier(${JSON.stringify(v).replace(/"/g, '&quot;')})">
+                                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                                </button>
+                                                <button type="button" class="btn-icon" style="color: #ef4444;" title="Delete" onclick="deleteSupplier('${v.id}')">
+                                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
                     `;
                     mainContainer.appendChild(card);
                 });
