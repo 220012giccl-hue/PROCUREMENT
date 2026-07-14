@@ -1,0 +1,5 @@
+# Run these commands in your terminal to push the changes to GitHub
+
+git add .
+git commit -m "Fix mobile responsiveness for tables and UI layout issues"
+git push origin main

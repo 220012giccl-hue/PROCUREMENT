@@ -261,6 +261,52 @@
             padding-right: 8px;
             overscroll-behavior: contain;
         }
+
+        @media (max-width: 768px) {
+            .vendor-table, .vendor-table tbody, .vendor-row, .vendor-cell {
+                display: block;
+                width: 100%;
+            }
+            .vendor-row {
+                margin-bottom: 12px;
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+                padding: 12px;
+                background: white;
+            }
+            .vendor-cell {
+                padding: 6px 0;
+                border: none;
+                width: 100% !important;
+            }
+            .vendor-name-cell {
+                border-bottom: 1px solid #f1f5f9;
+                padding-bottom: 8px;
+                margin-bottom: 6px;
+                font-size: 1.1rem;
+            }
+            .vendor-action-cell {
+                text-align: left !important;
+                display: flex;
+                gap: 8px;
+                margin-top: 8px;
+                border-top: 1px solid #f1f5f9;
+                padding-top: 8px;
+            }
+            .table-container {
+                border: none;
+                background: transparent;
+            }
+            .category-card {
+                background: transparent;
+                box-shadow: none;
+                border: none;
+                padding: 0;
+            }
+            .category-header {
+                padding: 12px 0;
+            }
+        }
     </style>
 </head>
 

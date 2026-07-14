@@ -119,6 +119,47 @@
             text-align: center;
             color: #94a3b8;
         }
+
+        @media (max-width: 768px) {
+            .procurement-table, .procurement-table tbody, .procurement-table tr, .procurement-table td {
+                display: block;
+                width: 100%;
+            }
+            .procurement-table thead {
+                display: none;
+            }
+            .procurement-table tr {
+                margin-bottom: 16px;
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+                padding: 12px;
+                background: white;
+            }
+            .procurement-table td {
+                padding: 6px 0;
+                border: none;
+            }
+            .procurement-table td:first-child {
+                border-bottom: 1px solid #f1f5f9;
+                padding-bottom: 12px;
+                margin-bottom: 8px;
+            }
+            .procurement-table td:last-child {
+                text-align: left !important;
+                display: flex;
+                gap: 8px;
+                margin-top: 8px;
+            }
+            .table-container {
+                border: none;
+                background: transparent;
+            }
+            .list-card {
+                border: none;
+                box-shadow: none;
+                background: transparent;
+            }
+        }
     </style>
 </head>
 
